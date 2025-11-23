@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/bookhive/static/css/main.998a4054.css",
+    "main.js": "/bookhive/static/js/main.605e82c6.js",
+    "index.html": "/bookhive/index.html",
+    "main.998a4054.css.map": "/bookhive/static/css/main.998a4054.css.map",
+    "main.605e82c6.js.map": "/bookhive/static/js/main.605e82c6.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.998a4054.css",
+    "static/js/main.605e82c6.js"
+  ]
+}
