@@ -1,0 +1,126 @@
+/* Navbar.css */
+
+.navbar-container {
+  background-color: var(--bh-bg-card-light);
+  border-bottom: 1px solid var(--bh-border-light);
+  box-shadow: var(--bh-shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  transition: all 0.3s ease;
+}
+
+.navbar-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-left {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+}
+
+.navbar-logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: var(--bh-gradient-1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.5px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.navbar-link {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--bh-text-secondary-light);
+  background: transparent;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.navbar-link:hover {
+  color: var(--bh-text-primary-light);
+  background-color: rgba(102, 126, 234, 0.1);
+}
+
+.navbar-right {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  background-color: rgba(102, 126, 234, 0.1);
+  border-radius: 50%;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+  background-color: rgba(102, 126, 234, 0.2);
+  transform: rotate(20deg);
+}
+
+.navbar-btn {
+  padding: 0.6rem 1.2rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  animation: slideInRight 0.4s ease;
+}
+
+.navbar-btn-primary {
+  background: var(--bh-gradient-1);
+  color: white;
+  box-shadow: var(--bh-shadow-md);
+}
+
+.navbar-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bh-shadow-lg);
+}
+
+.navbar-btn-secondary {
+  background-color: var(--bh-bg-light);
+  color: var(--bh-text-primary-light);
+  border: 1px solid var(--bh-border-light);
+}
+
+.navbar-btn-secondary:hover {
+  background-color: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+  .navbar-links {
+    display: none;
+  }
+  
+  .navbar-wrapper {
+    padding: 1rem 0.5rem;
+  }
+
+  .navbar-left {
+    gap: 0.5rem;
+  }
+}

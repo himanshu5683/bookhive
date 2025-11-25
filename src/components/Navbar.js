@@ -2,6 +2,7 @@
 import React, { useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
+import "../styles/Navbar.css";
 
 const Navbar = ({ activeComponent, setActiveComponent }) => {
     const { user, logout } = useContext(AuthContext);
@@ -9,36 +10,35 @@ const Navbar = ({ activeComponent, setActiveComponent }) => {
 
     const handleLogout = () => {
         logout();
-        navigate("/login");
+        navigate("/auth");
     };
 
+
     return (
-        <nav className="navbar">
-            <div className="navbar-title">BookHive</div>
+        <nav className="navbar-container">
+            <div className="navbar-wrapper">
+                <div className="navbar-left">
+                    <div className="navbar-logo" onClick={() => navigate("/")}>
+                        BookHive
+                    </div>
+                    <div className="navbar-links">
+                        <button className="navbar-link" onClick={() => setActiveComponent("Home")}>Home</button>
+                        <button className="navbar-link" onClick={() => setActiveComponent("Library")}>Library</button>
+                        <button className="navbar-link" onClick={() => setActiveComponent("Upload")}>Upload</button>
+                        <button className="navbar-link" onClick={() => setActiveComponent("Profile")}>Profile</button>
+                    </div>
+                </div>
 
-            <div className="navbar-links">
-                {["Home", "Library", "Upload", "Profile"].map(page => (
-                    <button
-                        key={page}
-                        className={activeComponent === page ? "active nav-button" : "nav-button"}
-                        onClick={() => setActiveComponent(page)}
-                    >
-                        {page}
-                    </button>
-                ))}
-            </div>
-
-            <div className="navbar-auth">
-                {user ? (
-                    <>
-                        <button className="nav-button" onClick={() => navigate("/dashboard")}>Dashboard</button>
-                        <button className="nav-button" onClick={handleLogout}>Logout</button>
-                    </>
-                ) : (
-                    <>
-                        <button className="nav-button" onClick={() => navigate("/auth")}>Auth</button>
-                    </>
-                )}
+                <div className="navbar-right">
+                    {user ? (
+                        <>
+                            <button className="navbar-btn navbar-btn-primary" onClick={() => navigate("/dashboard")}>Dashboard</button>
+                            <button className="navbar-btn navbar-btn-secondary" onClick={handleLogout}>Logout</button>
+                        </>
+                    ) : (
+                        <button className="navbar-btn navbar-btn-primary" onClick={() => navigate("/auth")}>Login / Signup</button>
+                    )}
+                </div>
             </div>
         </nav>
     );

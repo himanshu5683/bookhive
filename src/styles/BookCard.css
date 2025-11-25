@@ -1,0 +1,134 @@
+/* BookCard.css */
+
+.book-card {
+  background: var(--bh-bg-card-light);
+  border: 1px solid var(--bh-border-light);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  animation: scaleIn 0.4s ease;
+}
+
+.book-card:hover {
+  transform: translateY(-8px);
+  box-shadow: var(--bh-shadow-lg);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+.book-cover {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  overflow: hidden;
+  position: relative;
+}
+
+.book-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--bh-gradient-1);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.book-card:hover .book-cover::before {
+  opacity: 0.1;
+}
+
+.book-content {
+  padding: 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--bh-text-primary-light);
+  margin-bottom: 0.5rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.book-author {
+  font-size: 0.85rem;
+  color: var(--bh-text-secondary-light);
+  margin-bottom: 0.75rem;
+  font-weight: 500;
+}
+
+.book-desc {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--bh-text-secondary-light);
+  margin-bottom: 1rem;
+  flex: 1;
+  display: -webkit-box;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.book-footer {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bh-border-light);
+}
+
+.book-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 0.4rem;
+  transition: all 0.3s ease;
+  flex: 1;
+}
+
+.book-btn-read {
+  background: var(--bh-gradient-1);
+  color: white;
+}
+
+.book-btn-read:hover {
+  box-shadow: var(--bh-shadow-md);
+  transform: translateY(-1px);
+}
+
+.book-btn-save {
+  background-color: var(--bh-bg-light);
+  color: var(--bh-text-primary-light);
+  border: 1px solid var(--bh-border-light);
+}
+
+.book-btn-save:hover {
+  background-color: rgba(102, 126, 234, 0.05);
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+@media (max-width: 640px) {
+  .book-card {
+    border-radius: 0.6rem;
+  }
+
+  .book-content {
+    padding: 1rem;
+  }
+
+  .book-title {
+    font-size: 0.9rem;
+  }
+}

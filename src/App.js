@@ -1,5 +1,7 @@
 /* bookhive/src/App.js */
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import Loading from "./components/Loading";
+import "./styles/Loading.css";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
@@ -15,6 +17,14 @@ import Dashboard from "./Pages/Dashboard";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
+    const [loading, setLoading] = useState(false);
+
+    // Simulate loading on mount and on component change (for demo)
+    useEffect(() => {
+        setLoading(true);
+        const timer = setTimeout(() => setLoading(false), 700); // Simulate fetch delay
+        return () => clearTimeout(timer);
+    }, [activeComponent]);
 
     const renderComponent = () => {
         switch (activeComponent) {
@@ -33,6 +43,7 @@ function App() {
 
     const MainUI = () => (
         <div>
+            {loading && <Loading />}
             <Navbar activeComponent={activeComponent} setActiveComponent={setActiveComponent} />
             <div className="container">
                 {renderComponent()}
