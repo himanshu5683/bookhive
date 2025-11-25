@@ -11,9 +11,18 @@ import Profile from "./components/Profile";
 import "./styles/styles.css";
 
 import { AuthProvider } from "./auth/AuthContext";
+import { CreditProvider } from "./context/CreditContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import Auth from "./Pages/Auth";
-import Dashboard from "./Pages/Dashboard";
+import AuthPage from "./components/AuthPage";
+import Dashboard from "./pages/Dashboard";
+import Resources from "./pages/Resources";
+import Stories from "./pages/Stories";
+import StudyCircles from "./pages/StudyCircles";
+import Leaderboard from "./pages/Leaderboard";
+import UserProfile from "./pages/UserProfile";
+import Footer from "./components/Footer";
+import "./styles/Footer.css";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
@@ -32,6 +41,16 @@ function App() {
                 return <Home setActiveComponent={setActiveComponent} />;
             case "Library":
                 return <Library />;
+            case "Resources":
+                return <Resources />;
+            case "Stories":
+                return <Stories />;
+            case "StudyCircles":
+                return <StudyCircles />;
+            case "Leaderboard":
+                return <Leaderboard />;
+            case "UserProfile":
+                return <UserProfile />;
             case "Upload":
                 return <Upload />;
             case "Profile":
@@ -48,17 +67,27 @@ function App() {
             <div className="container">
                 {renderComponent()}
             </div>
+            <Footer />
         </div>
     );
 
     return (
-        <AuthProvider>
-            <Routes>
-                <Route path="/" element={<MainUI />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            </Routes>
-        </AuthProvider>
+        <ThemeProvider>
+            <AuthProvider>
+                <CreditProvider>
+                    <Routes>
+                        <Route path="/" element={<MainUI />} />
+                        <Route path="/resources" element={<MainUI />} />
+                        <Route path="/stories" element={<MainUI />} />
+                        <Route path="/circles" element={<MainUI />} />
+                        <Route path="/leaderboard" element={<MainUI />} />
+                        <Route path="/profile" element={<MainUI />} />
+                        <Route path="/auth" element={<AuthPage />} />
+                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                    </Routes>
+                </CreditProvider>
+            </AuthProvider>
+        </ThemeProvider>
     );
 }
 

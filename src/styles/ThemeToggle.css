@@ -1,0 +1,27 @@
+/* ThemeToggle.css */
+
+.theme-toggle {
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border);
+  color: var(--bh-text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.3s ease;
+  box-shadow: var(--bh-shadow-sm);
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: var(--bh-shadow-md);
+  border-color: var(--bh-accent-1);
+}
+
+.theme-toggle:active {
+  transform: scale(0.95);
+}

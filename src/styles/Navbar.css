@@ -1,13 +1,14 @@
 /* Navbar.css */
 
 .navbar-container {
-  background-color: var(--bh-bg-card-light);
-  border-bottom: 1px solid var(--bh-border-light);
-  box-shadow: var(--bh-shadow-sm);
+  background-color: rgba(255,255,255,0.9);
+  border-bottom: 1px solid var(--bh-border);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--bh-shadow-xs);
   position: sticky;
   top: 0;
   z-index: 100;
-  transition: all 0.3s ease;
+  transition: all var(--bh-transition);
 }
 
 .navbar-wrapper {
@@ -26,7 +27,7 @@
 }
 
 .navbar-logo {
-  font-size: 1.5rem;
+  font-size: 1.45rem;
   font-weight: 800;
   background: var(--bh-gradient-1);
   -webkit-background-clip: text;
@@ -42,18 +43,18 @@
 }
 
 .navbar-link {
-  padding: 0.5rem 1rem;
+  padding: 0.45rem 0.8rem;
   font-size: 0.95rem;
-  font-weight: 500;
-  color: var(--bh-text-secondary-light);
+  font-weight: 600;
+  color: var(--bh-text-secondary);
   background: transparent;
   border-radius: 0.5rem;
-  transition: all 0.3s ease;
+  transition: all var(--bh-transition);
 }
 
 .navbar-link:hover {
-  color: var(--bh-text-primary-light);
-  background-color: rgba(102, 126, 234, 0.1);
+  color: var(--bh-text-primary);
+  background-color: rgba(102,126,234,0.06);
 }
 
 .navbar-right {
@@ -62,23 +63,7 @@
   align-items: center;
 }
 
-.theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.5rem;
-  height: 2.5rem;
-  background-color: rgba(102, 126, 234, 0.1);
-  border-radius: 50%;
-  font-size: 1.2rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.theme-toggle:hover {
-  background-color: rgba(102, 126, 234, 0.2);
-  transform: rotate(20deg);
-}
+/* theme toggle removed - light-only UI */
 
 .navbar-btn {
   padding: 0.6rem 1.2rem;
@@ -101,15 +86,24 @@
 }
 
 .navbar-btn-secondary {
-  background-color: var(--bh-bg-light);
-  color: var(--bh-text-primary-light);
-  border: 1px solid var(--bh-border-light);
+  background-color: var(--bh-bg);
+  color: var(--bh-text-primary);
+  border: 1px solid var(--bh-border);
 }
 
 .navbar-btn-secondary:hover {
-  background-color: rgba(102, 126, 234, 0.1);
-  border-color: rgba(102, 126, 234, 0.3);
+  background-color: rgba(102,126,234,0.04);
+  border-color: rgba(102,126,234,0.12);
 }
+
+/* Search box + dropdown helpers */
+.navbar-search { display:flex; align-items:center; gap:.5rem; background:var(--bh-bg-card); border:1px solid var(--bh-border); padding:.35rem .6rem; border-radius:8px; box-shadow:var(--bh-shadow-xs); }
+.navbar-search input { border:0; outline:none; font-size:.95rem; color:var(--bh-text-primary); background:transparent; }
+.nav-dropdown { position:relative; }
+.nav-dropdown .dropdown-menu { position:absolute; top:calc(100% + .5rem); left:0; min-width:200px; background:var(--bh-bg-card); border:1px solid var(--bh-border); box-shadow:var(--bh-shadow-md); border-radius:8px; padding:.5rem; display:none; z-index:130; }
+.nav-dropdown:hover .dropdown-menu { display:block; }
+.dropdown-item { padding:.5rem .75rem; border-radius:6px; font-size:.95rem; color:var(--bh-text-primary); }
+.dropdown-item:hover { background: rgba(102,126,234,0.04); }
 
 @media (max-width: 768px) {
   .navbar-links {

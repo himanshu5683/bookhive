@@ -1,0 +1,133 @@
+/* Resources.css */
+
+.resources-page {
+  padding: 2rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.resources-hero {
+  text-align: center;
+  margin-bottom: 3rem;
+  animation: fadeIn 0.6s ease;
+}
+
+.resources-hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, #6b8cff, #9b6bff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.resources-hero p {
+  font-size: 1.1rem;
+  color: var(--bh-text-secondary);
+}
+
+/* Controls */
+.resources-controls {
+  background: var(--bh-bg-card);
+  padding: 2rem;
+  border-radius: var(--bh-radius-md);
+  margin-bottom: 2rem;
+  box-shadow: var(--bh-shadow-sm);
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius-sm);
+  background: var(--bh-bg);
+  color: var(--bh-text-primary);
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #6b8cff;
+  box-shadow: 0 0 0 3px rgba(107, 140, 255, 0.1);
+}
+
+.filters-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bh-text-primary);
+}
+
+.filter-group select {
+  padding: 0.6rem;
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius-sm);
+  background: var(--bh-bg);
+  color: var(--bh-text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-group select:hover {
+  border-color: #6b8cff;
+}
+
+.filter-group select:focus {
+  outline: none;
+  border-color: #6b8cff;
+  box-shadow: 0 0 0 3px rgba(107, 140, 255, 0.1);
+}
+
+.resources-info {
+  margin-bottom: 1.5rem;
+  padding: 0 1rem;
+  color: var(--bh-text-secondary);
+  font-size: 0.95rem;
+}
+
+/* Grid */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.no-results {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--bh-text-secondary);
+  font-size: 1.1rem;
+}
+
+@media (max-width: 768px) {
+  .resources-hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .resources-controls {
+    padding: 1.5rem;
+  }
+
+  .filters-row {
+    grid-template-columns: 1fr;
+  }
+
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+}
