@@ -5,7 +5,6 @@ import '../styles/UserProfile.css';
 const UserProfile = () => {
   const [selectedUser, setSelectedUser] = useState(sampleUsers[0]);
   const [isFollowing, setIsFollowing] = useState(false);
-  const [users, setUsers] = useState([]);
 
   // Fetch users from API or use sample data
   useEffect(() => {
@@ -16,12 +15,10 @@ const UserProfile = () => {
         // setUsers(data.users);
         
         // For now, use sample data
-        setUsers(sampleUsers);
         setSelectedUser(sampleUsers[0]);
       } catch (err) {
         console.error('Failed to fetch users:', err);
         // Fallback to sample data
-        setUsers(sampleUsers);
         setSelectedUser(sampleUsers[0]);
       }
     };

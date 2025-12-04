@@ -1,5 +1,5 @@
 import React, { useState, useContext } from "react";
-import { storage, db, auth } from "../firebase";
+import { storage, db } from "../firebase";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import AuthContext from "../auth/AuthContext";
@@ -14,7 +14,6 @@ const Upload = () => {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [fileName, setFileName] = useState("");
 
   // Allowed file types
   const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf", "video/mp4", "video/webm", "video/quicktime"];
@@ -60,7 +59,6 @@ const Upload = () => {
     }
 
     setFile(selectedFile);
-    setFileName(selectedFile.name);
     setUploadProgress(0);
   };
 
@@ -84,7 +82,6 @@ const Upload = () => {
     try {
       // Create storage reference with unique filename
       const timestamp = Date.now();
-      const fileExtension = file.name.split(".").pop();
       const storagePath = `uploads/${user.uid}/${timestamp}-${file.name}`;
       const storageRef = ref(storage, storagePath);
 
@@ -127,7 +124,6 @@ const Upload = () => {
             // Success message
             setSuccess(`✓ "${file.name}" uploaded successfully!`);
             setFile(null);
-            setFileName("");
             setUploadProgress(0);
             setUploading(false);
 
@@ -232,7 +228,6 @@ const Upload = () => {
                 className="upload-btn secondary"
                 onClick={() => {
                   setFile(null);
-                  setFileName("");
                   setUploadProgress(0);
                 }}
               >

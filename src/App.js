@@ -1,7 +1,7 @@
 /* bookhive/src/App.js */
 import React, { useState, useEffect } from "react";
 import Loading from "./components/Loading";
-import "./styles/Loading.css";
+import AppWrapper from "./components/AppWrapper";
 import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
@@ -31,13 +31,26 @@ import FileList from "./pages/FileList";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    // Simulate loading on mount and on component change (for demo)
+    // Handle initial loading
     useEffect(() => {
-        setLoading(true);
-        const timer = setTimeout(() => setLoading(false), 700); // Simulate fetch delay
+        // Simulate initial app loading
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
         return () => clearTimeout(timer);
+    }, []);
+
+    // Handle component switching loading
+    useEffect(() => {
+        if (activeComponent !== "Home") {  // Only show loading for non-home components
+            setLoading(true);
+            const timer = setTimeout(() => {
+                setLoading(false);
+            }, 700);
+            return () => clearTimeout(timer);
+        }
     }, [activeComponent]);
 
     const renderComponent = () => {
@@ -65,7 +78,6 @@ function App() {
 
     const MainUI = () => (
         <div>
-            {loading && <Loading />}
             <Navbar activeComponent={activeComponent} setActiveComponent={setActiveComponent} />
             <div className="container">
                 {renderComponent()}
@@ -78,24 +90,27 @@ function App() {
         <ThemeProvider>
             <AuthProvider>
                 <CreditProvider>
-                    <Routes>
-                        <Route path="/" element={<MainUI />} />
-                        <Route path="/resources" element={<MainUI />} />
-                        <Route path="/stories" element={<MainUI />} />
-                        <Route path="/circles" element={<MainUI />} />
-                        <Route path="/leaderboard" element={<MainUI />} />
-                        <Route path="/profile" element={<MainUI />} />
-                        <Route path="/auth" element={<AuthPage />} />
-                        
-                        {/* Firebase Authentication Routes */}
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
-                        
-                        {/* Protected Routes */}
-                        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                        <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-                        <Route path="/files" element={<ProtectedRoute><FileList /></ProtectedRoute>} />
-                    </Routes>
+                    <AppWrapper>
+                        {loading && <Loading />}
+                        <Routes>
+                            <Route path="/" element={<MainUI />} />
+                            <Route path="/resources" element={<MainUI />} />
+                            <Route path="/stories" element={<MainUI />} />
+                            <Route path="/circles" element={<MainUI />} />
+                            <Route path="/leaderboard" element={<MainUI />} />
+                            <Route path="/profile" element={<MainUI />} />
+                            <Route path="/auth" element={<AuthPage />} />
+                            
+                            {/* Firebase Authentication Routes */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/signup" element={<Signup />} />
+                            
+                            {/* Protected Routes */}
+                            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                            <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+                            <Route path="/files" element={<ProtectedRoute><FileList /></ProtectedRoute>} />
+                        </Routes>
+                    </AppWrapper>
                 </CreditProvider>
             </AuthProvider>
         </ThemeProvider>

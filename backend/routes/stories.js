@@ -1,7 +1,32 @@
 // backend/routes/stories.js - Story Sharing Routes
 
 const express = require('express');
+
 const router = express.Router();
+
+// In-memory storage for development without database
+const stories = [
+  {
+    id: 'story1',
+    content: 'Just finished my ML project!',
+    author: 'Alice Johnson',
+    authorId: 'user1',
+    likes: 284,
+    comments: 42,
+    shares: 18,
+    createdAt: new Date('2024-01-15')
+  },
+  {
+    id: 'story2',
+    content: 'Learning React hooks today. They\'re so powerful!',
+    author: 'Bob Williams',
+    authorId: 'user2',
+    likes: 156,
+    comments: 23,
+    shares: 8,
+    createdAt: new Date('2024-01-14')
+  }
+];
 
 /**
  * GET /api/stories
@@ -10,60 +35,67 @@ const router = express.Router();
  * Response: { total, stories: [...], pagination }
  */
 router.get('/', (req, res) => {
-  const { sort = 'recent', page = 1, limit = 20 } = req.query;
-
-  // TODO: Query database
-  // TODO: Sort by (recent, trending, popular)
-  // TODO: Paginate results
-
-  res.status(200).json({
-    total: 5,
-    stories: [
-      {
-        id: 'story1',
-        author: 'Alice Johnson',
-        authorId: 'user1',
-        content: 'Just finished my ML project!',
-        timestamp: new Date(),
-        likes: 284,
-        comments: 42,
-        shares: 18,
-      },
-    ],
-    pagination: { page: 1, limit: 20, total: 5 },
-  });
+  try {
+    const { sort = 'recent', page = 1, limit = 20 } = req.query;
+    
+    // Sort stories
+    const sortedStories = [...stories].sort((a, b) => {
+      if (sort === 'trending') return b.likes - a.likes;
+      if (sort === 'popular') return b.comments - a.comments;
+      return new Date(b.createdAt) - new Date(a.createdAt); // default to recent
+    });
+    
+    // Paginate stories
+    const skip = (page - 1) * limit;
+    const paginatedStories = sortedStories.slice(skip, skip + parseInt(limit));
+    
+    res.status(200).json({
+      total: sortedStories.length,
+      stories: paginatedStories,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total: sortedStories.length }
+    });
+  } catch (error) {
+    console.error('Error fetching stories:', error);
+    res.status(500).json({ error: 'Server error fetching stories' });
+  }
 });
 
 /**
  * POST /api/stories
  * Create a new story
- * Body: { content, userId }
+ * Body: { content, userId, author }
  * Response: { id, ...story }
  */
 router.post('/', (req, res) => {
-  const { content, userId } = req.body;
+  try {
+    const { content, userId, author } = req.body;
 
-  if (!content || !userId) {
-    return res.status(400).json({ error: 'Content and userId required' });
-  }
+    if (!content || !userId || !author) {
+      return res.status(400).json({ error: 'Content, userId, and author required' });
+    }
 
-  // TODO: Verify authentication (JWT)
-  // TODO: Validate content length
-  // TODO: Save to database
-
-  res.status(201).json({
-    message: 'Story created successfully',
-    story: {
-      id: 'story_new',
-      author: 'User Name',
-      authorId: userId,
+    // Create story
+    const story = {
+      id: 'story_' + Date.now(),
       content,
-      timestamp: new Date(),
+      author,
+      authorId: userId,
       likes: 0,
       comments: 0,
       shares: 0,
-    },
-  });
+      createdAt: new Date()
+    };
+
+    stories.push(story);
+
+    res.status(201).json({
+      message: 'Story created successfully',
+      story
+    });
+  } catch (error) {
+    console.error('Error creating story:', error);
+    res.status(500).json({ error: 'Server error creating story' });
+  }
 });
 
 /**
@@ -72,17 +104,26 @@ router.post('/', (req, res) => {
  * Body: { userId }
  */
 router.post('/:id/like', (req, res) => {
-  const { id } = req.params;
-  const { userId } = req.body;
-
-  // TODO: Check if user already liked
-  // TODO: Add/remove like from database
-  // TODO: Update story's like count
-
-  res.status(200).json({
-    message: 'Like recorded',
-    likes: 285,
-  });
+  try {
+    const { id } = req.params;
+    
+    // Find story
+    const storyIndex = stories.findIndex(story => story.id === id);
+    if (storyIndex === -1) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Update story's like count
+    stories[storyIndex].likes += 1;
+    
+    res.status(200).json({
+      message: 'Like recorded',
+      likes: stories[storyIndex].likes
+    });
+  } catch (error) {
+    console.error('Error liking story:', error);
+    res.status(500).json({ error: 'Server error liking story' });
+  }
 });
 
 /**
@@ -92,22 +133,36 @@ router.post('/:id/like', (req, res) => {
  * Response: { comment: { id, userId, content, timestamp } }
  */
 router.post('/:id/comment', (req, res) => {
-  const { id } = req.params;
-  const { userId, content } = req.body;
+  try {
+    const { id } = req.params;
+    const { userId, content } = req.body;
+    
+    if (!content || !userId) {
+      return res.status(400).json({ error: 'Content and userId required' });
+    }
 
-  // TODO: Verify authentication
-  // TODO: Validate comment length
-  // TODO: Save comment to database
-
-  res.status(201).json({
-    message: 'Comment added',
-    comment: {
-      id: 'comment_new',
-      userId,
-      content,
-      timestamp: new Date(),
-    },
-  });
+    // Find story
+    const storyIndex = stories.findIndex(story => story.id === id);
+    if (storyIndex === -1) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Update story's comment count
+    stories[storyIndex].comments += 1;
+    
+    res.status(201).json({
+      message: 'Comment added',
+      comment: {
+        id: 'comment_' + Date.now(),
+        userId,
+        content,
+        timestamp: new Date()
+      }
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Server error adding comment' });
+  }
 });
 
 /**
@@ -115,12 +170,21 @@ router.post('/:id/comment', (req, res) => {
  * Delete a story
  */
 router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-
-  // TODO: Verify ownership
-  // TODO: Delete from database
-
-  res.status(200).json({ message: 'Story deleted successfully' });
+  try {
+    const { id } = req.params;
+    
+    const storyIndex = stories.findIndex(story => story.id === id);
+    if (storyIndex === -1) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    stories.splice(storyIndex, 1);
+    
+    res.status(200).json({ message: 'Story deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting story:', error);
+    res.status(500).json({ error: 'Server error deleting story' });
+  }
 });
 
 module.exports = router;

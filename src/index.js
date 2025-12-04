@@ -10,15 +10,9 @@ if (!container) {
   throw new Error("Root container missing in HTML!");
 }
 
-// Detect if running locally or deployed
-const isLocal = window.location.hostname === "localhost";
-
-// Set basename only for deployed environment
-const basename = isLocal ? "/" : "/bookhive";
-
 const root = ReactDOM.createRoot(container);
 root.render(
-  <BrowserRouter basename={basename}>
+  <BrowserRouter>
     <App />
   </BrowserRouter>
 );

@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth, db } from "../../firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import AuthContext from "../../auth/AuthContext";
+import { db } from "../../firebase";
 import { doc, setDoc } from "firebase/firestore";
 import "../../styles/Auth.css";
 
@@ -12,6 +12,7 @@ const Signup = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { signup } = useContext(AuthContext);
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -38,10 +39,9 @@ const Signup = () => {
     }
 
     try {
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-
+      // Create user in Firebase Auth through our AuthContext
+      const user = await signup(email, password);
+      
       // Store user in Firestore
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
@@ -84,11 +84,10 @@ const Signup = () => {
             <input
               id="email"
               type="email"
-              placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
               disabled={loading}
-              required
             />
           </div>
 
@@ -97,11 +96,10 @@ const Signup = () => {
             <input
               id="password"
               type="password"
-              placeholder="Create a password (min 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
               disabled={loading}
-              required
             />
           </div>
 
@@ -110,21 +108,33 @@ const Signup = () => {
             <input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
               disabled={loading}
-              required
             />
           </div>
 
-          <button type="submit" className="auth-btn" disabled={loading}>
-            {loading ? "Creating Account..." : "Sign Up"}
+          <button 
+            type="submit" 
+            className="auth-button" 
+            disabled={loading}
+          >
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
         </form>
 
         <div className="auth-footer">
-          <p>Already have an account? <a href="/login">Log in</a></p>
+          <p>
+            Already have an account?{" "}
+            <button 
+              className="auth-link" 
+              onClick={() => navigate("/login")}
+              disabled={loading}
+            >
+              Sign In
+            </button>
+          </p>
         </div>
       </div>
     </div>
