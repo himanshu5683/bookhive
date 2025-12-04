@@ -20,6 +20,10 @@ export default function AuthPage() {
   const [errors, setErrors] = useState({});
   const [dark, setDark] = useState(false);
 
+  const handleForgotPassword = () => {
+  alert("Forgot Password clicked!"); // Placeholder for now
+};
+
   const handleTab = (m) => {
     setMode(m);
     setErrors({});
@@ -83,7 +87,9 @@ export default function AuthPage() {
                   <label className="remember-me">
                     <input type="checkbox" name="remember" /> Remember me
                   </label>
-                  <a href="#" className="forgot-link">Forgot Password?</a>
+                  <button type="button" className="forgot-link" onClick={handleForgotPassword}>
+  Forgot Password?
+</button>
                 </div>
                 <button className="auth-btn" type="submit">Login</button>
               </>

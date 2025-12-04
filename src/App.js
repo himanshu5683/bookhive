@@ -6,7 +6,6 @@ import { Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Home from "./components/Home";
 import Library from "./components/Library";
-import Upload from "./components/Upload";
 import Profile from "./components/Profile";
 import "./styles/styles.css";
 
@@ -23,6 +22,12 @@ import Leaderboard from "./pages/Leaderboard";
 import UserProfile from "./pages/UserProfile";
 import Footer from "./components/Footer";
 import "./styles/Footer.css";
+
+// Firebase Auth Pages
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import Upload from "./pages/Upload";
+import FileList from "./pages/FileList";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
@@ -51,8 +56,6 @@ function App() {
                 return <Leaderboard />;
             case "UserProfile":
                 return <UserProfile />;
-            case "Upload":
-                return <Upload />;
             case "Profile":
                 return <Profile />;
             default:
@@ -83,7 +86,15 @@ function App() {
                         <Route path="/leaderboard" element={<MainUI />} />
                         <Route path="/profile" element={<MainUI />} />
                         <Route path="/auth" element={<AuthPage />} />
+                        
+                        {/* Firebase Authentication Routes */}
+                        <Route path="/login" element={<Login />} />
+                        <Route path="/signup" element={<Signup />} />
+                        
+                        {/* Protected Routes */}
                         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                        <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+                        <Route path="/files" element={<ProtectedRoute><FileList /></ProtectedRoute>} />
                     </Routes>
                 </CreditProvider>
             </AuthProvider>

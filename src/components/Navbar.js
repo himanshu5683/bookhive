@@ -41,7 +41,7 @@ const Navbar = ({ activeComponent, setActiveComponent }) => {
                         <button className="navbar-link" onClick={() => setActiveComponent("Home")}>Home</button>
                         <button className="navbar-link" onClick={() => setActiveComponent("Resources")}>Resources</button>
                         <button className="navbar-link" onClick={() => setActiveComponent("Stories")}>Stories</button>
-                        <button className="navbar-link" onClick={() => setActiveComponent("StudyCircles")}>Circles</button>
+                        <button className="navbar-link" onClick={() => setActiveComponent("StudyCircles")}>Community</button>
                         <button className="navbar-link" onClick={() => setActiveComponent("Leaderboard")}>Leaderboard</button>
 
                         <div className="nav-dropdown">
