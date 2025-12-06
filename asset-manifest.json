@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/bookhive/static/css/main.57c663b9.css",
-    "main.js": "/bookhive/static/js/main.31bfdd3c.js",
+    "main.css": "/bookhive/static/css/main.8cdc0d09.css",
+    "main.js": "/bookhive/static/js/main.47870857.js",
     "index.html": "/bookhive/index.html",
-    "main.57c663b9.css.map": "/bookhive/static/css/main.57c663b9.css.map",
-    "main.31bfdd3c.js.map": "/bookhive/static/js/main.31bfdd3c.js.map"
+    "main.8cdc0d09.css.map": "/bookhive/static/css/main.8cdc0d09.css.map",
+    "main.47870857.js.map": "/bookhive/static/js/main.47870857.js.map"
   },
   "entrypoints": [
-    "static/css/main.57c663b9.css",
-    "static/js/main.31bfdd3c.js"
+    "static/css/main.8cdc0d09.css",
+    "static/js/main.47870857.js"
   ]
 }
