@@ -1,18 +1,44 @@
 /* bookhive/src/components/Home.js */
-import React, { useContext } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/Home.css";
-import { sampleNotes, sampleStories, sampleStudyCircles } from "../data/sampleData";
+import "../../styles/Home.css";
 import ResourceCard from "./ResourceCard";
-import AuthContext from "../auth/AuthContext";
+import AuthContext from "../../auth/AuthContext";
+import apiClient from "../../services/api";
 
 const Home = ({ setActiveComponent }) => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
+    const [trendingResources, setTrendingResources] = useState([]);
+    const [latestStories, setLatestStories] = useState([]);
+    const [popularCircles, setPopularCircles] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const trendingNotes = sampleNotes.slice(0, 3);
-    const latestStories = sampleStories.slice(0, 3);
-    const popularCircles = sampleStudyCircles.slice(0, 3);
+    // Fetch data from backend
+    useEffect(() => {
+        const fetchHomeData = async () => {
+            setLoading(true);
+            try {
+                // Fetch trending resources
+                const resourcesRes = await apiClient.resourcesAPI.getAll({ limit: 3, sort: 'rating' });
+                setTrendingResources(resourcesRes.resources || []);
+
+                // Fetch latest stories
+                const storiesRes = await apiClient.storiesAPI.getAll({ limit: 3 });
+                setLatestStories(storiesRes.stories || []);
+
+                // Fetch popular circles
+                const circlesRes = await apiClient.circlesAPI.getAll({ limit: 3, sort: 'members' });
+                setPopularCircles(circlesRes.circles || []);
+            } catch (err) {
+                console.error('Failed to fetch home data:', err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHomeData();
+    }, []);
 
     return (
         <div className="home-container">
@@ -68,9 +94,15 @@ const Home = ({ setActiveComponent }) => {
                 </div>
 
                 <div className="resources-grid">
-                    {trendingNotes.map(note => (
-                        <ResourceCard key={note.id} resource={{ ...note, type: 'note' }} />
-                    ))}
+                    {loading ? (
+                        <p>Loading resources...</p>
+                    ) : trendingResources.length > 0 ? (
+                        trendingResources.map(resource => (
+                            <ResourceCard key={resource._id || resource.id} resource={resource} />
+                        ))
+                    ) : (
+                        <p>No resources yet. Be the first to share!</p>
+                    )}
                 </div>
             </section>
 
@@ -82,22 +114,28 @@ const Home = ({ setActiveComponent }) => {
                 </div>
 
                 <div className="stories-preview">
-                    {latestStories.map(story => (
-                        <div key={story.id} className="story-preview-card">
-                            <div className="story-author-mini">
-                                <span className="avatar">{story.author.charAt(0)}</span>
-                                <div>
-                                    <p className="author-name">{story.author}</p>
-                                    <p className="timestamp">2h ago</p>
+                    {loading ? (
+                        <p>Loading stories...</p>
+                    ) : latestStories.length > 0 ? (
+                        latestStories.map(story => (
+                            <div key={story._id || story.id} className="story-preview-card">
+                                <div className="story-author-mini">
+                                    <span className="avatar">{(story.author || 'A').charAt(0)}</span>
+                                    <div>
+                                        <p className="author-name">{story.author || 'Anonymous'}</p>
+                                        <p className="timestamp">Recently</p>
+                                    </div>
+                                </div>
+                                <p className="story-text">{(story.content || '').substring(0, 100)}...</p>
+                                <div className="story-engagement">
+                                    <span>❤️ {story.likes || 0}</span>
+                                    <span>💬 {story.comments?.length || 0}</span>
                                 </div>
                             </div>
-                            <p className="story-text">{story.content.substring(0, 100)}...</p>
-                            <div className="story-engagement">
-                                <span>❤️ {story.likes}</span>
-                                <span>💬 {story.comments}</span>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        <p>No stories yet. Share yours!</p>
+                    )}
                 </div>
             </section>
 
@@ -109,21 +147,26 @@ const Home = ({ setActiveComponent }) => {
                 </div>
 
                 <div className="circles-preview">
-                    {popularCircles.map(circle => (
-                        <div key={circle.id} className="circle-preview-card">
-                            <div className="circle-emoji-large">{circle.emoji}</div>
-                            <h3>{circle.name}</h3>
-                            <p className="circle-topic">{circle.topic}</p>
-                            <p className="circle-desc">{circle.description}</p>
-                            <div className="circle-preview-stats">
-                                <span>👥 {circle.members}</span>
-                                <span>💬 {circle.threads}</span>
+                    {loading ? (
+                        <p>Loading circles...</p>
+                    ) : popularCircles.length > 0 ? (
+                        popularCircles.map(circle => (
+                            <div key={circle._id || circle.id} className="circle-preview-card">
+                                <h3>{circle.name}</h3>
+                                <p className="circle-topic">{circle.topic}</p>
+                                <p className="circle-desc">{circle.description}</p>
+                                <div className="circle-preview-stats">
+                                    <span>👥 {circle.memberCount || circle.members?.length || 0}</span>
+                                    <span>💬 {circle.threads?.length || 0}</span>
+                                </div>
+                                <button className="btn-join-small" onClick={() => setActiveComponent('StudyCircles')}>
+                                    Join Circle
+                                </button>
                             </div>
-                            <button className="btn-join-small" onClick={() => setActiveComponent('StudyCircles')}>
-                                Join Circle
-                            </button>
-                        </div>
-                    ))}
+                        ))
+                    ) : (
+                        <p>No study circles yet. Create one!</p>
+                    )}
                 </div>
             </section>
 

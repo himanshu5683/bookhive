@@ -24,21 +24,21 @@ const Login = () => {
     }
 
     try {
-      // Sign in with Firebase Auth through our AuthContext
+      // Sign in through our AuthContext (uses backend API)
       await login(email, password);
       // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
-      if (err.code === "auth/user-not-found") {
+      // Handle backend API errors
+      const errorMessage = err.message || "Failed to log in";
+      if (errorMessage.includes("Invalid credentials")) {
+        setError("Invalid email or password");
+      } else if (errorMessage.includes("not found")) {
         setError("No account found with this email");
-      } else if (err.code === "auth/wrong-password") {
-        setError("Incorrect password");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Invalid email address");
-      } else if (err.code === "auth/user-disabled") {
-        setError("Account has been disabled");
+      } else if (errorMessage.includes("Network")) {
+        setError("Network error. Please check your connection.");
       } else {
-        setError(err.message || "Failed to log in");
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);

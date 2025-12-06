@@ -1,7 +1,7 @@
 /* bookhive/src/index.js */
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
+import { HashRouter } from "react-router-dom";
 import App from "./App";
 
 // Get root container safely
@@ -12,7 +12,7 @@ if (!container) {
 
 const root = ReactDOM.createRoot(container);
 root.render(
-  <BrowserRouter>
+  <HashRouter>
     <App />
-  </BrowserRouter>
+  </HashRouter>
 );

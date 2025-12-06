@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from 'react';
-import { sampleUsers } from '../data/sampleData';
+import apiClient from '../services/api';
 import '../styles/Leaderboard.css';
 
 const Leaderboard = () => {
   const [filterBy, setFilterBy] = useState('credits');
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Fetch leaderboard from API or use sample data
+  // Fetch leaderboard from backend API
   useEffect(() => {
     const fetchLeaderboard = async () => {
+      setLoading(true);
+      setError('');
       try {
-        // TODO: Uncomment when backend is ready
-        // const data = await usersAPI.getLeaderboard({ sortBy: filterBy });
-        // setUsers(data.leaderboard);
-        
-        // For now, use sample data
-        setUsers(sampleUsers);
+        const response = await apiClient.usersAPI.getLeaderboard({ sortBy: filterBy, limit: 20 });
+        setUsers(response.leaderboard || response.users || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
-        // Fallback to sample data
-        setUsers(sampleUsers);
+        setError('Failed to load leaderboard. Please try again.');
+        setUsers([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -48,11 +50,14 @@ const Leaderboard = () => {
         <p>Top contributors and community leaders</p>
       </div>
 
+      {/* Error Message */}
+      {error && <div className="error-message">{error}</div>}
+
       {/* Controls */}
       <div className="leaderboard-controls">
         <div className="filter-group">
           <label>Rank By:</label>
-          <select value={filterBy} onChange={(e) => setFilterBy(e.target.value)}>
+          <select value={filterBy} onChange={(e) => setFilterBy(e.target.value)} disabled={loading}>
             <option value="credits">Credits</option>
             <option value="contributions">Contributions</option>
             <option value="followers">Followers</option>
@@ -60,43 +65,58 @@ const Leaderboard = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="loading-state">
+          <p>Loading leaderboard...</p>
+        </div>
+      )}
+
       {/* Rankings */}
-      <div className="leaderboard-list">
-        {rankedUsers.map((user, idx) => (
-          <div key={user.id} className={`leaderboard-item rank-${idx + 1}`}>
-            <div className="rank-medal">{getMedalEmoji(idx + 1)}</div>
-
-            <div className="user-info">
-              <span className="user-avatar">{user.avatar}</span>
-              <div className="user-details">
-                <p className="user-name">{user.name}</p>
-                <p className="user-level">{user.level}</p>
-              </div>
+      {!loading && (
+        <div className="leaderboard-list">
+          {rankedUsers.length === 0 ? (
+            <div className="no-users">
+              <p>No users on the leaderboard yet.</p>
             </div>
+          ) : (
+            rankedUsers.map((user, idx) => (
+              <div key={user._id || user.id} className={`leaderboard-item rank-${idx + 1}`}>
+                <div className="rank-medal">{getMedalEmoji(idx + 1)}</div>
 
-            <div className="user-stats">
-              <div className="stat">
-                <span className="stat-label">Credits</span>
-                <span className="stat-value">{user.credits.toLocaleString()}</span>
-              </div>
-              <div className="stat">
-                <span className="stat-label">Contributions</span>
-                <span className="stat-value">{user.contributions}</span>
-              </div>
-              <div className="stat">
-                <span className="stat-label">Followers</span>
-                <span className="stat-value">{user.followers}</span>
-              </div>
-            </div>
+                <div className="user-info">
+                  <span className="user-avatar">{user.avatar || '👤'}</span>
+                  <div className="user-details">
+                    <p className="user-name">{user.name}</p>
+                    <p className="user-level">{user.role || 'Member'}</p>
+                  </div>
+                </div>
 
-            <div className="user-badges">
-              {user.badges.map((badge, i) => (
-                <span key={i} className="badge" title={badge}>{badge}</span>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+                <div className="user-stats">
+                  <div className="stat">
+                    <span className="stat-label">Credits</span>
+                    <span className="stat-value">{(user.credits || 0).toLocaleString()}</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Contributions</span>
+                    <span className="stat-value">{user.contributions || 0}</span>
+                  </div>
+                  <div className="stat">
+                    <span className="stat-label">Followers</span>
+                    <span className="stat-value">{user.followers || 0}</span>
+                  </div>
+                </div>
+
+                <div className="user-badges">
+                  {(user.badges || []).slice(0, 3).map((badge, i) => (
+                    <span key={i} className="badge" title={badge}>{badge}</span>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Gamification Section */}
       <div className="gamification-section">

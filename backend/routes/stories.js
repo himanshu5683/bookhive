@@ -1,32 +1,9 @@
 // backend/routes/stories.js - Story Sharing Routes
 
 const express = require('express');
+const Story = require('../models/Story');
 
 const router = express.Router();
-
-// In-memory storage for development without database
-const stories = [
-  {
-    id: 'story1',
-    content: 'Just finished my ML project!',
-    author: 'Alice Johnson',
-    authorId: 'user1',
-    likes: 284,
-    comments: 42,
-    shares: 18,
-    createdAt: new Date('2024-01-15')
-  },
-  {
-    id: 'story2',
-    content: 'Learning React hooks today. They\'re so powerful!',
-    author: 'Bob Williams',
-    authorId: 'user2',
-    likes: 156,
-    comments: 23,
-    shares: 8,
-    createdAt: new Date('2024-01-14')
-  }
-];
 
 /**
  * GET /api/stories
@@ -34,25 +11,30 @@ const stories = [
  * Query: ?sort=recent&page=1&limit=20
  * Response: { total, stories: [...], pagination }
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { sort = 'recent', page = 1, limit = 20 } = req.query;
     
-    // Sort stories
-    const sortedStories = [...stories].sort((a, b) => {
-      if (sort === 'trending') return b.likes - a.likes;
-      if (sort === 'popular') return b.comments - a.comments;
-      return new Date(b.createdAt) - new Date(a.createdAt); // default to recent
-    });
+    // Build sort
+    const sortObj = {};
+    if (sort === 'trending') sortObj.likes = -1;
+    else if (sort === 'popular') sortObj.comments = -1;
+    else sortObj.createdAt = -1; // default to recent
     
-    // Paginate stories
+    // Calculate pagination
     const skip = (page - 1) * limit;
-    const paginatedStories = sortedStories.slice(skip, skip + parseInt(limit));
+    
+    // Execute query
+    const total = await Story.countDocuments();
+    const stories = await Story.find()
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit));
     
     res.status(200).json({
-      total: sortedStories.length,
-      stories: paginatedStories,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: sortedStories.length }
+      total,
+      stories,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
     });
   } catch (error) {
     console.error('Error fetching stories:', error);
@@ -66,27 +48,23 @@ router.get('/', (req, res) => {
  * Body: { content, userId, author }
  * Response: { id, ...story }
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
-    const { content, userId, author } = req.body;
+    const { title, content, userId, author } = req.body;
 
     if (!content || !userId || !author) {
       return res.status(400).json({ error: 'Content, userId, and author required' });
     }
 
     // Create story
-    const story = {
-      id: 'story_' + Date.now(),
+    const story = new Story({
+      title: title || 'Untitled',
       content,
       author,
-      authorId: userId,
-      likes: 0,
-      comments: 0,
-      shares: 0,
-      createdAt: new Date()
-    };
+      authorId: userId
+    });
 
-    stories.push(story);
+    await story.save();
 
     res.status(201).json({
       message: 'Story created successfully',
@@ -103,22 +81,22 @@ router.post('/', (req, res) => {
  * Like or unlike a story
  * Body: { userId }
  */
-router.post('/:id/like', (req, res) => {
+router.post('/:id/like', async (req, res) => {
   try {
     const { id } = req.params;
     
     // Find story
-    const storyIndex = stories.findIndex(story => story.id === id);
-    if (storyIndex === -1) {
+    const story = await Story.findByIdAndUpdate(id, {
+      $inc: { likes: 1 }
+    }, { new: true });
+    
+    if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
     
-    // Update story's like count
-    stories[storyIndex].likes += 1;
-    
     res.status(200).json({
       message: 'Like recorded',
-      likes: stories[storyIndex].likes
+      likes: story.likes
     });
   } catch (error) {
     console.error('Error liking story:', error);
@@ -132,7 +110,7 @@ router.post('/:id/like', (req, res) => {
  * Body: { userId, content }
  * Response: { comment: { id, userId, content, timestamp } }
  */
-router.post('/:id/comment', (req, res) => {
+router.post('/:id/comment', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId, content } = req.body;
@@ -142,13 +120,13 @@ router.post('/:id/comment', (req, res) => {
     }
 
     // Find story
-    const storyIndex = stories.findIndex(story => story.id === id);
-    if (storyIndex === -1) {
+    const story = await Story.findByIdAndUpdate(id, {
+      $inc: { comments: 1 }
+    }, { new: true });
+    
+    if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
-    
-    // Update story's comment count
-    stories[storyIndex].comments += 1;
     
     res.status(201).json({
       message: 'Comment added',
@@ -169,16 +147,14 @@ router.post('/:id/comment', (req, res) => {
  * DELETE /api/stories/:id
  * Delete a story
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const storyIndex = stories.findIndex(story => story.id === id);
-    if (storyIndex === -1) {
+    const story = await Story.findByIdAndDelete(id);
+    if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
-    
-    stories.splice(storyIndex, 1);
     
     res.status(200).json({ message: 'Story deleted successfully' });
   } catch (error) {

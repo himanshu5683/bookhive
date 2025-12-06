@@ -1,59 +1,36 @@
 // backend/routes/circles.js - Study Circles Routes
 
 const express = require('express');
+const StudyCircle = require('../models/StudyCircle');
 
 const router = express.Router();
-
-// In-memory storage for development without database
-const circles = [
-  {
-    id: 'circle1',
-    name: 'Advanced JavaScript Study Group',
-    topic: 'Programming',
-    description: 'Deep dive into modern JavaScript',
-    createdBy: 'user1',
-    members: [
-      { userId: 'user1', joinedAt: new Date('2024-01-01') },
-      { userId: 'user2', joinedAt: new Date('2024-01-05') }
-    ],
-    threads: [
-      {
-        id: 'thread1',
-        title: 'Best practices for React hooks',
-        content: 'What are your favorite React hook patterns?',
-        authorId: 'user1',
-        createdAt: new Date('2024-01-10')
-      }
-    ],
-    memberCount: 2,
-    threadCount: 1,
-    createdAt: new Date('2024-01-01')
-  }
-];
 
 /**
  * GET /api/circles
  * Fetch all study circles
  * Query: ?topic=Programming&page=1&limit=10
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { topic, page = 1, limit = 10 } = req.query;
     
-    // Filter circles
-    let filteredCircles = [...circles];
-    if (topic) {
-      filteredCircles = filteredCircles.filter(circle => circle.topic === topic);
-    }
+    // Build query
+    const query = {};
+    if (topic) query.topic = topic;
     
-    // Paginate circles
+    // Calculate pagination
     const skip = (page - 1) * limit;
-    const paginatedCircles = filteredCircles.slice(skip, skip + parseInt(limit));
+    
+    // Execute query
+    const total = await StudyCircle.countDocuments(query);
+    const circles = await StudyCircle.find(query)
+      .skip(skip)
+      .limit(parseInt(limit));
     
     res.status(200).json({
-      total: filteredCircles.length,
-      circles: paginatedCircles,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: filteredCircles.length }
+      total,
+      circles,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
     });
   } catch (error) {
     console.error('Error fetching circles:', error);
@@ -66,7 +43,7 @@ router.get('/', (req, res) => {
  * Create a new study circle
  * Body: { name, topic, description, creatorId }
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { name, topic, description, creatorId } = req.body;
 
@@ -75,8 +52,7 @@ router.post('/', (req, res) => {
     }
 
     // Create circle
-    const circle = {
-      id: 'circle_' + Date.now(),
+    const circle = new StudyCircle({
       name,
       topic,
       description,
@@ -84,11 +60,10 @@ router.post('/', (req, res) => {
       members: [{ userId: creatorId, joinedAt: new Date() }],
       threads: [],
       memberCount: 1,
-      threadCount: 0,
-      createdAt: new Date()
-    };
+      threadCount: 0
+    });
 
-    circles.push(circle);
+    await circle.save();
 
     res.status(201).json({
       message: 'Circle created successfully',
@@ -104,11 +79,11 @@ router.post('/', (req, res) => {
  * GET /api/circles/:id
  * Fetch a specific circle with details
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const circle = circles.find(circle => circle.id === id);
+    const circle = await StudyCircle.findById(id);
     if (!circle) {
       return res.status(404).json({ error: 'Circle not found' });
     }
@@ -125,30 +100,32 @@ router.get('/:id', (req, res) => {
  * Join a study circle
  * Body: { userId }
  */
-router.post('/:id/join', (req, res) => {
+router.post('/:id/join', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
     
     // Find circle
-    const circleIndex = circles.findIndex(circle => circle.id === id);
-    if (circleIndex === -1) {
+    const circle = await StudyCircle.findById(id);
+    if (!circle) {
       return res.status(404).json({ error: 'Circle not found' });
     }
     
     // Check if already member
-    const isMember = circles[circleIndex].members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId);
     if (isMember) {
       return res.status(400).json({ error: 'Already a member' });
     }
     
     // Add user to circle members
-    circles[circleIndex].members.push({ userId, joinedAt: new Date() });
-    circles[circleIndex].memberCount = circles[circleIndex].members.length;
+    circle.members.push({ userId, joinedAt: new Date() });
+    circle.memberCount = circle.members.length;
+    
+    await circle.save();
     
     res.status(200).json({
       message: 'Successfully joined circle',
-      memberCount: circles[circleIndex].memberCount
+      memberCount: circle.memberCount
     });
   } catch (error) {
     console.error('Error joining circle:', error);
@@ -161,7 +138,7 @@ router.post('/:id/join', (req, res) => {
  * Create a discussion thread
  * Body: { userId, title, content }
  */
-router.post('/:id/thread', (req, res) => {
+router.post('/:id/thread', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId, title, content } = req.body;
@@ -171,28 +148,29 @@ router.post('/:id/thread', (req, res) => {
     }
 
     // Find circle
-    const circleIndex = circles.findIndex(circle => circle.id === id);
-    if (circleIndex === -1) {
+    const circle = await StudyCircle.findById(id);
+    if (!circle) {
       return res.status(404).json({ error: 'Circle not found' });
     }
     
     // Check if user is member
-    const isMember = circles[circleIndex].members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId);
     if (!isMember) {
       return res.status(403).json({ error: 'Must be a member to post' });
     }
     
     // Add thread
     const thread = {
-      id: 'thread_' + Date.now(),
       title,
       content,
       authorId: userId,
       createdAt: new Date()
     };
     
-    circles[circleIndex].threads.push(thread);
-    circles[circleIndex].threadCount = circles[circleIndex].threads.length;
+    circle.threads.push(thread);
+    circle.threadCount = circle.threads.length;
+    
+    await circle.save();
     
     res.status(201).json({
       message: 'Thread created successfully',
@@ -209,7 +187,7 @@ router.post('/:id/thread', (req, res) => {
  * Reply to a discussion thread
  * Body: { userId, content }
  */
-router.post('/:circleId/thread/:threadId/reply', (req, res) => {
+router.post('/:circleId/thread/:threadId/reply', async (req, res) => {
   try {
     const { circleId } = req.params;
     const { userId, content } = req.body;
@@ -219,13 +197,13 @@ router.post('/:circleId/thread/:threadId/reply', (req, res) => {
     }
 
     // Find circle
-    const circleIndex = circles.findIndex(circle => circle.id === circleId);
-    if (circleIndex === -1) {
+    const circle = await StudyCircle.findById(circleId);
+    if (!circle) {
       return res.status(404).json({ error: 'Circle not found' });
     }
     
     // Check if user is member
-    const isMember = circles[circleIndex].members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId);
     if (!isMember) {
       return res.status(403).json({ error: 'Must be a member to reply' });
     }

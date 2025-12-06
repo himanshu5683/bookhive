@@ -3,11 +3,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const User = require('../models/User');
 
 const router = express.Router();
-
-// In-memory storage for development without database
-const users = [];
 
 /**
  * POST /api/auth/signup
@@ -25,31 +23,22 @@ router.post('/signup', async (req, res) => {
     }
 
     // Check if user already exists
-    const existingUser = users.find(user => user.email === email);
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'User already exists' });
     }
 
-    // Hash password
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-
     // Create new user
-    const user = {
-      id: 'user_' + Date.now(),
+    const user = new User({
       email,
-      password: hashedPassword,
-      name,
-      credits: 0,
-      contributions: 0,
-      followers: 0,
-      following: 0
-    };
+      password,
+      name
+    });
 
-    users.push(user);
+    await user.save();
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -57,7 +46,7 @@ router.post('/signup', async (req, res) => {
       message: 'User created successfully',
       token,
       user: {
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         credits: user.credits
@@ -84,19 +73,19 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user by email
-    const user = users.find(user => user.email === email);
+    const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verify password
-    const validPassword = await bcrypt.compare(password, user.password);
+    const validPassword = await user.comparePassword(password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Generate JWT token
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
@@ -104,7 +93,7 @@ router.post('/login', async (req, res) => {
       message: 'Login successful',
       token,
       user: {
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         credits: user.credits
@@ -141,16 +130,16 @@ router.get('/verify', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Find user
-    const user = users.find(user => user.id === decoded.userId);
+    const user = await User.findById(decoded.userId);
     if (!user) {
       return res.status(401).json({ error: 'Invalid token' });
     }
 
     res.status(200).json({
       valid: true,
-      userId: user.id,
+      userId: user._id,
       user: {
-        id: user.id,
+        id: user._id,
         name: user.name,
         email: user.email,
         credits: user.credits

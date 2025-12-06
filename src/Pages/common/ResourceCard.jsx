@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import '../styles/ResourceCard.css';
+import '../../styles/ResourceCard.css';
 
 const ResourceCard = ({ resource }) => {
   const [downloaded, setDownloaded] = useState(false);

@@ -1,5 +1,5 @@
 import React from 'react';
-import '../styles/BookCard.css';
+import '../../styles/BookCard.css';
 
 const Star = ({ filled }) => (
   <span className={filled ? 'star filled' : 'star'}>★</span>

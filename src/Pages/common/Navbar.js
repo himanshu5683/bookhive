@@ -1,9 +1,9 @@
 /* bookhive/src/components/Navbar.js */
 import React, { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../auth/AuthContext";
+import AuthContext from "../../auth/AuthContext";
 import ThemeToggle from "./ThemeToggle";
-import "../styles/Navbar.css";
+import "../../styles/Navbar.css";
 
 const Navbar = ({ activeComponent, setActiveComponent }) => {
     const { user, logout } = useContext(AuthContext);

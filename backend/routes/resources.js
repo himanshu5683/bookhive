@@ -1,38 +1,10 @@
 // backend/routes/resources.js - Resources (Notes/PDFs) Routes
 
 const express = require('express');
+const Resource = require('../models/Resource');
+const User = require('../models/User');
 
 const router = express.Router();
-
-// In-memory storage for development without database
-const resources = [
-  {
-    id: 'res1',
-    title: 'Advanced JavaScript',
-    description: 'Deep dive into JavaScript concepts',
-    type: 'note',
-    category: 'Programming',
-    author: 'Alice Johnson',
-    authorId: 'user1',
-    rating: 4.8,
-    downloads: 1250,
-    credits: 150,
-    createdAt: new Date('2024-01-15')
-  },
-  {
-    id: 'res2',
-    title: 'Quantum Physics Basics',
-    description: 'Introduction to quantum mechanics',
-    type: 'pdf',
-    category: 'Science',
-    author: 'Bob Chen',
-    authorId: 'user2',
-    rating: 4.6,
-    downloads: 890,
-    credits: 120,
-    createdAt: new Date('2024-01-10')
-  }
-];
 
 /**
  * GET /api/resources
@@ -40,35 +12,36 @@ const resources = [
  * Query params: ?type=note&category=Programming&sort=rating&page=1&limit=10
  * Response: { total, resources: [...], pagination }
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { type, category, sort = 'rating', page = 1, limit = 10 } = req.query;
     
-    // Filter resources
-    let filteredResources = [...resources];
-    if (type) {
-      filteredResources = filteredResources.filter(resource => resource.type === type);
-    }
-    if (category) {
-      filteredResources = filteredResources.filter(resource => resource.category === category);
-    }
+    // Build query
+    const query = {};
+    if (type) query.type = type;
+    if (category) query.category = category;
     
-    // Sort resources
-    filteredResources.sort((a, b) => {
-      if (sort === 'rating') return b.rating - a.rating;
-      if (sort === 'downloads') return b.downloads - a.downloads;
-      if (sort === 'recent') return new Date(b.createdAt) - new Date(a.createdAt);
-      return b.rating - a.rating; // default to rating
-    });
+    // Build sort
+    const sortObj = {};
+    if (sort === 'rating') sortObj.rating = -1;
+    else if (sort === 'downloads') sortObj.downloads = -1;
+    else if (sort === 'recent') sortObj.createdAt = -1;
+    else sortObj.rating = -1;
     
-    // Paginate resources
+    // Calculate pagination
     const skip = (page - 1) * limit;
-    const paginatedResources = filteredResources.slice(skip, skip + parseInt(limit));
+    
+    // Execute query
+    const total = await Resource.countDocuments(query);
+    const resources = await Resource.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit));
     
     res.status(200).json({
-      total: filteredResources.length,
-      resources: paginatedResources,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: filteredResources.length }
+      total,
+      resources,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
     });
   } catch (error) {
     console.error('Error fetching resources:', error);
@@ -82,7 +55,7 @@ router.get('/', (req, res) => {
  * Body: { title, description, type, category, author, authorId }
  * Response: { id, ...resource }
  */
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { title, description, type, category, author, authorId } = req.body;
 
@@ -91,21 +64,21 @@ router.post('/', (req, res) => {
     }
 
     // Create resource
-    const resource = {
-      id: 'res_' + Date.now(),
+    const resource = new Resource({
       title,
       description,
       type,
       category,
       author,
-      authorId,
-      rating: 0,
-      downloads: 0,
-      credits: 100,
-      createdAt: new Date()
-    };
+      authorId
+    });
 
-    resources.push(resource);
+    await resource.save();
+    
+    // Update user contributions
+    await User.findByIdAndUpdate(authorId, {
+      $inc: { contributions: 1, credits: 100 }
+    });
 
     res.status(201).json({
       message: 'Resource uploaded successfully',
@@ -122,11 +95,11 @@ router.post('/', (req, res) => {
  * Fetch a specific resource
  * Response: { ...resource, content? }
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const resource = resources.find(resource => resource.id === id);
+    const resource = await Resource.findById(id);
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
@@ -143,24 +116,24 @@ router.get('/:id', (req, res) => {
  * Update a resource
  * Body: { title?, description?, category? }
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { title, description, category } = req.body;
     
-    const resourceIndex = resources.findIndex(resource => resource.id === id);
-    if (resourceIndex === -1) {
+    const updateFields = {};
+    if (title) updateFields.title = title;
+    if (description) updateFields.description = description;
+    if (category) updateFields.category = category;
+    
+    const resource = await Resource.findByIdAndUpdate(id, updateFields, { new: true });
+    if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    // Update resource fields
-    if (title) resources[resourceIndex].title = title;
-    if (description) resources[resourceIndex].description = description;
-    if (category) resources[resourceIndex].category = category;
-    
     res.status(200).json({
       message: 'Resource updated successfully',
-      resource: resources[resourceIndex]
+      resource
     });
   } catch (error) {
     console.error('Error updating resource:', error);
@@ -172,16 +145,14 @@ router.put('/:id', (req, res) => {
  * DELETE /api/resources/:id
  * Delete a resource
  */
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const resourceIndex = resources.findIndex(resource => resource.id === id);
-    if (resourceIndex === -1) {
+    const resource = await Resource.findByIdAndDelete(id);
+    if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
-    
-    resources.splice(resourceIndex, 1);
     
     res.status(200).json({ message: 'Resource deleted successfully' });
   } catch (error) {
@@ -194,7 +165,7 @@ router.delete('/:id', (req, res) => {
  * POST /api/resources/:id/download
  * Record download and award/deduct credits
  */
-router.post('/:id/download', (req, res) => {
+router.post('/:id/download', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
@@ -204,13 +175,28 @@ router.post('/:id/download', (req, res) => {
     }
     
     // Find resource
-    const resource = resources.find(resource => resource.id === id);
+    const resource = await Resource.findById(id);
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
     // Increment download count
     resource.downloads += 1;
+    await resource.save();
+    
+    // Deduct credits from downloader
+    const downloader = await User.findById(userId);
+    if (downloader && downloader.credits >= resource.credits) {
+      downloader.credits -= resource.credits;
+      await downloader.save();
+    }
+    
+    // Award credits to uploader
+    const uploader = await User.findById(resource.authorId);
+    if (uploader) {
+      uploader.credits += resource.credits;
+      await uploader.save();
+    }
     
     res.status(200).json({
       message: 'Download recorded',

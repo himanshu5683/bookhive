@@ -1,33 +1,35 @@
 /* bookhive/src/App.js */
 import React, { useState, useEffect } from "react";
-import Loading from "./components/Loading";
-import AppWrapper from "./components/AppWrapper";
 import { Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Home from "./components/Home";
-import Library from "./components/Library";
-import Profile from "./components/Profile";
 import "./styles/styles.css";
 
 import { AuthProvider } from "./auth/AuthContext";
 import { CreditProvider } from "./context/CreditContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import AuthPage from "./components/AuthPage";
+// Page Components
 import Dashboard from "./pages/Dashboard";
 import Resources from "./pages/Resources";
 import Stories from "./pages/Stories";
 import StudyCircles from "./pages/StudyCircles";
 import Leaderboard from "./pages/Leaderboard";
 import UserProfile from "./pages/UserProfile";
-import Footer from "./components/Footer";
-import "./styles/Footer.css";
-
-// Firebase Auth Pages
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
 import Upload from "./pages/Upload";
 import FileList from "./pages/FileList";
+
+// Authentication Pages
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+
+// Common Components
+import Loading from "./pages/common/Loading";
+import AppWrapper from "./pages/common/AppWrapper";
+import Navbar from "./pages/common/Navbar";
+import Home from "./pages/common/Home";
+import Library from "./pages/common/Library";
+import Profile from "./pages/common/Profile";
+import AuthPage from "./pages/common/AuthPage";
+import Footer from "./pages/common/Footer";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
@@ -101,7 +103,7 @@ function App() {
                             <Route path="/profile" element={<MainUI />} />
                             <Route path="/auth" element={<AuthPage />} />
                             
-                            {/* Firebase Authentication Routes */}
+                            {/* Authentication Routes */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/signup" element={<Signup />} />
                             

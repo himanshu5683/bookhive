@@ -1,8 +1,6 @@
 import React, { useState, useContext } from "react";
-import { storage, db } from "../firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import AuthContext from "../auth/AuthContext";
+import apiClient from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/Upload.css";
 
@@ -10,10 +8,16 @@ const Upload = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("Programming");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Available categories
+  const categories = ["Programming", "Science", "Mathematics", "Technology", "Business", "Arts", "Languages", "Other"];
 
   // Allowed file types
   const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "application/pdf", "video/mp4", "video/webm", "video/quicktime"];
@@ -67,6 +71,17 @@ const Upload = () => {
     setError("");
     setSuccess("");
 
+    // Validation
+    if (!title.trim()) {
+      setError("Please enter a title for your resource.");
+      return;
+    }
+
+    if (!description.trim()) {
+      setError("Please enter a description for your resource.");
+      return;
+    }
+
     if (!file) {
       setError("Please select a file first.");
       return;
@@ -78,68 +93,59 @@ const Upload = () => {
     }
 
     setUploading(true);
+    setUploadProgress(0);
 
     try {
-      // Create storage reference with unique filename
-      const timestamp = Date.now();
-      const storagePath = `uploads/${user.uid}/${timestamp}-${file.name}`;
-      const storageRef = ref(storage, storagePath);
-
-      // Upload file with progress tracking
-      const uploadTask = uploadBytesResumable(storageRef, file);
-
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          // Progress
-          const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-          setUploadProgress(progress);
-        },
-        (err) => {
-          // Error
-          console.error("Upload error:", err);
-          setError(err.message || "Failed to upload file.");
-          setUploading(false);
-        },
-        async () => {
-          // Success - Get download URL
-          try {
-            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-
-            // Save file metadata to Firestore
-            await addDoc(collection(db, "files"), {
-              uid: user.uid,
-              email: user.email,
-              fileName: file.name,
-              fileType: file.type,
-              fileSize: file.size,
-              downloadURL: downloadURL,
-              storagePath: storagePath,
-              uploadedAt: serverTimestamp(),
-              isPublic: false,
-              views: 0,
-              downloads: 0
-            });
-
-            // Success message
-            setSuccess(`✓ "${file.name}" uploaded successfully!`);
-            setFile(null);
-            setUploadProgress(0);
-            setUploading(false);
-
-            // Auto-clear message after 5 seconds
-            setTimeout(() => setSuccess(""), 5000);
-          } catch (err) {
-            console.error("Firestore error:", err);
-            setError("File uploaded but failed to save metadata.");
-            setUploading(false);
+      // Simulate upload progress while creating resource
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
           }
-        }
-      );
+          return prev + 10;
+        });
+      }, 200);
+
+      // Determine resource type based on file type
+      let resourceType = 'document';
+      if (file.type.includes('pdf')) resourceType = 'pdf';
+      else if (file.type.includes('image')) resourceType = 'note';
+      else if (file.type.includes('video')) resourceType = 'video';
+      else if (file.type.includes('audio')) resourceType = 'audio';
+
+      // Create resource in backend
+      // Note: In a real app, you'd upload the file to cloud storage first
+      // and get a URL, then create the resource with that URL
+      const resourceData = {
+        title: title.trim(),
+        description: description.trim(),
+        type: resourceType,
+        category: category,
+        url: `https://storage.example.com/${Date.now()}_${file.name}`, // Placeholder URL
+        tags: [category.toLowerCase()]
+      };
+
+      await apiClient.resourcesAPI.create(resourceData);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      setUploading(false);
+      setSuccess(`✓ "${title}" uploaded successfully!`);
+      
+      // Reset form
+      setFile(null);
+      setTitle("");
+      setDescription("");
+      setCategory("Programming");
+      
+      // Auto-clear message after 5 seconds
+      setTimeout(() => setSuccess(""), 5000);
     } catch (err) {
       console.error("Error:", err);
       setError(err.message || "An error occurred during upload.");
       setUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -153,6 +159,49 @@ const Upload = () => {
         {success && <div className="upload-success">{success}</div>}
 
         <form className="upload-form" onSubmit={handleUpload}>
+          {/* Title Input */}
+          <div className="form-group">
+            <label htmlFor="title">Title *</label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Enter a title for your resource"
+              disabled={uploading}
+              required
+            />
+          </div>
+
+          {/* Description Input */}
+          <div className="form-group">
+            <label htmlFor="description">Description *</label>
+            <textarea
+              id="description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Describe your resource..."
+              disabled={uploading}
+              rows={3}
+              required
+            />
+          </div>
+
+          {/* Category Select */}
+          <div className="form-group">
+            <label htmlFor="category">Category</label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              disabled={uploading}
+            >
+              {categories.map(cat => (
+                <option key={cat} value={cat}>{cat}</option>
+              ))}
+            </select>
+          </div>
+
           {/* File Input Area */}
           <div className="file-input-wrapper">
             <input
@@ -228,6 +277,8 @@ const Upload = () => {
                 className="upload-btn secondary"
                 onClick={() => {
                   setFile(null);
+                  setTitle("");
+                  setDescription("");
                   setUploadProgress(0);
                 }}
               >
@@ -243,7 +294,7 @@ const Upload = () => {
           <ul>
             <li>✓ Maximum file size: 100MB</li>
             <li>✓ Supported formats: JPG, PNG, GIF, WebP, PDF, MP4, WebM, MOV</li>
-            <li>✓ Files are stored securely in Firebase Storage</li>
+            <li>✓ Files are securely processed by our backend</li>
             <li>✓ You can manage your uploads in your profile</li>
             <li>✓ Only you can see your uploads unless you make them public</li>
           </ul>

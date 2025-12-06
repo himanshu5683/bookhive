@@ -1,10 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
-import { auth } from "../firebase";
-import { 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword, 
-  signOut 
-} from "firebase/auth";
+import apiClient from "../services/api";
 
 const AuthContext = createContext();
 
@@ -13,19 +8,36 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            setUser(user);
+        // Check if user is already logged in
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            // Verify token with backend
+            apiClient.authAPI.verify()
+                .then(response => {
+                    if (response.valid) {
+                        setUser(response.user);
+                    } else {
+                        localStorage.removeItem('authToken');
+                    }
+                })
+                .catch(() => {
+                    localStorage.removeItem('authToken');
+                })
+                .finally(() => {
+                    setLoading(false);
+                });
+        } else {
             setLoading(false);
-        });
-
-        return unsubscribe;
+        }
     }, []);
 
-    const signup = async (email, password) => {
+    const signup = async (email, password, name) => {
         try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            setUser(userCredential.user);
-            return userCredential.user;
+            const response = await apiClient.authAPI.signup({ email, password, name });
+            // Store token
+            localStorage.setItem('authToken', response.token);
+            setUser(response.user);
+            return response.user;
         } catch (error) {
             throw error;
         }
@@ -33,9 +45,11 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         try {
-            const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            setUser(userCredential.user);
-            return userCredential.user;
+            const response = await apiClient.authAPI.login({ email, password });
+            // Store token
+            localStorage.setItem('authToken', response.token);
+            setUser(response.user);
+            return response.user;
         } catch (error) {
             throw error;
         }
@@ -43,7 +57,15 @@ export const AuthProvider = ({ children }) => {
 
     const logout = async () => {
         try {
-            await signOut(auth);
+            // Logout from our backend
+            try {
+                await apiClient.authAPI.logout();
+            } catch (error) {
+                console.warn('Backend logout failed:', error);
+            }
+            
+            // Clear token
+            localStorage.removeItem('authToken');
             setUser(null);
         } catch (error) {
             throw error;

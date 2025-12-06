@@ -1,6 +1,9 @@
 // src/services/api.js - API Client Utility
+import API_CONFIG from '../config/api';
+import { getToken, setToken, isAuthenticated } from '../utils/auth';
+import { handleApiError, logError } from '../utils/errorHandler';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = API_CONFIG.BASE_URL;
 
 /**
  * Generic fetch wrapper with error handling
@@ -10,7 +13,7 @@ const request = async (endpoint, options = {}) => {
     method = 'GET',
     body = null,
     headers = {},
-    token = localStorage.getItem('authToken'),
+    token = getToken(),
   } = options;
 
   const fetchOptions = {
@@ -33,15 +36,18 @@ const request = async (endpoint, options = {}) => {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || `API Error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      const error = new Error(errorData.message || `API Error: ${response.status}`);
+      error.response = { status: response.status, data: errorData };
+      throw error;
     }
 
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error('API Error:', error);
-    throw error;
+    logError(error, `API Request: ${endpoint}`);
+    const errorMessage = handleApiError(error);
+    throw new Error(errorMessage);
   }
 };
 
@@ -239,28 +245,7 @@ export const usersAPI = {
 
 // ============ HELPER FUNCTIONS ============
 
-/**
- * Get authorization token
- */
-export const getToken = () => localStorage.getItem('authToken');
-
-/**
- * Set authorization token
- */
-export const setToken = (token) => {
-  if (token) {
-    localStorage.setItem('authToken', token);
-  } else {
-    localStorage.removeItem('authToken');
-  }
-};
-
-/**
- * Check if user is authenticated
- */
-export const isAuthenticated = () => {
-  return !!getToken();
-};
+export { getToken, setToken, isAuthenticated } from '../utils/auth';
 
 const apiClient = {
   authAPI,

@@ -1,11 +1,10 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import { db } from "../../firebase";
-import { doc, setDoc } from "firebase/firestore";
 import "../../styles/Auth.css";
 
 const Signup = () => {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -20,7 +19,7 @@ const Signup = () => {
     setLoading(true);
 
     // Validation
-    if (!email || !password || !confirmPassword) {
+    if (!name || !email || !password || !confirmPassword) {
       setError("All fields are required");
       setLoading(false);
       return;
@@ -39,31 +38,24 @@ const Signup = () => {
     }
 
     try {
-      // Create user in Firebase Auth through our AuthContext
-      const user = await signup(email, password);
+      // Create user through our AuthContext (uses backend API)
+      await signup(email, password, name);
       
-      // Store user in Firestore
-      await setDoc(doc(db, "users", user.uid), {
-        uid: user.uid,
-        email: user.email,
-        createdAt: new Date().toISOString(),
-        displayName: "",
-        photoURL: "",
-        credits: 0,
-        role: "user"
-      });
-
       // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
-      if (err.code === "auth/email-already-in-use") {
+      // Handle backend API errors
+      const errorMessage = err.message || "Failed to create account";
+      if (errorMessage.includes("already exists")) {
         setError("Email is already registered");
-      } else if (err.code === "auth/invalid-email") {
-        setError("Invalid email address");
-      } else if (err.code === "auth/weak-password") {
-        setError("Password is too weak");
+      } else if (errorMessage.includes("Invalid email") || errorMessage.includes("Valid email")) {
+        setError("Please enter a valid email address");
+      } else if (errorMessage.includes("Password") || errorMessage.includes("6 characters")) {
+        setError("Password must be at least 6 characters");
+      } else if (errorMessage.includes("Network")) {
+        setError("Network error. Please check your connection.");
       } else {
-        setError(err.message || "Failed to create account");
+        setError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -79,6 +71,18 @@ const Signup = () => {
         {error && <div className="auth-error">{error}</div>}
 
         <form className="auth-form" onSubmit={handleSignup}>
+          <div className="form-group">
+            <label htmlFor="name">Full Name</label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your full name"
+              disabled={loading}
+            />
+          </div>
+
           <div className="form-group">
             <label htmlFor="email">Email Address</label>
             <input

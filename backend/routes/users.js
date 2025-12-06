@@ -1,79 +1,42 @@
 // backend/routes/users.js - User Management Routes
 
 const express = require('express');
+const User = require('../models/User');
 
 const router = express.Router();
-
-// In-memory storage for development without database
-const users = [
-  {
-    id: 'user1',
-    name: 'Alice Chen',
-    email: 'alice@example.com',
-    password: '$2a$10$examplehashedpassword', // 'password'
-    credits: 1250,
-    contributions: 42,
-    followers: 156,
-    following: 89,
-    bio: 'Book lover and knowledge enthusiast',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alice',
-    badges: ['Top Contributor', 'Knowledge Master', 'Leader'],
-    joinDate: new Date('2023-01-15')
-  },
-  {
-    id: 'user2',
-    name: 'Bob Williams',
-    email: 'bob@example.com',
-    password: '$2a$10$examplehashedpassword', // 'password'
-    credits: 980,
-    contributions: 35,
-    followers: 98,
-    following: 65,
-    bio: 'Tech enthusiast and developer',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Bob',
-    badges: ['Rapid Riser', 'Active Member'],
-    joinDate: new Date('2023-03-22')
-  }
-];
 
 /**
  * GET /api/users
  * Fetch list of users with optional filtering
  * Query: ?page=1&limit=10&search=john
  */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { page = 1, limit = 10, search } = req.query;
     
-    // Filter users
-    let filteredUsers = [...users];
+    // Build query
+    const query = {};
     if (search) {
-      filteredUsers = filteredUsers.filter(user => 
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase())
-      );
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
     }
     
-    // Paginate users
+    // Calculate pagination
     const skip = (page - 1) * limit;
-    const paginatedUsers = filteredUsers.slice(skip, skip + parseInt(limit));
+    
+    // Execute query
+    const total = await User.countDocuments(query);
+    const users = await User.find(query)
+      .select('-password')
+      .skip(skip)
+      .limit(parseInt(limit));
     
     res.status(200).json({
-      total: filteredUsers.length,
-      users: paginatedUsers.map(user => ({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        credits: user.credits,
-        contributions: user.contributions,
-        followers: user.followers,
-        following: user.following,
-        bio: user.bio,
-        avatar: user.avatar,
-        badges: user.badges,
-        joinDate: user.joinDate
-      })),
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: filteredUsers.length }
+      total,
+      users,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
     });
   } catch (error) {
     console.error('Error fetching users:', error);
@@ -86,24 +49,29 @@ router.get('/', (req, res) => {
  * Fetch leaderboard rankings
  * Query: ?sortBy=credits&page=1&limit=20
  */
-router.get('/leaderboard', (req, res) => {
+router.get('/leaderboard', async (req, res) => {
   try {
     const { sortBy = 'credits', page = 1, limit = 20 } = req.query;
     
-    // Sort users
-    const sortedUsers = [...users].sort((a, b) => {
-      if (sortBy === 'credits') return b.credits - a.credits;
-      if (sortBy === 'contributions') return b.contributions - a.contributions;
-      if (sortBy === 'followers') return b.followers - a.followers;
-      return b.credits - a.credits; // default to credits
-    });
+    // Build sort
+    const sortObj = {};
+    if (sortBy === 'credits') sortObj.credits = -1;
+    else if (sortBy === 'contributions') sortObj.contributions = -1;
+    else if (sortBy === 'followers') sortObj.followers = -1;
+    else sortObj.credits = -1;
     
-    // Paginate users
+    // Calculate pagination
     const skip = (page - 1) * limit;
-    const paginatedUsers = sortedUsers.slice(skip, skip + parseInt(limit));
+    
+    // Execute query
+    const users = await User.find()
+      .select('-password')
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit));
     
     // Add rankings and medals
-    const leaderboard = paginatedUsers.map((user, index) => {
+    const leaderboard = users.map((user, index) => {
       const rank = skip + index + 1;
       let medal = '';
       if (rank === 1) medal = '🥇';
@@ -113,7 +81,7 @@ router.get('/leaderboard', (req, res) => {
       return {
         rank,
         medal,
-        userId: user.id,
+        userId: user._id,
         name: user.name,
         credits: user.credits,
         contributions: user.contributions,
@@ -135,28 +103,16 @@ router.get('/leaderboard', (req, res) => {
  * GET /api/users/:id
  * Fetch user profile details
  */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const user = users.find(user => user.id === id);
+    const user = await User.findById(id).select('-password');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    res.status(200).json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      credits: user.credits,
-      contributions: user.contributions,
-      followers: user.followers,
-      following: user.following,
-      bio: user.bio,
-      avatar: user.avatar,
-      badges: user.badges,
-      joinDate: user.joinDate
-    });
+    res.status(200).json(user);
   } catch (error) {
     console.error('Error fetching user:', error);
     res.status(500).json({ error: 'Server error fetching user' });
@@ -168,36 +124,27 @@ router.get('/:id', (req, res) => {
  * Update user profile
  * Body: { name, bio, avatar }
  */
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { name, bio, avatar } = req.body;
     
-    const userIndex = users.findIndex(user => user.id === id);
-    if (userIndex === -1) {
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (avatar) updateFields.avatar = avatar;
+    
+    const user = await User.findByIdAndUpdate(id, updateFields, { 
+      new: true,
+      select: '-password'
+    });
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Update user fields
-    if (name) users[userIndex].name = name;
-    if (bio !== undefined) users[userIndex].bio = bio;
-    if (avatar) users[userIndex].avatar = avatar;
-    
     res.status(200).json({
       message: 'Profile updated successfully',
-      user: {
-        id: users[userIndex].id,
-        name: users[userIndex].name,
-        email: users[userIndex].email,
-        credits: users[userIndex].credits,
-        contributions: users[userIndex].contributions,
-        followers: users[userIndex].followers,
-        following: users[userIndex].following,
-        bio: users[userIndex].bio,
-        avatar: users[userIndex].avatar,
-        badges: users[userIndex].badges,
-        joinDate: users[userIndex].joinDate
-      }
+      user
     });
   } catch (error) {
     console.error('Error updating user:', error);
@@ -210,7 +157,7 @@ router.put('/:id', (req, res) => {
  * Update user credits
  * Body: { amount, action: 'add'|'deduct', reason }
  */
-router.put('/:id/credits', (req, res) => {
+router.put('/:id/credits', async (req, res) => {
   try {
     const { id } = req.params;
     const { amount, action = 'add', reason } = req.body;
@@ -220,17 +167,19 @@ router.put('/:id/credits', (req, res) => {
     }
 
     // Find user
-    const userIndex = users.findIndex(user => user.id === id);
-    if (userIndex === -1) {
+    const user = await User.findById(id);
+    if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
     // Update credits
     if (action === 'add') {
-      users[userIndex].credits += amount;
+      user.credits += amount;
     } else {
-      users[userIndex].credits = Math.max(0, users[userIndex].credits - amount);
+      user.credits = Math.max(0, user.credits - amount);
     }
+
+    await user.save();
 
     res.status(200).json({
       message: `Credits ${action}ed successfully`,
@@ -238,7 +187,7 @@ router.put('/:id/credits', (req, res) => {
       amount,
       action,
       reason,
-      newCredits: users[userIndex].credits,
+      newCredits: user.credits,
       timestamp: new Date()
     });
   } catch (error) {
@@ -251,11 +200,11 @@ router.put('/:id/credits', (req, res) => {
  * GET /api/users/:id/achievements
  * Fetch user badges and achievements
  */
-router.get('/:id/achievements', (req, res) => {
+router.get('/:id/achievements', async (req, res) => {
   try {
     const { id } = req.params;
     
-    const user = users.find(user => user.id === id);
+    const user = await User.findById(id).select('badges');
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -297,7 +246,7 @@ router.get('/:id/achievements', (req, res) => {
  * Follow a user
  * Body: { followerId }
  */
-router.post('/:id/follow', (req, res) => {
+router.post('/:id/follow', async (req, res) => {
   try {
     const { id } = req.params;
     const { followerId } = req.body;
@@ -306,24 +255,24 @@ router.post('/:id/follow', (req, res) => {
       return res.status(400).json({ error: 'followerId required' });
     }
     
-    // Find users
-    const followedUserIndex = users.findIndex(user => user.id === id);
-    const followerUserIndex = users.findIndex(user => user.id === followerId);
+    // Update followed user's followers count
+    const followedUser = await User.findByIdAndUpdate(id, {
+      $inc: { followers: 1 }
+    }, { new: true });
     
-    if (followedUserIndex === -1 || followerUserIndex === -1) {
+    if (!followedUser) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Update followed user's followers count
-    users[followedUserIndex].followers += 1;
-    
     // Update follower's following count
-    users[followerUserIndex].following += 1;
+    const follower = await User.findByIdAndUpdate(followerId, {
+      $inc: { following: 1 }
+    });
     
     res.status(200).json({
       message: 'User followed successfully',
       userId: id,
-      followerCount: users[followedUserIndex].followers
+      followerCount: followedUser.followers
     });
   } catch (error) {
     console.error('Error following user:', error);

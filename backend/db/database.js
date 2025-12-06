@@ -4,9 +4,15 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI);
+    // Use local MongoDB for development, cloud for production
+    const mongoURI = process.env.NODE_ENV === 'production' 
+      ? process.env.MONGODB_URI 
+      : 'mongodb://127.0.0.1:27017/bookhive';
+      
+    const conn = await mongoose.connect(mongoURI);
     
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
+    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
     console.log('⚠️  Starting server without database connection...');

@@ -1,17 +1,9 @@
 import React, { useState } from 'react';
-import '../styles/AuthPage.css';
+import '../../styles/AuthPage.css';
+import apiClient from '../../services/api';
 
-
-const emptyLogin = {
-  email: '',
-  password: '',
-};
-const emptySignup = {
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-};
+const emptyLogin = { email: '', password: '' };
+const emptySignup = { username: '', email: '', password: '', confirmPassword: '' };
 
 export default function AuthPage() {
   const [mode, setMode] = useState('login');
@@ -20,10 +12,6 @@ export default function AuthPage() {
   const [errors, setErrors] = useState({});
   const [dark, setDark] = useState(false);
 
-  const handleForgotPassword = () => {
-  alert("Forgot Password clicked!"); // Placeholder for now
-};
-
   const handleTab = (m) => {
     setMode(m);
     setErrors({});
@@ -31,8 +19,7 @@ export default function AuthPage() {
 
   const handleInput = (e, form) => {
     const { name, value } = e.target;
-    if (form === 'login') setLogin({ ...login, [name]: value });
-    else setSignup({ ...signup, [name]: value });
+    form === 'login' ? setLogin({ ...login, [name]: value }) : setSignup({ ...signup, [name]: value });
   };
 
   const validate = () => {
@@ -50,11 +37,23 @@ export default function AuthPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    // Simulate login/signup
-    alert(mode === 'login' ? 'Logged in!' : 'Signed up!');
+
+    try {
+      if (mode === 'login') {
+        const { user, token } = await apiClient.authAPI.login(login);
+        apiClient.setToken(token);
+        alert(`Welcome back, ${user.username}!`);
+      } else {
+        const { user, token } = await apiClient.authAPI.signup(signup);
+        apiClient.setToken(token);
+        alert(`Account created! Welcome, ${user.username}!`);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (
@@ -63,7 +62,7 @@ export default function AuthPage() {
         <div className="auth-visual">
           <h2>Welcome to BookHive</h2>
           <p>Connect, share, and discover your next favorite book.</p>
-          <button className="mode-toggle" onClick={() => setDark((d) => !d)}>
+          <button className="mode-toggle" onClick={() => setDark(!dark)}>
             {dark ? '🌞 Light Mode' : '🌙 Dark Mode'}
           </button>
         </div>
@@ -75,11 +74,11 @@ export default function AuthPage() {
           <form className="auth-form" onSubmit={handleSubmit} autoComplete="off">
             {mode === 'login' ? (
               <>
-                <div className={`input-group${errors.email ? ' error' : ''}`}> 
+                <div className={`input-group${errors.email ? ' error' : ''}`}>
                   <input type="text" name="email" placeholder="Email or Username" value={login.email} onChange={e => handleInput(e, 'login')} autoFocus />
                   {errors.email && <span className="error-msg">{errors.email}</span>}
                 </div>
-                <div className={`input-group${errors.password ? ' error' : ''}`}> 
+                <div className={`input-group${errors.password ? ' error' : ''}`}>
                   <input type="password" name="password" placeholder="Password" value={login.password} onChange={e => handleInput(e, 'login')} />
                   {errors.password && <span className="error-msg">{errors.password}</span>}
                 </div>
@@ -87,41 +86,31 @@ export default function AuthPage() {
                   <label className="remember-me">
                     <input type="checkbox" name="remember" /> Remember me
                   </label>
-                  <button type="button" className="forgot-link" onClick={handleForgotPassword}>
-  Forgot Password?
-</button>
+                  <button type="button" className="forgot-link" onClick={() => alert('Forgot Password clicked!')}>Forgot Password?</button>
                 </div>
                 <button className="auth-btn" type="submit">Login</button>
               </>
             ) : (
               <>
-                <div className={`input-group${errors.username ? ' error' : ''}`}> 
+                <div className={`input-group${errors.username ? ' error' : ''}`}>
                   <input type="text" name="username" placeholder="Username" value={signup.username} onChange={e => handleInput(e, 'signup')} autoFocus />
                   {errors.username && <span className="error-msg">{errors.username}</span>}
                 </div>
-                <div className={`input-group${errors.email ? ' error' : ''}`}> 
+                <div className={`input-group${errors.email ? ' error' : ''}`}>
                   <input type="email" name="email" placeholder="Email" value={signup.email} onChange={e => handleInput(e, 'signup')} />
                   {errors.email && <span className="error-msg">{errors.email}</span>}
                 </div>
-                <div className={`input-group${errors.password ? ' error' : ''}`}> 
+                <div className={`input-group${errors.password ? ' error' : ''}`}>
                   <input type="password" name="password" placeholder="Password" value={signup.password} onChange={e => handleInput(e, 'signup')} />
                   {errors.password && <span className="error-msg">{errors.password}</span>}
                 </div>
-                <div className={`input-group${errors.confirmPassword ? ' error' : ''}`}> 
+                <div className={`input-group${errors.confirmPassword ? ' error' : ''}`}>
                   <input type="password" name="confirmPassword" placeholder="Confirm Password" value={signup.confirmPassword} onChange={e => handleInput(e, 'signup')} />
                   {errors.confirmPassword && <span className="error-msg">{errors.confirmPassword}</span>}
                 </div>
                 <button className="auth-btn" type="submit">Sign Up</button>
               </>
             )}
-            <div className="social-login">
-              <span>or continue with</span>
-              <div className="social-btns">
-                <button type="button" className="social google" title="Login with Google"><span>G</span></button>
-                <button type="button" className="social facebook" title="Login with Facebook"><span>f</span></button>
-                <button type="button" className="social github" title="Login with GitHub"><span>&lt;/&gt;</span></button>
-              </div>
-            </div>
           </form>
         </div>
       </div>

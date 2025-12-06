@@ -1,59 +1,52 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
-import { db, auth } from "../firebase";
-import { signOut } from "firebase/auth";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import AuthContext from "../auth/AuthContext";
+import apiClient from "../services/api";
 import "../styles/Dashboard.css";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState(auth.currentUser);
-  const [fileCount, setFileCount] = useState(0);
+  const { user, logout } = useContext(AuthContext);
+  const [stats, setStats] = useState({ files: 0, credits: 0, contributions: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
-    // Set up auth listener
-    const unsubscribeAuth = auth.onAuthStateChanged((currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        navigate("/login");
-      }
-    });
-
-    // Count user's uploaded files
-    if (user) {
-      const filesRef = collection(db, "files");
-      const q = query(filesRef, where("uid", "==", user.uid));
-
-      const unsubscribeFiles = onSnapshot(
-        q,
-        (snapshot) => {
-          setFileCount(snapshot.size);
-          setLoading(false);
-        },
-        (err) => {
-          console.error("Error fetching file count:", err);
-          setError("Failed to load file count");
-          setLoading(false);
-        }
-      );
-
-      return () => {
-        unsubscribeAuth();
-        unsubscribeFiles();
-      };
-    } else {
-      return () => unsubscribeAuth();
+    if (!user) {
+      navigate("/login");
+      return;
     }
+
+    // Fetch user stats from backend
+    const fetchStats = async () => {
+      try {
+        // Try to get user data from API
+        if (user.id) {
+          const response = await apiClient.usersAPI.getById(user.id);
+          if (response.user) {
+            setStats({
+              files: response.user.contributions || 0,
+              credits: response.user.credits || 0,
+              contributions: response.user.contributions || 0
+            });
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch user stats:', err);
+        // Use default values on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
   }, [user, navigate]);
 
   const handleLogout = async () => {
     setSigningOut(true);
     try {
-      await signOut(auth);
+      await logout();
       navigate("/login");
     } catch (err) {
       setError("Failed to logout. Please try again.");
@@ -100,19 +93,37 @@ const Dashboard = () => {
             </div>
             <div className="info-item">
               <span className="info-label">User ID:</span>
-              <span className="info-value info-mono">{user?.uid}</span>
+              <span className="info-value info-mono">{user?.id}</span>
+            </div>
+            <div className="info-item">
+              <span className="info-label">Name:</span>
+              <span className="info-value">{user?.name || 'Not set'}</span>
             </div>
           </div>
         </div>
 
         <div className="stats-section">
-          <h2 className="section-title">📊 Upload Statistics</h2>
+          <h2 className="section-title">📊 Your Statistics</h2>
           <div className="stats-grid">
             <div className="stat-card">
               <div className="stat-icon">📤</div>
               <div className="stat-content">
-                <div className="stat-value">{fileCount}</div>
+                <div className="stat-value">{stats.files}</div>
                 <div className="stat-label">Files Uploaded</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">💰</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.credits}</div>
+                <div className="stat-label">Credits Earned</div>
+              </div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-icon">⭐</div>
+              <div className="stat-content">
+                <div className="stat-value">{stats.contributions}</div>
+                <div className="stat-label">Contributions</div>
               </div>
             </div>
           </div>

@@ -1,26 +1,32 @@
-import React, { useState, useEffect } from 'react';
-import { sampleStudyCircles } from '../data/sampleData';
+import React, { useState, useEffect, useContext } from 'react';
+import apiClient from '../services/api';
+import AuthContext from '../auth/AuthContext';
 import '../styles/StudyCircles.css';
 
 const StudyCircles = () => {
+  const { user } = useContext(AuthContext);
   const [circles, setCircles] = useState([]);
   const [joined, setJoined] = useState(new Set());
   const [selectedCircle, setSelectedCircle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [newThread, setNewThread] = useState({ title: '', content: '' });
+  const [showThreadForm, setShowThreadForm] = useState(false);
 
-  // Fetch circles from API or use sample data
+  // Fetch circles from backend API
   useEffect(() => {
     const fetchCircles = async () => {
+      setLoading(true);
+      setError('');
       try {
-        // TODO: Uncomment when backend is ready
-        // const data = await circlesAPI.getAll();
-        // setCircles(data.circles);
-        
-        // For now, use sample data
-        setCircles(sampleStudyCircles);
+        const response = await apiClient.circlesAPI.getAll();
+        setCircles(response.circles || []);
       } catch (err) {
         console.error('Failed to fetch circles:', err);
-        // Fallback to sample data
-        setCircles(sampleStudyCircles);
+        setError('Failed to load study circles. Please try again.');
+        setCircles([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,18 +34,52 @@ const StudyCircles = () => {
   }, []);
 
   const toggleJoin = async (circleId) => {
+    if (!user) {
+      setError('Please log in to join circles');
+      return;
+    }
+
     try {
       const newJoined = new Set(joined);
       if (newJoined.has(circleId)) {
+        // Leave circle (if API supports it)
         newJoined.delete(circleId);
+        // Update member count locally
+        setCircles(circles.map(c => 
+          c._id === circleId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c
+        ));
       } else {
-        // TODO: Uncomment when backend is ready
-        // await circlesAPI.join(circleId);
+        // Join circle via API
+        await apiClient.circlesAPI.join(circleId);
         newJoined.add(circleId);
+        // Update member count locally
+        setCircles(circles.map(c => 
+          c._id === circleId ? { ...c, memberCount: c.memberCount + 1 } : c
+        ));
       }
       setJoined(newJoined);
     } catch (err) {
       console.error('Failed to join circle:', err);
+      setError('Failed to join circle. Please try again.');
+    }
+  };
+
+  const handleCreateThread = async () => {
+    if (!newThread.title.trim() || !newThread.content.trim()) {
+      setError('Please fill in both title and content');
+      return;
+    }
+
+    try {
+      await apiClient.circlesAPI.createThread(selectedCircle._id, newThread);
+      setNewThread({ title: '', content: '' });
+      setShowThreadForm(false);
+      // Refresh circle details
+      const response = await apiClient.circlesAPI.getById(selectedCircle._id);
+      setSelectedCircle(response.circle);
+    } catch (err) {
+      console.error('Failed to create thread:', err);
+      setError('Failed to create thread. Please try again.');
     }
   };
 
@@ -62,73 +102,116 @@ const StudyCircles = () => {
         <p>Join subject-based groups to learn, discuss, and share resources with like-minded people</p>
       </div>
 
-      {selectedCircle ? (
+      {/* Error Message */}
+      {error && <div className="error-message">{error}</div>}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="loading-state">
+          <p>Loading study circles...</p>
+        </div>
+      )}
+
+      {!loading && selectedCircle ? (
         <div className="circle-detail">
           <button className="btn-back" onClick={() => setSelectedCircle(null)}>← Back</button>
           <div className="detail-header">
-            <h2>{selectedCircle.emoji} {selectedCircle.name}</h2>
+            <h2>{selectedCircle.name}</h2>
             <p>{selectedCircle.description}</p>
             <div className="detail-stats">
-              <span>👥 {selectedCircle.members} members</span>
-              <span>💬 {selectedCircle.threads} discussions</span>
-              <span>🔄 Active {formatDate(selectedCircle.lastActive)}</span>
+              <span>👥 {selectedCircle.memberCount || selectedCircle.members?.length || 0} members</span>
+              <span>💬 {selectedCircle.threads?.length || 0} discussions</span>
+              <span>🔄 Active {formatDate(new Date(selectedCircle.updatedAt || selectedCircle.createdAt))}</span>
             </div>
             <button
-              className={`btn ${joined.has(selectedCircle.id) ? 'btn-joined' : 'btn-join'}`}
-              onClick={() => toggleJoin(selectedCircle.id)}
+              className={`btn ${joined.has(selectedCircle._id) ? 'btn-joined' : 'btn-join'}`}
+              onClick={() => toggleJoin(selectedCircle._id)}
             >
-              {joined.has(selectedCircle.id) ? '✓ Joined' : 'Join Circle'}
+              {joined.has(selectedCircle._id) ? '✓ Joined' : 'Join Circle'}
             </button>
           </div>
+
+          {/* Create Thread Form */}
+          {user && joined.has(selectedCircle._id) && (
+            <div className="create-thread-section">
+              {showThreadForm ? (
+                <div className="thread-form">
+                  <input
+                    type="text"
+                    placeholder="Thread title..."
+                    value={newThread.title}
+                    onChange={(e) => setNewThread({ ...newThread, title: e.target.value })}
+                  />
+                  <textarea
+                    placeholder="Thread content..."
+                    value={newThread.content}
+                    onChange={(e) => setNewThread({ ...newThread, content: e.target.value })}
+                    rows={4}
+                  />
+                  <div className="thread-form-actions">
+                    <button className="btn btn-create" onClick={handleCreateThread}>Create Thread</button>
+                    <button className="btn btn-cancel" onClick={() => setShowThreadForm(false)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <button className="btn btn-new-thread" onClick={() => setShowThreadForm(true)}>
+                  + Start New Discussion
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Discussion Threads */}
           <div className="threads-section">
             <h3>Recent Discussions</h3>
             <div className="thread-list">
-              <div className="thread-item">
-                <p className="thread-title">Best practices for code organization</p>
-                <p className="thread-meta">📝 Started by John • 2h ago • 14 replies</p>
-              </div>
-              <div className="thread-item">
-                <p className="thread-title">How to ace technical interviews?</p>
-                <p className="thread-meta">📝 Started by Sarah • 5h ago • 28 replies</p>
-              </div>
-              <div className="thread-item">
-                <p className="thread-title">Resource recommendations for beginners</p>
-                <p className="thread-meta">📝 Started by Mike • 1d ago • 42 replies</p>
-              </div>
+              {selectedCircle.threads?.length > 0 ? (
+                selectedCircle.threads.map(thread => (
+                  <div key={thread._id || thread.id} className="thread-item">
+                    <p className="thread-title">{thread.title}</p>
+                    <p className="thread-meta">📝 Started by {thread.author} • {thread.replyCount || 0} replies</p>
+                  </div>
+                ))
+              ) : (
+                <p className="no-threads">No discussions yet. Start one!</p>
+              )}
             </div>
           </div>
         </div>
-      ) : (
+      ) : !loading && (
         <div className="circles-grid">
-          {circles.map(circle => (
-            <div
-              key={circle.id}
-              className="circle-card"
-              onClick={() => setSelectedCircle(circle)}
-            >
-              <div className="circle-emoji">{circle.emoji}</div>
-              <h3>{circle.name}</h3>
-              <p className="circle-topic">{circle.topic}</p>
-              <p className="circle-description">{circle.description}</p>
-
-              <div className="circle-stats">
-                <span>👥 {circle.members}</span>
-                <span>💬 {circle.threads}</span>
-              </div>
-
-              <button
-                className={`btn ${joined.has(circle.id) ? 'btn-joined' : 'btn-join'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleJoin(circle.id);
-                }}
-              >
-                {joined.has(circle.id) ? '✓ Joined' : 'Join'}
-              </button>
+          {circles.length === 0 ? (
+            <div className="no-circles">
+              <p>No study circles available yet.</p>
             </div>
-          ))}
+          ) : (
+            circles.map(circle => (
+              <div
+                key={circle._id || circle.id}
+                className="circle-card"
+                onClick={() => setSelectedCircle(circle)}
+              >
+                <h3>{circle.name}</h3>
+                <p className="circle-topic">{circle.topic}</p>
+                <p className="circle-description">{circle.description}</p>
+
+                <div className="circle-stats">
+                  <span>👥 {circle.memberCount || circle.members?.length || 0}</span>
+                  <span>💬 {circle.threads?.length || 0}</span>
+                </div>
+
+                <button
+                  className={`btn ${joined.has(circle._id) ? 'btn-joined' : 'btn-join'}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleJoin(circle._id);
+                  }}
+                >
+                  {joined.has(circle._id) ? '✓ Joined' : 'Join'}
+                </button>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>

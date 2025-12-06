@@ -1,26 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { sampleStories, sampleUsers } from '../data/sampleData';
+import React, { useState, useEffect, useContext } from 'react';
+import apiClient from '../services/api';
+import AuthContext from '../auth/AuthContext';
 import '../styles/Stories.css';
 
 const Stories = () => {
+  const { user } = useContext(AuthContext);
   const [stories, setStories] = useState([]);
   const [newStory, setNewStory] = useState('');
   const [likedStories, setLikedStories] = useState(new Set());
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [posting, setPosting] = useState(false);
 
-  // Fetch stories from API or use sample data
+  // Fetch stories from backend API
   useEffect(() => {
     const fetchStories = async () => {
+      setLoading(true);
+      setError('');
       try {
-        // TODO: Uncomment when backend is ready
-        // const data = await storiesAPI.getAll({ limit: 50 });
-        // setStories(data.stories);
-        
-        // For now, use sample data
-        setStories(sampleStories);
+        const response = await apiClient.storiesAPI.getAll({ limit: 50 });
+        setStories(response.stories || []);
       } catch (err) {
         console.error('Failed to fetch stories:', err);
-        // Fallback to sample data
-        setStories(sampleStories);
+        setError('Failed to load stories. Please try again.');
+        setStories([]);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -28,46 +33,54 @@ const Stories = () => {
   }, []);
 
   const handleShare = async () => {
-    if (newStory.trim()) {
-      try {
-        // TODO: Uncomment when backend is ready
-        // const response = await storiesAPI.create({ content: newStory });
-        
-        // For now, add locally
-        const story = {
-          id: `story${Date.now()}`,
-          author: 'You',
-          authorId: 'user0',
-          content: newStory,
-          timestamp: new Date(),
-          likes: 0,
-          comments: 0,
-          shares: 0,
-          emoji: '✨',
-        };
-        setStories([story, ...stories]);
-        setNewStory('');
-      } catch (err) {
-        console.error('Failed to share story:', err);
-      }
+    if (!newStory.trim()) return;
+    if (!user) {
+      setError('Please log in to share a story');
+      return;
+    }
+
+    setPosting(true);
+    setError('');
+    try {
+      const response = await apiClient.storiesAPI.create({ content: newStory });
+      // Add the new story to the top of the list
+      setStories([response.story, ...stories]);
+      setNewStory('');
+    } catch (err) {
+      console.error('Failed to share story:', err);
+      setError('Failed to share story. Please try again.');
+    } finally {
+      setPosting(false);
     }
   };
 
   const toggleLike = async (storyId) => {
+    if (!user) {
+      setError('Please log in to like stories');
+      return;
+    }
+
     try {
       const newLiked = new Set(likedStories);
       if (newLiked.has(storyId)) {
-        // TODO: Uncomment when backend is ready
-        // await storiesAPI.unlike(storyId);
+        await apiClient.storiesAPI.unlike(storyId);
         newLiked.delete(storyId);
+        // Update story likes count locally
+        setStories(stories.map(s => 
+          s._id === storyId ? { ...s, likes: Math.max(0, s.likes - 1) } : s
+        ));
       } else {
-        // TODO: Uncomment when backend is ready
-        // await storiesAPI.like(storyId);
+        await apiClient.storiesAPI.like(storyId);
         newLiked.add(storyId);
+        // Update story likes count locally
+        setStories(stories.map(s => 
+          s._id === storyId ? { ...s, likes: s.likes + 1 } : s
+        ));
       }
       setLikedStories(newLiked);
     } catch (err) {
       console.error('Failed to update like:', err);
+      setError('Failed to update like. Please try again.');
     }
   };
 
@@ -90,58 +103,85 @@ const Stories = () => {
         <p>Share your learning journey, insights, and experiences with the community</p>
       </div>
 
+      {/* Error Message */}
+      {error && <div className="error-message">{error}</div>}
+
       {/* Compose */}
-      <div className="story-composer">
-        <div className="composer-header">
-          <span>✨ Share Your Story</span>
+      {user && (
+        <div className="story-composer">
+          <div className="composer-header">
+            <span>✨ Share Your Story</span>
+          </div>
+          <textarea
+            className="story-input"
+            placeholder="What's on your mind? Share a learning moment, reflection, or achievement..."
+            value={newStory}
+            onChange={(e) => setNewStory(e.target.value)}
+            rows={4}
+            disabled={posting}
+          />
+          <button
+            className="btn-share"
+            onClick={handleShare}
+            disabled={!newStory.trim() || posting}
+          >
+            {posting ? 'Sharing...' : 'Share Story'}
+          </button>
         </div>
-        <textarea
-          className="story-input"
-          placeholder="What's on your mind? Share a learning moment, reflection, or achievement..."
-          value={newStory}
-          onChange={(e) => setNewStory(e.target.value)}
-          rows={4}
-        />
-        <button
-          className="btn-share"
-          onClick={handleShare}
-          disabled={!newStory.trim()}
-        >
-          Share Story
-        </button>
-      </div>
+      )}
+
+      {!user && (
+        <div className="login-prompt">
+          <p>📝 <a href="/login">Log in</a> to share your story with the community</p>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="loading-state">
+          <p>Loading stories...</p>
+        </div>
+      )}
 
       {/* Stories Feed */}
-      <div className="stories-feed">
-        {stories.map(story => (
-          <div key={story.id} className="story-card">
-            <div className="story-header">
-              <div className="story-author-info">
-                <span className="author-avatar">{sampleUsers.find(u => u.id === story.authorId)?.avatar || '👤'}</span>
-                <div className="author-details">
-                  <p className="author-name">{story.author}</p>
-                  <p className="story-time">{formatDate(story.timestamp)}</p>
+      {!loading && (
+        <div className="stories-feed">
+          {stories.length === 0 ? (
+            <div className="no-stories">
+              <p>No stories yet. Be the first to share!</p>
+            </div>
+          ) : (
+            stories.map(story => (
+              <div key={story._id || story.id} className="story-card">
+                <div className="story-header">
+                  <div className="story-author-info">
+                    <span className="author-avatar">👤</span>
+                    <div className="author-details">
+                      <p className="author-name">{story.author || 'Anonymous'}</p>
+                      <p className="story-time">{formatDate(new Date(story.createdAt || story.timestamp))}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="story-content">
+                  <p>{story.content}</p>
+                </div>
+
+                <div className="story-actions">
+                  <button
+                    className={`action-btn ${likedStories.has(story._id || story.id) ? 'liked' : ''}`}
+                    onClick={() => toggleLike(story._id || story.id)}
+                  >
+                    ❤️ {story.likes || 0}
+                  </button>
+                  <button className="action-btn">💬 {story.comments?.length || 0}</button>
+                  <button className="action-btn">↗️ {story.shares || 0}</button>
                 </div>
               </div>
-            </div>
-
-            <div className="story-content">
-              <p>{story.content}</p>
-            </div>
-
-            <div className="story-actions">
-              <button
-                className={`action-btn ${likedStories.has(story.id) ? 'liked' : ''}`}
-                onClick={() => toggleLike(story.id)}
-              >
-                ❤️ {likedStories.has(story.id) ? story.likes + 1 : story.likes}
-              </button>
-              <button className="action-btn">💬 {story.comments}</button>
-              <button className="action-btn">↗️ {story.shares}</button>
-            </div>
-          </div>
-        ))}
-      </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 };
