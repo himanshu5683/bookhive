@@ -1,13 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import AuthContext from "../../auth/AuthContext";
 import apiClient from "../../services/api";
 import "../../styles/AI.css";
 
 const Search = () => {
+  const { user } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchParams, setSearchParams] = useState({
+    keywords: [],
+    genres: [],
+    authors: [],
+    title: ""
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [searchParams, setSearchParams] = useState(null);
+  const [showParams, setShowParams] = useState(false);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -19,77 +29,76 @@ const Search = () => {
     
     setLoading(true);
     setError("");
-    setResults([]);
-    setSearchParams(null);
+    setSearchResults([]);
     
     try {
       // First, use AI to extract search parameters
       const aiResponse = await apiClient.aiAPI.search({
-        query: query
+        query,
+        userId: user?.id
       });
       
       setSearchParams(aiResponse.searchParams);
+      setShowParams(true);
       
-      // In a real implementation, you would use these parameters to filter actual resources
-      // For now, we'll simulate results
-      const mockResults = [
-        {
-          id: 1,
-          title: "The Great Gatsby",
-          author: "F. Scott Fitzgerald",
-          description: "A classic American novel set in the Jazz Age",
-          genre: "Classic Literature"
-        },
-        {
-          id: 2,
-          title: "To Kill a Mockingbird",
-          author: "Harper Lee",
-          description: "A gripping tale of racial injustice and childhood innocence",
-          genre: "Classic Literature"
-        },
-        {
-          id: 3,
-          title: "1984",
-          author: "George Orwell",
-          description: "A dystopian social science fiction novel",
-          genre: "Science Fiction"
-        }
-      ];
-      
-      setResults(mockResults);
+      // Then, simulate searching with these parameters
+      // In a real app, you would call your actual search API here
+      setTimeout(() => {
+        const mockResults = [
+          {
+            id: 1,
+            title: "JavaScript: The Definitive Guide",
+            author: "David Flanagan",
+            description: "A comprehensive guide to JavaScript programming",
+            genre: "Programming",
+            rating: 4.8
+          },
+          {
+            id: 2,
+            title: "Clean Code",
+            author: "Robert Martin",
+            description: "A handbook of agile software craftsmanship",
+            genre: "Software Engineering",
+            rating: 4.7
+          },
+          {
+            id: 3,
+            title: "You Don't Know JS",
+            author: "Kyle Simpson",
+            description: "Deep dive into JavaScript mechanics",
+            genre: "Programming",
+            rating: 4.6
+          }
+        ];
+        
+        setSearchResults(mockResults);
+        setLoading(false);
+      }, 1000);
     } catch (err) {
-      console.error("Error performing search:", err);
+      console.error("Search error:", err);
       setError("Failed to perform search. Please try again.");
-      
-      // Fallback to basic search
-      const mockResults = [
-        {
-          id: 1,
-          title: "Sample Book Result",
-          author: "Sample Author",
-          description: "This is a sample search result.",
-          genre: "General"
-        }
-      ];
-      
-      setResults(mockResults);
-    } finally {
       setLoading(false);
     }
   };
 
   const handleClear = () => {
     setQuery("");
-    setResults([]);
+    setSearchResults([]);
+    setSearchParams({
+      keywords: [],
+      genres: [],
+      authors: [],
+      title: ""
+    });
+    setShowParams(false);
     setError("");
-    setSearchParams(null);
   };
 
   return (
-    <div className="resources-container">
-      <div className="resources-header">
+    <div className="ai-container">
+      <div className="ai-header">
         <h1>🔍 AI-Powered Search</h1>
-        <p>Smart search with natural language processing</p>
+        <p>Find books and resources with intelligent natural language search</p>
       </div>
 
       <div className="search-container">
@@ -99,75 +108,118 @@ const Search = () => {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search for books, authors, genres... (e.g., 'science fiction books about space exploration')"
+              placeholder="Search for books, authors, genres, or topics..."
+              disabled={loading}
             />
             <button 
               type="submit" 
-              className="search-button" 
+              className="search-button btn btn-primary"
               disabled={loading}
             >
               {loading ? "Searching..." : "Search"}
             </button>
+            <button 
+              type="button" 
+              className="clear-button btn btn-secondary"
+              onClick={handleClear}
+              disabled={loading}
+            >
+              Clear
+            </button>
           </div>
-          
-          <button 
-            type="button" 
-            className="clear-button" 
-            onClick={handleClear}
-            disabled={loading}
-          >
-            Clear
-          </button>
         </form>
 
-        {error && <div className="error-message">{error}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
 
-        {searchParams && (
+        {showParams && (
           <div className="search-params">
             <h3>AI Extracted Search Parameters</h3>
             <div className="params-grid">
-              <div className="param-item">
-                <strong>Keywords:</strong> {searchParams.keywords?.join(", ") || "None"}
-              </div>
-              <div className="param-item">
-                <strong>Genres:</strong> {searchParams.genres?.join(", ") || "None"}
-              </div>
-              <div className="param-item">
-                <strong>Authors:</strong> {searchParams.authors?.join(", ") || "None"}
-              </div>
-              <div className="param-item">
-                <strong>Title:</strong> {searchParams.title || "None"}
-              </div>
+              {searchParams.keywords.length > 0 && (
+                <div className="param-item">
+                  <strong>Keywords:</strong> {searchParams.keywords.join(", ")}
+                </div>
+              )}
+              {searchParams.genres.length > 0 && (
+                <div className="param-item">
+                  <strong>Genres:</strong> {searchParams.genres.join(", ")}
+                </div>
+              )}
+              {searchParams.authors.length > 0 && (
+                <div className="param-item">
+                  <strong>Authors:</strong> {searchParams.authors.join(", ")}
+                </div>
+              )}
+              {searchParams.title && (
+                <div className="param-item">
+                  <strong>Title:</strong> {searchParams.title}
+                </div>
+              )}
             </div>
           </div>
         )}
 
-        {loading ? (
+        {loading && (
           <div className="loading-spinner">
             <div className="spinner"></div>
             <p>Analyzing your query with AI...</p>
           </div>
-        ) : results.length > 0 ? (
-          <div className="resources-grid">
-            <h3>Search Results</h3>
-            {results.map((book) => (
-              <div key={book.id} className="resource-card">
-                <div className="card-content">
-                  <h3 className="resource-title">{book.title}</h3>
-                  <p className="resource-author">by {book.author}</p>
-                  <p className="resource-description">{book.description}</p>
-                  <div className="resource-meta">
-                    <span className="resource-genre">{book.genre}</span>
+        )}
+
+        {searchResults.length > 0 && (
+          <div className="search-results">
+            <h3>Search Results ({searchResults.length})</h3>
+            <div className="results-grid">
+              {searchResults.map((result) => (
+                <div key={result.id} className="result-card card">
+                  <h4 className="result-title">{result.title}</h4>
+                  <p className="result-author">by {result.author}</p>
+                  <p className="result-description">{result.description}</p>
+                  <div className="result-meta">
+                    <span className="result-genre badge badge-secondary">
+                      {result.genre}
+                    </span>
+                    <span className="result-rating">
+                      ⭐ {result.rating}
+                    </span>
+                  </div>
+                  <div className="result-actions">
+                    <button className="btn btn-primary btn-sm">
+                      View Details
+                    </button>
+                    <button className="btn btn-secondary btn-sm">
+                      Add to Library
+                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : query && !loading && (
-          <div className="no-results">
-            <p>No results found for "{query}". Try a different search term.</p>
+              ))}
+            </div>
           </div>
         )}
+
+        {searchResults.length === 0 && !loading && query && (
+          <div className="no-results">
+            <div className="no-results-icon">🔍</div>
+            <h3>No results found</h3>
+            <p>Try adjusting your search terms or browse our recommendations</p>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate("/ai/recommendations")}
+            >
+              Get AI Recommendations
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Back to AI Dashboard */}
+      <div className="back-to-dashboard">
+        <button 
+          className="btn btn-outline"
+          onClick={() => navigate("/ai")}
+        >
+          ← Back to AI Dashboard
+        </button>
       </div>
     </div>
   );

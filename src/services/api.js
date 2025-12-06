@@ -1,290 +1,151 @@
 // src/services/api.js - API Client Utility
+import axios from 'axios';
 import API_CONFIG from '../config/api';
-import { getToken, setToken, isAuthenticated } from '../utils/auth';
-import { handleApiError, logError } from '../utils/errorHandler';
+import { getToken } from '../utils/auth';
 
-const API_BASE_URL = API_CONFIG.BASE_URL;
+// Create axios instance with base configuration
+const apiClient = axios.create({
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-/**
- * Generic fetch wrapper with error handling
- */
-const request = async (endpoint, options = {}) => {
-  const {
-    method = 'GET',
-    body = null,
-    headers = {},
-    token = getToken(),
-  } = options;
-
-  const fetchOptions = {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
-  };
-
-  if (token) {
-    fetchOptions.headers['Authorization'] = `Bearer ${token}`;
-  }
-
-  if (body) {
-    fetchOptions.body = JSON.stringify(body);
-  }
-
-  try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, fetchOptions);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const error = new Error(errorData.message || `API Error: ${response.status}`);
-      error.response = { status: response.status, data: errorData };
-      throw error;
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
-
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    logError(error, `API Request: ${endpoint}`);
-    const errorMessage = handleApiError(error);
-    throw new Error(errorMessage);
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
   }
-};
+);
+
+// Response interceptor to handle errors
+apiClient.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    if (error.response) {
+      // Server responded with error status
+      const errorMessage = error.response.data?.message || `API Error: ${error.response.status}`;
+      return Promise.reject(new Error(errorMessage));
+    } else if (error.request) {
+      // Network error
+      return Promise.reject(new Error('Network error. Please check your connection.'));
+    } else {
+      // Other error
+      return Promise.reject(new Error('An unexpected error occurred'));
+    }
+  }
+);
 
 // ============ AUTH ENDPOINTS ============
 
 export const authAPI = {
-  signup: (userData) =>
-    request('/auth/signup', {
-      method: 'POST',
-      body: userData,
-    }),
-
-  login: (credentials) =>
-    request('/auth/login', {
-      method: 'POST',
-      body: credentials,
-    }),
-
-  logout: () =>
-    request('/auth/logout', {
-      method: 'POST',
-    }),
-
-  verify: () =>
-    request('/auth/verify', {
-      method: 'GET',
-    }),
+  signup: (userData) => apiClient.post('/auth/signup', userData),
+  login: (credentials) => apiClient.post('/auth/login', credentials),
+  logout: () => apiClient.post('/auth/logout'),
+  verify: () => apiClient.get('/auth/verify'),
 };
 
 // ============ RESOURCES ENDPOINTS ============
 
 export const resourcesAPI = {
-  getAll: (filters = {}) => {
-    const params = new URLSearchParams(filters);
-    return request(`/resources?${params.toString()}`, {
-      method: 'GET',
-    });
-  },
-
-  getById: (id) =>
-    request(`/resources/${id}`, {
-      method: 'GET',
-    }),
-
-  create: (resourceData) =>
-    request('/resources', {
-      method: 'POST',
-      body: resourceData,
-    }),
-
-  update: (id, updateData) =>
-    request(`/resources/${id}`, {
-      method: 'PUT',
-      body: updateData,
-    }),
-
-  delete: (id) =>
-    request(`/resources/${id}`, {
-      method: 'DELETE',
-    }),
-
-  download: (id) =>
-    request(`/resources/${id}/download`, {
-      method: 'POST',
-    }),
-
-  rate: (id, rating) =>
-    request(`/resources/${id}/rate`, {
-      method: 'POST',
-      body: { rating },
-    }),
+  getAll: (filters = {}) => apiClient.get('/resources', { params: filters }),
+  getById: (id) => apiClient.get(`/resources/${id}`),
+  create: (resourceData) => apiClient.post('/resources', resourceData),
+  update: (id, updateData) => apiClient.put(`/resources/${id}`, updateData),
+  delete: (id) => apiClient.delete(`/resources/${id}`),
+  download: (id, data) => apiClient.post(`/resources/${id}/download`, data),
+  rate: (id, ratingData) => apiClient.post(`/resources/${id}/rate`, ratingData),
 };
 
 // ============ STORIES ENDPOINTS ============
 
 export const storiesAPI = {
-  getAll: (params = {}) => {
-    const queryString = new URLSearchParams(params);
-    return request(`/stories?${queryString.toString()}`, {
-      method: 'GET',
-    });
-  },
-
-  create: (storyData) =>
-    request('/stories', {
-      method: 'POST',
-      body: storyData,
-    }),
-
-  like: (storyId) =>
-    request(`/stories/${storyId}/like`, {
-      method: 'POST',
-    }),
-
-  unlike: (storyId) =>
-    request(`/stories/${storyId}/like`, {
-      method: 'DELETE',
-    }),
-
-  comment: (storyId, comment) =>
-    request(`/stories/${storyId}/comment`, {
-      method: 'POST',
-      body: { content: comment },
-    }),
-
-  delete: (storyId) =>
-    request(`/stories/${storyId}`, {
-      method: 'DELETE',
-    }),
+  getAll: (params = {}) => apiClient.get('/stories', { params }),
+  create: (storyData) => apiClient.post('/stories', storyData),
+  update: (storyId, storyData) => apiClient.put(`/stories/${storyId}`, storyData),
+  like: (storyId) => apiClient.post(`/stories/${storyId}/like`),
+  unlike: (storyId) => apiClient.delete(`/stories/${storyId}/like`),
+  comment: (storyId, comment) => apiClient.post(`/stories/${storyId}/comment`, { content: comment }),
+  delete: (storyId) => apiClient.delete(`/stories/${storyId}`),
 };
 
 // ============ CIRCLES ENDPOINTS ============
 
 export const circlesAPI = {
-  getAll: (params = {}) => {
-    const queryString = new URLSearchParams(params);
-    return request(`/circles?${queryString.toString()}`, {
-      method: 'GET',
-    });
-  },
-
-  getById: (id) =>
-    request(`/circles/${id}`, {
-      method: 'GET',
-    }),
-
-  create: (circleData) =>
-    request('/circles', {
-      method: 'POST',
-      body: circleData,
-    }),
-
-  join: (circleId) =>
-    request(`/circles/${circleId}/join`, {
-      method: 'POST',
-    }),
-
-  createThread: (circleId, threadData) =>
-    request(`/circles/${circleId}/thread`, {
-      method: 'POST',
-      body: threadData,
-    }),
-
-  replyToThread: (circleId, threadId, replyData) =>
-    request(`/circles/${circleId}/thread/${threadId}/reply`, {
-      method: 'POST',
-      body: replyData,
-    }),
+  getAll: (params = {}) => apiClient.get('/circles', { params }),
+  getById: (id) => apiClient.get(`/circles/${id}`),
+  create: (circleData) => apiClient.post('/circles', circleData),
+  join: (circleId) => apiClient.post(`/circles/${circleId}/join`),
+  createThread: (circleId, threadData) => apiClient.post(`/circles/${circleId}/thread`, threadData),
+  replyToThread: (circleId, threadId, replyData) => apiClient.post(`/circles/${circleId}/thread/${threadId}/reply`, replyData),
 };
 
-// ============ AI ENDPOINTS ============
+// ============ USERS ENDPOINTS ============
 
 export const usersAPI = {
-  getAll: (params = {}) => {
-    const queryString = new URLSearchParams(params);
-    return request(`/users?${queryString.toString()}`, {
-      method: 'GET',
-    });
-  },
-
-  getById: (id) =>
-    request(`/users/${id}`, {
-      method: 'GET',
-    }),
-
-  getLeaderboard: (params = {}) => {
-    const queryString = new URLSearchParams(params);
-    return request(`/users/leaderboard?${queryString.toString()}`, {
-      method: 'GET',
-    });
-  },
-
-  update: (id, updateData) =>
-    request(`/users/${id}`, {
-      method: 'PUT',
-      body: updateData,
-    }),
-
-  updateCredits: (id, creditsData) =>
-    request(`/users/${id}/credits`, {
-      method: 'PUT',
-      body: creditsData,
-    }),
-
-  getAchievements: (id) =>
-    request(`/users/${id}/achievements`, {
-      method: 'GET',
-    }),
-
-  follow: (id) =>
-    request(`/users/${id}/follow`, {
-      method: 'POST',
-    }),
+  getAll: (params = {}) => apiClient.get('/users', { params }),
+  getById: (id) => apiClient.get(`/users/${id}`),
+  getLeaderboard: (params = {}) => apiClient.get('/users/leaderboard', { params }),
+  update: (id, updateData) => apiClient.put(`/users/${id}`, updateData),
+  updateCredits: (id, creditsData) => apiClient.put(`/users/${id}/credits`, creditsData),
+  updateTags: (id, tagsData) => apiClient.put(`/users/${id}/tags`, tagsData),
+  getAchievements: (id) => apiClient.get(`/users/${id}/achievements`),
+  follow: (id) => apiClient.post(`/users/${id}/follow`),
 };
-
-// ============ HELPER FUNCTIONS ============
-
-export { getToken, setToken, isAuthenticated } from '../utils/auth';
 
 // ============ AI ENDPOINTS ============
 
 export const aiAPI = {
-  getRecommendations: (params) =>
-    request('/ai/recommendations', {
-      method: 'POST',
-      body: params,
-    }),
+  getRecommendations: (params) => apiClient.post('/ai/recommendations', params),
+  chat: (messageData) => apiClient.post('/ai/chat', messageData),
+  summarize: (textData) => apiClient.post('/ai/summarize', textData),
+  search: (searchData) => apiClient.post('/ai/search', searchData),
+  generateTags: (contentData) => apiClient.post('/ai/generate-tags', contentData),
+  autoTag: (contentData) => apiClient.post('/ai/auto-tag', contentData),
+  trendDetection: (params) => apiClient.post('/ai/trend-detection', params),
+  sentimentAnalysis: (textData) => apiClient.post('/ai/sentiment-analysis', textData),
+  eventSuggestions: (params) => apiClient.post('/ai/event-suggestions', params),
+};
+// ============ ACTIVITY ENDPOINTS ============
 
-  chat: (messageData) =>
-    request('/ai/chat', {
-      method: 'POST',
-      body: messageData,
-    }),
-
-  summarize: (textData) =>
-    request('/ai/summarize', {
-      method: 'POST',
-      body: textData,
-    }),
-
-  search: (searchData) =>
-    request('/ai/search', {
-      method: 'POST',
-      body: searchData,
-    }),
+export const activityAPI = {
+  logActivity: (activityData) => apiClient.post('/activity/log', activityData),
+  getUserActivities: (userId, params = {}) => apiClient.get(`/activity/user/${userId}`, { params }),
+  getUserActivityStats: (userId) => apiClient.get(`/activity/stats/${userId}`),
 };
 
-const apiClient = {
-  authAPI,
-  resourcesAPI,
-  storiesAPI,
-  circlesAPI,
-  usersAPI,
-  aiAPI,
-  getToken,
-  setToken,
-  isAuthenticated,
+// ============ TWO-FACTOR AUTHENTICATION ENDPOINTS ============
+
+export const twoFactorAPI = {
+  setup: (userId) => apiClient.post('/twofactor/setup', { userId }),
+  verify: (userId, token) => apiClient.post('/twofactor/verify', { userId, token }),
+  disable: (userId) => apiClient.post('/twofactor/disable', { userId }),
+  useRecoveryCode: (userId, code) => apiClient.post('/twofactor/recovery', { userId, code }),
+  getStatus: (userId) => apiClient.get(`/twofactor/status/${userId}`),
 };
 
+// ============ REQUESTS ENDPOINTS ============
+
+export const requestsAPI = {
+  getAll: (params = {}) => apiClient.get('/requests', { params }),
+  create: (requestData) => apiClient.post('/requests', requestData),
+  updateStatus: (id, statusData) => apiClient.put(`/requests/${id}/status`, statusData),
+};
+
+// ============ FEEDBACK ENDPOINTS ============
+
+export const feedbackAPI = {
+  getAll: (params = {}) => apiClient.get('/feedback', { params }),
+  create: (feedbackData) => apiClient.post('/feedback', feedbackData),
+};
+
+// Export the axios instance as default
 export default apiClient;

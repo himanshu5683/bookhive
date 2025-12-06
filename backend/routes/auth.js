@@ -61,12 +61,12 @@ router.post('/signup', async (req, res) => {
 /**
  * POST /api/auth/login
  * Authenticate user and return token
- * Body: { email, password }
- * Response: { token, user: { id, name, email, credits } }
+ * Body: { email, password, twoFactorToken }
+ * Response: { token, user: { id, name, email, credits }, requires2FA }
  */
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, twoFactorToken } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password required' });
@@ -82,6 +82,23 @@ router.post('/login', async (req, res) => {
     const validPassword = await user.comparePassword(password);
     if (!validPassword) {
       return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // If 2FA token is not provided, request it
+      if (!twoFactorToken) {
+        return res.status(200).json({ 
+          requires2FA: true,
+          message: '2FA required'
+        });
+      }
+      
+      // Verify 2FA token
+      const isValid2FA = user.verifyTwoFactorToken(twoFactorToken);
+      if (!isValid2FA) {
+        return res.status(401).json({ error: 'Invalid 2FA token' });
+      }
     }
 
     // Generate JWT token

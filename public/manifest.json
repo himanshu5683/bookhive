@@ -1,6 +1,6 @@
 {
   "short_name": "BookHive",
-  "name": "BookHive - Community Learning Platform",
+  "name": "BookHive - Collaborative Learning Platform",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +20,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
+  "theme_color": "#6b8cff",
   "background_color": "#ffffff"
 }

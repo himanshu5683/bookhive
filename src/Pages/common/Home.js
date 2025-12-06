@@ -6,13 +6,18 @@ import ResourceCard from "./ResourceCard";
 import AuthContext from "../../auth/AuthContext";
 import apiClient from "../../services/api";
 
-const Home = ({ setActiveComponent }) => {
+const Home = () => {
     const { user } = useContext(AuthContext);
     const navigate = useNavigate();
     const [trendingResources, setTrendingResources] = useState([]);
     const [latestStories, setLatestStories] = useState([]);
     const [popularCircles, setPopularCircles] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [stats, setStats] = useState({
+        resources: 0,
+        users: 0,
+        circles: 0
+    });
 
     // Fetch data from backend
     useEffect(() => {
@@ -20,18 +25,25 @@ const Home = ({ setActiveComponent }) => {
             setLoading(true);
             try {
                 // Fetch trending resources
-                const resourcesRes = await apiClient.resourcesAPI.getAll({ limit: 3, sort: 'rating' });
+                const resourcesRes = await apiClient.resourcesAPI.getAll({ limit: 6, sort: 'rating' });
                 setTrendingResources(resourcesRes.resources || []);
-
+                
                 // Fetch latest stories
-                const storiesRes = await apiClient.storiesAPI.getAll({ limit: 3 });
+                const storiesRes = await apiClient.storiesAPI.getAll({ limit: 4 });
                 setLatestStories(storiesRes.stories || []);
-
+                
                 // Fetch popular circles
-                const circlesRes = await apiClient.circlesAPI.getAll({ limit: 3, sort: 'members' });
+                const circlesRes = await apiClient.circlesAPI.getAll({ limit: 4 });
                 setPopularCircles(circlesRes.circles || []);
-            } catch (err) {
-                console.error('Failed to fetch home data:', err);
+                
+                // Fetch stats (mock data for now)
+                setStats({
+                    resources: 1247,
+                    users: 892,
+                    circles: 43
+                });
+            } catch (error) {
+                console.error("Error fetching home data:", error);
             } finally {
                 setLoading(false);
             }
@@ -41,174 +53,325 @@ const Home = ({ setActiveComponent }) => {
     }, []);
 
     return (
-        <div className="home-container">
+        <div className="home-page">
             {/* Hero Section */}
             <section className="hero-section">
                 <div className="hero-content">
-                    <h1 className="hero-title">📚 Welcome to BookHive</h1>
-                    <p className="hero-subtitle">A platform for sharing knowledge, building communities, and growing together</p>
-
-                    <div className="hero-cta-buttons">
-                        <button
-                            className="btn-hero btn-hero-primary"
-                            onClick={() => user ? setActiveComponent('Upload') : navigate('/auth')}
-                        >
-                            📤 Share Your Notes
-                        </button>
-                        <button
-                            className="btn-hero btn-hero-primary"
-                            onClick={() => setActiveComponent('Resources')}
-                        >
-                            🔍 Explore Resources
-                        </button>
-                        <button
-                            className="btn-hero btn-hero-secondary"
-                            onClick={() => setActiveComponent('StudyCircles')}
-                        >
-                            👥 Join Study Circles
-                        </button>
-                    </div>
-
-                    <div className="hero-stats">
-                        <div className="stat-item">
-                            <span className="stat-number">5K+</span>
-                            <span className="stat-label">Resources</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-number">2K+</span>
-                            <span className="stat-label">Community Members</span>
-                        </div>
-                        <div className="stat-item">
-                            <span className="stat-number">150+</span>
-                            <span className="stat-label">Study Circles</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            {/* Trending Section */}
-            <section className="section trending-section">
-                <div className="section-header">
-                    <h2>🔥 Trending Resources</h2>
-                    <button className="btn-link" onClick={() => setActiveComponent('Resources')}>View All →</button>
-                </div>
-
-                <div className="resources-grid">
-                    {loading ? (
-                        <p>Loading resources...</p>
-                    ) : trendingResources.length > 0 ? (
-                        trendingResources.map(resource => (
-                            <ResourceCard key={resource._id || resource.id} resource={resource} />
-                        ))
-                    ) : (
-                        <p>No resources yet. Be the first to share!</p>
-                    )}
-                </div>
-            </section>
-
-            {/* Stories Section */}
-            <section className="section stories-section">
-                <div className="section-header">
-                    <h2>📖 Latest Stories</h2>
-                    <button className="btn-link" onClick={() => setActiveComponent('Stories')}>View All →</button>
-                </div>
-
-                <div className="stories-preview">
-                    {loading ? (
-                        <p>Loading stories...</p>
-                    ) : latestStories.length > 0 ? (
-                        latestStories.map(story => (
-                            <div key={story._id || story.id} className="story-preview-card">
-                                <div className="story-author-mini">
-                                    <span className="avatar">{(story.author || 'A').charAt(0)}</span>
-                                    <div>
-                                        <p className="author-name">{story.author || 'Anonymous'}</p>
-                                        <p className="timestamp">Recently</p>
-                                    </div>
-                                </div>
-                                <p className="story-text">{(story.content || '').substring(0, 100)}...</p>
-                                <div className="story-engagement">
-                                    <span>❤️ {story.likes || 0}</span>
-                                    <span>💬 {story.comments?.length || 0}</span>
-                                </div>
+                    <div className="hero-text">
+                        <h1 className="hero-title">Welcome to BookHive</h1>
+                        <p className="hero-subtitle">Connect, Share, and Learn with Fellow Students</p>
+                        <div className="hero-stats">
+                            <div className="stat-item">
+                                <span className="stat-number">{stats.resources.toLocaleString()}</span>
+                                <span className="stat-label">Resources</span>
                             </div>
-                        ))
-                    ) : (
-                        <p>No stories yet. Share yours!</p>
-                    )}
-                </div>
-            </section>
-
-            {/* Study Circles Section */}
-            <section className="section circles-section">
-                <div className="section-header">
-                    <h2>👥 Popular Study Circles</h2>
-                    <button className="btn-link" onClick={() => setActiveComponent('StudyCircles')}>Join Now →</button>
-                </div>
-
-                <div className="circles-preview">
-                    {loading ? (
-                        <p>Loading circles...</p>
-                    ) : popularCircles.length > 0 ? (
-                        popularCircles.map(circle => (
-                            <div key={circle._id || circle.id} className="circle-preview-card">
-                                <h3>{circle.name}</h3>
-                                <p className="circle-topic">{circle.topic}</p>
-                                <p className="circle-desc">{circle.description}</p>
-                                <div className="circle-preview-stats">
-                                    <span>👥 {circle.memberCount || circle.members?.length || 0}</span>
-                                    <span>💬 {circle.threads?.length || 0}</span>
-                                </div>
-                                <button className="btn-join-small" onClick={() => setActiveComponent('StudyCircles')}>
-                                    Join Circle
+                            <div className="stat-item">
+                                <span className="stat-number">{stats.users.toLocaleString()}</span>
+                                <span className="stat-label">Learners</span>
+                            </div>
+                            <div className="stat-item">
+                                <span className="stat-number">{stats.circles}</span>
+                                <span className="stat-label">Study Groups</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="hero-buttons">
+                        {user ? (
+                            <>
+                                <button 
+                                    className="btn btn-primary btn-lg"
+                                    onClick={() => navigate('/upload')}
+                                >
+                                    📤 Upload Resource
                                 </button>
-                            </div>
-                        ))
+                                <button 
+                                    className="btn btn-secondary btn-lg"
+                                    onClick={() => navigate('/dashboard')}
+                                >
+                                    📊 My Dashboard
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button 
+                                    className="btn btn-primary btn-lg"
+                                    onClick={() => navigate('/signup')}
+                                >
+                                    🚀 Get Started
+                                </button>
+                                <button 
+                                    className="btn btn-secondary btn-lg"
+                                    onClick={() => navigate('/resources')}
+                                >
+                                    🔍 Browse Resources
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+                
+                <div className="hero-illustration">
+                    <div className="hero-image-placeholder">
+                        <span className="hero-image-icon">📚</span>
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="features-section section">
+                <div className="container">
+                    <div className="section-header text-center">
+                        <h2 className="section-title">Powerful Learning Platform</h2>
+                        <p className="section-subtitle">Everything you need to enhance your learning journey</p>
+                    </div>
+                    
+                    <div className="features-grid">
+                        <div className="feature-card card">
+                            <div className="feature-icon">📚</div>
+                            <h3>Share Resources</h3>
+                            <p>Upload notes, PDFs, and study materials for others. Build a collaborative learning community.</p>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => navigate('/resources')}
+                            >
+                                Explore Resources
+                            </button>
+                        </div>
+                        
+                        <div className="feature-card card">
+                            <div className="feature-icon">👥</div>
+                            <h3>Join Communities</h3>
+                            <p>Connect with study groups and discussion circles. Collaborate with peers worldwide.</p>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => navigate('/circles')}
+                            >
+                                Find Circles
+                            </button>
+                        </div>
+                        
+                        <div className="feature-card card">
+                            <div className="feature-icon">📖</div>
+                            <h3>Read Stories</h3>
+                            <p>Discover inspiring academic journeys and experiences from fellow learners.</p>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => navigate('/stories')}
+                            >
+                                Read Stories
+                            </button>
+                        </div>
+                        
+                        <div className="feature-card card">
+                            <div className="feature-icon">🤖</div>
+                            <h3>AI Assistance</h3>
+                            <p>Get personalized book recommendations, content summarization, and smart search.</p>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => navigate('/ai/chat')}
+                            >
+                                Try AI Assistant
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* Trending Resources */}
+            <section className="section">
+                <div className="container">
+                    <div className="section-header">
+                        <div>
+                            <h2 className="section-title">🔥 Trending Resources</h2>
+                            <p className="section-subtitle">Most popular learning materials this week</p>
+                        </div>
+                        <button 
+                            className="btn btn-outline" 
+                            onClick={() => navigate('/resources')}
+                        >
+                            View All Resources →
+                        </button>
+                    </div>
+                    
+                    {loading ? (
+                        <div className="loading-skeleton-grid">
+                            {[...Array(6)].map((_, index) => (
+                                <div key={index} className="skeleton-card"></div>
+                            ))}
+                        </div>
+                    ) : trendingResources.length > 0 ? (
+                        <div className="resources-grid">
+                            {trendingResources.slice(0, 6).map(resource => (
+                                <ResourceCard key={resource._id} resource={resource} />
+                            ))}
+                        </div>
                     ) : (
-                        <p>No study circles yet. Create one!</p>
+                        <div className="empty-state">
+                            <div className="empty-icon">📚</div>
+                            <h3>No trending resources found</h3>
+                            <p>Be the first to upload a resource and start the trend!</p>
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => navigate('/upload')}
+                            >
+                                Upload Resource
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Latest Stories */}
+            <section className="section bg-secondary">
+                <div className="container">
+                    <div className="section-header">
+                        <div>
+                            <h2 className="section-title">📖 Latest Stories</h2>
+                            <p className="section-subtitle">Inspiring journeys from our community</p>
+                        </div>
+                        <button 
+                            className="btn btn-outline" 
+                            onClick={() => navigate('/stories')}
+                        >
+                            View All Stories →
+                        </button>
+                    </div>
+                    
+                    {loading ? (
+                        <div className="loading-skeleton-grid">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="skeleton-card"></div>
+                            ))}
+                        </div>
+                    ) : latestStories.length > 0 ? (
+                        <div className="stories-grid">
+                            {latestStories.map(story => (
+                                <div key={story._id} className="story-card card">
+                                    <h3 className="story-title">{story.title}</h3>
+                                    <p className="story-author">by {story.author}</p>
+                                    <p className="story-excerpt">{story.content.substring(0, 120)}...</p>
+                                    <div className="story-meta">
+                                        <span className="story-date">
+                                            {new Date(story.createdAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <button 
+                                        className="btn btn-primary btn-sm" 
+                                        onClick={() => navigate(`/stories/${story._id}`)}
+                                    >
+                                        Read More
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="empty-state">
+                            <div className="empty-icon">📖</div>
+                            <h3>No stories published yet</h3>
+                            <p>Share your learning journey with the community!</p>
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => navigate('/stories')}
+                            >
+                                Share Your Story
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Popular Study Circles */}
+            <section className="section">
+                <div className="container">
+                    <div className="section-header">
+                        <div>
+                            <h2 className="section-title">👥 Popular Study Circles</h2>
+                            <p className="section-subtitle">Join active learning communities</p>
+                        </div>
+                        <button 
+                            className="btn btn-outline" 
+                            onClick={() => navigate('/circles')}
+                        >
+                            Browse All Circles →
+                        </button>
+                    </div>
+                    
+                    {loading ? (
+                        <div className="loading-skeleton-grid">
+                            {[...Array(4)].map((_, index) => (
+                                <div key={index} className="skeleton-card"></div>
+                            ))}
+                        </div>
+                    ) : popularCircles.length > 0 ? (
+                        <div className="circles-grid">
+                            {popularCircles.map(circle => (
+                                <div key={circle._id} className="circle-card card">
+                                    <div className="circle-header">
+                                        <h3 className="circle-title">{circle.name}</h3>
+                                        <span className="circle-members">
+                                            👥 {circle.memberCount || 0} members
+                                        </span>
+                                    </div>
+                                    <p className="circle-description">{circle.description}</p>
+                                    <div className="circle-tags">
+                                        {circle.tags && circle.tags.slice(0, 3).map((tag, index) => (
+                                            <span key={index} className="badge badge-secondary">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                    <button 
+                                        className="btn btn-primary btn-sm" 
+                                        onClick={() => navigate(`/circles/${circle._id}`)}
+                                    >
+                                        Join Circle
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="empty-state">
+                            <div className="empty-icon">👥</div>
+                            <h3>No study circles created yet</h3>
+                            <p>Start your own study group and invite others!</p>
+                            <button 
+                                className="btn btn-primary"
+                                onClick={() => navigate('/circles')}
+                            >
+                                Create Study Circle
+                            </button>
+                        </div>
                     )}
                 </div>
             </section>
 
             {/* CTA Section */}
-            <section className="section cta-section">
-                <div className="cta-content">
-                    <h2>Ready to Share Your Knowledge?</h2>
-                    <p>Earn credits, build your reputation, and help the community grow by sharing your resources.</p>
-                    <button
-                        className="btn-hero btn-hero-primary"
-                        onClick={() => user ? navigate('/upload') : navigate('/auth')}
-                    >
-                        {user ? '📤 Upload Now' : '🔑 Sign Up to Share'}
-                    </button>
-                </div>
-            </section>
-
-            {/* Gamification Preview */}
-            <section className="section gamification-section">
-                <h2>🎮 Gamification & Rewards</h2>
-                <div className="gamification-preview">
-                    <div className="gamification-card">
-                        <span className="icon">⭐</span>
-                        <p><strong>Earn Credits</strong> by sharing notes, PDFs, and stories.</p>
+            <section className="cta-section section">
+                <div className="container">
+                    <div className="cta-card card">
+                        <div className="cta-content">
+                            <h2 className="cta-title">Ready to Transform Your Learning?</h2>
+                            <p className="cta-description">
+                                Join thousands of students sharing resources, collaborating in study groups, 
+                                and accelerating their learning journey with BookHive.
+                            </p>
+                            <div className="cta-buttons">
+                                <button 
+                                    className="btn btn-primary btn-lg"
+                                    onClick={() => navigate('/signup')}
+                                >
+                                    Join BookHive Free
+                                </button>
+                                <button 
+                                    className="btn btn-outline btn-lg"
+                                    onClick={() => navigate('/resources')}
+                                >
+                                    Explore Resources
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div className="gamification-card">
-                        <span className="icon">📈</span>
-                        <p><strong>Climb Ranks</strong> from Contributor to Expert to Master.</p>
-                    </div>
-                    <div className="gamification-card">
-                        <span className="icon">🏆</span>
-                        <p><strong>Earn Badges</strong> for achievements and milestones.</p>
-                    </div>
-                    <div className="gamification-card">
-                        <span className="icon">👑</span>
-                        <p><strong>Join Leaderboard</strong> and compete with top contributors.</p>
-                    </div>
-                </div>
-                <div className="leaderboard-btn-wrapper">
-                    <button className="btn-hero btn-hero-secondary" onClick={() => setActiveComponent('Leaderboard')}>
-                        🏆 View Leaderboard
-                    </button>
                 </div>
             </section>
         </div>

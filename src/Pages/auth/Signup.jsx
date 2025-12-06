@@ -1,6 +1,7 @@
-import React, { useState, useContext } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useContext, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
+import SocialAuthButton from "../../components/SocialAuthButton";
 import "../../styles/Auth.css";
 
 const Signup = () => {
@@ -10,13 +11,34 @@ const Signup = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [socialLoading, setSocialLoading] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const { signup } = useContext(AuthContext);
+  const location = useLocation();
+  const { signup, socialLogin, user } = useContext(AuthContext);
+
+  // Check for OAuth errors in URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const oauthError = params.get('error');
+    if (oauthError) {
+      setError(decodeURIComponent(oauthError));
+    }
+  }, [location]);
+
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (user && !loading) {
+      navigate("/dashboard");
+    }
+  }, [user, loading, navigate]);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    console.log('Signup form submitted');
 
     // Validation
     if (!name || !email || !password || !confirmPassword) {
@@ -38,12 +60,15 @@ const Signup = () => {
     }
 
     try {
+      console.log('Calling signup function with:', { email, password, name });
       // Create user through our AuthContext (uses backend API)
       await signup(email, password, name);
+      console.log('Signup successful, redirecting to dashboard');
       
       // Redirect to dashboard
       navigate("/dashboard");
     } catch (err) {
+      console.error('Signup error:', err);
       // Handle backend API errors
       const errorMessage = err.message || "Failed to create account";
       if (errorMessage.includes("already exists")) {
@@ -62,83 +87,172 @@ const Signup = () => {
     }
   };
 
+  const handleSocialLogin = async (provider) => {
+    setError("");
+    setSocialLoading(provider);
+    console.log(`Social login with ${provider} initiated`);
+
+    try {
+      await socialLogin(provider);
+    } catch (err) {
+      console.error(`${provider} login error:`, err);
+      setError(err.message || `Failed to login with ${provider}`);
+    } finally {
+      setSocialLoading(null);
+    }
+  };
+
   return (
-    <div className="auth-container">
-      <div className="auth-card">
-        <h1 className="auth-title">Create Account</h1>
-        <p className="auth-subtitle">Join BookHive and start learning</p>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form className="auth-form" onSubmit={handleSignup}>
-          <div className="form-group">
-            <label htmlFor="name">Full Name</label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your full name"
-              disabled={loading}
-            />
+    <div className="auth-page">
+      <div className="auth-container">
+        <div className="auth-card card">
+          <div className="auth-header">
+            <h1 className="auth-title">Create Account</h1>
+            <p className="auth-subtitle">Join BookHive and start learning</p>
           </div>
 
-          <div className="form-group">
-            <label htmlFor="email">Email Address</label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              disabled={loading}
-            />
-          </div>
+          {error && (
+            <div className="alert alert-error">
+              <span className="alert-icon">⚠️</span>
+              <div className="alert-content">
+                <div className="alert-title">Signup Error</div>
+                <div className="alert-description">{error}</div>
+              </div>
+            </div>
+          )}
 
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a password"
-              disabled={loading}
-            />
-          </div>
+          <form className="auth-form" onSubmit={handleSignup}>
+            <div className="form-group">
+              <label htmlFor="name" className="label">Full Name</label>
+              <input
+                id="name"
+                type="text"
+                className="input"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter your full name"
+                disabled={loading}
+                autoComplete="name"
+              />
+            </div>
 
-          <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              id="confirmPassword"
-              type="password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Confirm your password"
-              disabled={loading}
-            />
-          </div>
+            <div className="form-group">
+              <label htmlFor="email" className="label">Email Address</label>
+              <input
+                id="email"
+                type="email"
+                className="input"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                disabled={loading}
+                autoComplete="email"
+              />
+            </div>
 
-          <button 
-            type="submit" 
-            className="auth-button" 
-            disabled={loading}
-          >
-            {loading ? "Creating Account..." : "Create Account"}
-          </button>
-        </form>
+            <div className="form-group">
+              <label htmlFor="password" className="label">
+                <span>Password</span>
+                <button 
+                  type="button" 
+                  className="btn btn-icon btn-ghost password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  className="input"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Create a password"
+                  disabled={loading}
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
 
-        <div className="auth-footer">
-          <p>
-            Already have an account?{" "}
+            <div className="form-group">
+              <label htmlFor="confirmPassword" className="label">
+                <span>Confirm Password</span>
+                <button 
+                  type="button" 
+                  className="btn btn-icon btn-ghost password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? "🙈" : "👁️"}
+                </button>
+              </label>
+              <div className="password-input-wrapper">
+                <input
+                  id="confirmPassword"
+                  type={showConfirmPassword ? "text" : "password"}
+                  className="input"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  disabled={loading}
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+
             <button 
-              className="auth-link" 
-              onClick={() => navigate("/login")}
+              type="submit" 
+              className="btn btn-primary btn-lg btn-block"
               disabled={loading}
             >
-              Sign In
+              {loading ? (
+                <>
+                  <span className="spinner"></span>
+                  Creating Account...
+                </>
+              ) : (
+                "Create Account"
+              )}
             </button>
-          </p>
+          </form>
+
+          <div className="divider">or continue with</div>
+
+          <div className="social-auth-buttons">
+            <SocialAuthButton 
+              provider="google" 
+              onClick={() => handleSocialLogin('google')}
+              disabled={loading || socialLoading}
+              loading={socialLoading === 'google'}
+            />
+            <SocialAuthButton 
+              provider="github" 
+              onClick={() => handleSocialLogin('github')}
+              disabled={loading || socialLoading}
+              loading={socialLoading === 'github'}
+            />
+            <SocialAuthButton 
+              provider="facebook" 
+              onClick={() => handleSocialLogin('facebook')}
+              disabled={loading || socialLoading}
+              loading={socialLoading === 'facebook'}
+            />
+          </div>
+
+          <div className="auth-footer">
+            <p>
+              Already have an account?{" "}
+              <button 
+                className="btn btn-link"
+                onClick={() => navigate("/login")}
+                disabled={loading}
+              >
+                Sign In
+              </button>
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -1,70 +1,227 @@
-# Getting Started with Create React App
+# BookHive - Collaborative Learning Platform
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+BookHive is a comprehensive educational platform that enables users to share, discover, and collaborate on learning resources. Built with modern web technologies, it features a robust credit-based economy, AI-powered tagging, community features, and seamless user experience.
 
-## Available Scripts
+## 🌟 Key Features
 
-In the project directory, you can run:
+### User Management
+- Secure user registration and authentication
+- Complete profile management with editing capabilities
+- Avatar and bio customization
+- Interest-based tagging with AI generation
 
-### `npm start`
+### Credit & Tagging System
+- **Credit Economy**: Earn credits for contributions, spend for downloads
+- **AI-Powered Tags**: Automatic tag generation based on content
+- **Leaderboard**: Rank users by contribution and engagement
+- **Gamification**: Badges and achievements for active participation
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### Resource Management
+- **Multi-format Support**: Upload PDFs, notes, documents, videos, and audio
+- **Premium Resources**: Mark resources as premium with custom pricing
+- **Smart Organization**: Categorization and tagging for easy discovery
+- **Credit-based Access**: Spend credits to download resources
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### Community Features
+- **Stories Platform**: Share learning experiences and insights
+- **Study Circles**: Subject-based groups for collaborative learning
+- **Discussion Threads**: Engage in topic-specific conversations
+- **Social Engagement**: Like, comment, and follow other users
 
-### `npm test`
+### Request & Feedback System
+- **Resource Requests**: Request specific learning materials
+- **User Feedback**: Collect suggestions and bug reports
+- **Status Tracking**: Monitor request fulfillment progress
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+### Search & Discovery
+- **Global Search**: Find resources and users across the platform
+- **Smart Filtering**: Filter by category, type, and tags
+- **NLP-Powered**: AI-enhanced search with natural language processing
 
-### `npm run build`
+## 🛠 Technology Stack
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Frontend
+- **React** with Create React App
+- **React Router** for navigation
+- **Context API** for state management
+- **Axios** for API communication
+- **Responsive CSS** with mobile-first design
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### Backend
+- **Express.js** REST API
+- **MongoDB** with Mongoose ODM
+- **JWT Authentication** for secure access
+- **OpenAI GPT-3.5** for AI features
+- **Railway** for deployment
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### DevOps
+- **GitHub Pages** for frontend hosting
+- **Railway** for backend deployment
+- **MongoDB Atlas** for database hosting
 
-### `npm run eject`
+## 🚀 Getting Started
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Prerequisites
+- Node.js (v14 or higher)
+- npm or yarn
+- MongoDB database
+- OpenAI API key (optional)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Installation
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/himanshu5683/bookhive.git
+   cd bookhive
+   ```
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+2. **Install frontend dependencies:**
+   ```bash
+   npm install
+   ```
 
-## Learn More
+3. **Install backend dependencies:**
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+4. **Configure environment variables:**
+   - Create `.env` in root directory for frontend
+   - Create `.env` in `backend` directory for backend
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### Development
 
-### Code Splitting
+1. **Start backend server:**
+   ```bash
+   cd backend
+   npm run dev
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+2. **Start frontend development server:**
+   ```bash
+   npm start
+   ```
 
-### Analyzing the Bundle Size
+3. **Access the application:**
+   Open [http://localhost:3000](http://localhost:3000)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### Production Build
 
-### Making a Progressive Web App
+1. **Build frontend:**
+   ```bash
+   npm run build
+   ```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+2. **Start production server:**
+   ```bash
+   cd backend
+   npm start
+   ```
 
-### Advanced Configuration
+## 📁 Project Structure
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+```
+bookhive/
+├── public/                 # Static assets
+├── src/                    # Frontend source code
+│   ├── auth/              # Authentication context
+│   ├── components/        # Reusable components
+│   ├── Pages/             # Page components
+│   │   └── common/        # Shared page components
+│   ├── services/          # API clients
+│   ├── styles/            # CSS stylesheets
+│   └── utils/             # Utility functions
+├── backend/               # Backend source code
+│   ├── models/            # Database models
+│   ├── routes/            # API routes
+│   ├── db/                # Database configuration
+│   └── middleware/        # Express middleware
+├── DEPLOYMENT_GUIDE.md    # Deployment instructions
+└── PROJECT_COMPLETION_SUMMARY.md  # Project documentation
+```
 
-### Deployment
+## 🎯 Core Functionality
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+### User Profiles
+- Automatic profile creation on signup
+- Display uploaded resources, credit points, and tags
+- Profile editing capabilities
+- Interest-based tagging with AI
 
-### `npm run build` fails to minify
+### Resource Sharing
+- Authenticated file uploads (PDFs, notes, documents)
+- Proper user reference storage in backend
+- Premium resource marking with custom pricing
+- Credit-based download system
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+### Credit System
+- Activity-based credit assignment (uploads, stories, participation)
+- AI/NLP tag generation for users and content
+- Leaderboard ranking by credit points
+- Real-time credit updates
+
+### Community Features
+- Story sharing with editing/deleting capabilities
+- Study circles for collaborative learning
+- Discussion threads with replies
+- Request and feedback systems
+
+## 🔧 Deployment
+
+### Frontend (GitHub Pages)
+1. Configure `REACT_APP_API_URL` environment variable
+2. Build the application: `npm run build`
+3. Deploy to GitHub Pages using GitHub Actions
+
+### Backend (Railway)
+1. Set environment variables in Railway dashboard
+2. Connect to MongoDB Atlas database
+3. Deploy using Railway CLI: `railway up`
+
+### Environment Variables
+
+**Frontend (.env):**
+```env
+REACT_APP_API_URL=https://your-backend-domain.up.railway.app/api
+```
+
+**Backend (.env):**
+```env
+PORT=5000
+NODE_ENV=production
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret_key
+CORS_ORIGIN=https://your-frontend-domain.com
+OPENAI_API_KEY=your_openai_api_key
+```
+
+## 📖 Documentation
+
+- [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md) - Complete deployment instructions
+- [PROJECT_COMPLETION_SUMMARY.md](PROJECT_COMPLETION_SUMMARY.md) - Project overview and features
+- [API Documentation](backend/routes/) - Backend API route documentation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with Create React App
+- Powered by Express.js and MongoDB
+- AI features powered by OpenAI
+- Hosted on GitHub Pages and Railway
+
+## 📞 Support
+
+For issues and feature requests, please create an issue on GitHub.

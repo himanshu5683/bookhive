@@ -1,134 +1,174 @@
-/* bookhive/src/App.js */
-import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
-import "./styles/styles.css";
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import './styles/styles.css';
 
-import { AuthProvider } from "./auth/AuthContext";
-import { CreditProvider } from "./context/CreditContext";
-import { ThemeProvider } from "./context/ThemeContext";
-import ProtectedRoute from "./auth/ProtectedRoute";
+// Import i18n
+import './config/i18n';
+
+// Context Providers - Correct Order: ThemeProvider > AuthProvider > CreditProvider > LanguageProvider > WebSocketProvider > NotificationProvider
+import { ThemeProvider } from './context/ThemeContext';
+import { AuthProvider } from './auth/AuthContext';
+import { CreditProvider } from './context/CreditContext';
+import { LanguageProvider } from './context/LanguageContext';
+import { WebSocketProvider } from './context/WebSocketContext';
+import { NotificationProvider } from './context/NotificationContext';
+
+// Components
+import ProtectedRoute from './auth/ProtectedRoute';
+import AppWrapper from './Pages/common/AppWrapper';
+
 // Page Components
-import Dashboard from "./Pages/Dashboard";
-import Resources from "./Pages/Resources";
-import Stories from "./Pages/Stories";
-import StudyCircles from "./Pages/StudyCircles";
-import Leaderboard from "./Pages/Leaderboard";
-import UserProfile from "./Pages/UserProfile";
-import Upload from "./Pages/Upload";
-import FileList from "./Pages/FileList";
+import Dashboard from './Pages/Dashboard';
+import Resources from './Pages/Resources';
+import Stories from './Pages/Stories';
+import StudyCircles from './Pages/StudyCircles';
+import Leaderboard from './Pages/Leaderboard';
+import Upload from './Pages/Upload';
+import FileList from './Pages/FileList';
+import Events from './Pages/Events';
+import NotificationsPage from './Pages/NotificationsPage';
 
 // AI Components
-import Recommendations from "./Pages/ai/Recommendations";
-import Chat from "./Pages/ai/Chat";
-import Summarize from "./Pages/ai/Summarize";
-import Search from "./Pages/ai/Search";
-
+import AIDashboard from './Pages/ai/Dashboard';
+import Chat from './Pages/ai/Chat';
+import Summarize from './Pages/ai/Summarize';
+import Search from './Pages/ai/Search';
+import AutoTag from './Pages/ai/AutoTag';
+import TrendDetection from './Pages/ai/TrendDetection';
+import SentimentAnalysis from './Pages/ai/SentimentAnalysis';
+import EventSuggestions from './Pages/ai/EventSuggestions';
 // Authentication Pages
-import Login from "./Pages/auth/Login";
-import Signup from "./Pages/auth/Signup";
+import Login from './Pages/auth/Login';
+import Signup from './Pages/auth/Signup';
+import OAuthCallback from './Pages/auth/OAuthCallback';
 
 // Common Components
-import Loading from "./Pages/common/Loading";
-import AppWrapper from "./Pages/common/AppWrapper";
-import Navbar from "./Pages/common/Navbar";
-import Home from "./Pages/common/Home";
-import Library from "./Pages/common/Library";
-import Profile from "./Pages/common/Profile";
-import AuthPage from "./Pages/common/AuthPage";
-import Footer from "./Pages/common/Footer";
+import Navbar from './Pages/common/Navbar';
+import Home from './Pages/common/Home';
+import Library from './Pages/common/Library';
+import Profile from './Pages/common/Profile';
+import Footer from './Pages/common/Footer';
+
+// Layout component that includes navbar and footer
+const Layout = ({ children }) => (
+  <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Navbar />
+    <main style={{ flex: 1 }}>
+      <div className="container">
+        {children}
+      </div>
+    </main>
+    <Footer />
+  </div>
+);
 
 function App() {
-    const [activeComponent, setActiveComponent] = useState("Home");
-    const [loading, setLoading] = useState(true);
-
-    // Handle initial loading
-    useEffect(() => {
-        // Simulate initial app loading
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
-    // Handle component switching loading
-    useEffect(() => {
-        if (activeComponent !== "Home") {  // Only show loading for non-home components
-            setLoading(true);
-            const timer = setTimeout(() => {
-                setLoading(false);
-            }, 700);
-            return () => clearTimeout(timer);
-        }
-    }, [activeComponent]);
-
-    const renderComponent = () => {
-        switch (activeComponent) {
-            case "Home":
-                return <Home setActiveComponent={setActiveComponent} />;
-            case "Library":
-                return <Library />;
-            case "Resources":
-                return <Resources />;
-            case "Stories":
-                return <Stories />;
-            case "StudyCircles":
-                return <StudyCircles />;
-            case "Leaderboard":
-                return <Leaderboard />;
-            case "UserProfile":
-                return <UserProfile />;
-            case "Profile":
-                return <Profile />;
-            default:
-                return <Home setActiveComponent={setActiveComponent} />;
-        }
-    };
-
-    const MainUI = () => (
-        <div>
-            <Navbar activeComponent={activeComponent} setActiveComponent={setActiveComponent} />
-            <div className="container">
-                {renderComponent()}
-            </div>
-            <Footer />
-        </div>
-    );
-
-    return (
-        <ThemeProvider>
-            <AuthProvider>
-                <CreditProvider>
-                    <AppWrapper>
-                        {loading && <Loading />}
-                        <Routes>
-                            <Route path="/" element={<MainUI />} />
-                            <Route path="/resources" element={<MainUI />} />
-                            <Route path="/stories" element={<MainUI />} />
-                            <Route path="/circles" element={<MainUI />} />
-                            <Route path="/leaderboard" element={<MainUI />} />
-                            <Route path="/profile" element={<MainUI />} />
-                            <Route path="/auth" element={<AuthPage />} />
-                            
-                            {/* Authentication Routes */}
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/signup" element={<Signup />} />
-                            
-                            {/* Protected Routes */}
-                            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                            <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
-                            <Route path="/files" element={<ProtectedRoute><FileList /></ProtectedRoute>} />
-                            
-                            {/* AI Routes */}
-                            <Route path="/ai/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
-                            <Route path="/ai/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-                            <Route path="/ai/summarize" element={<ProtectedRoute><Summarize /></ProtectedRoute>} />
-                            <Route path="/ai/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-                        </Routes>
-                    </AppWrapper>
-                </CreditProvider>
-            </AuthProvider>
-        </ThemeProvider>
-    );
+  return (
+    <ThemeProvider>
+      <AuthProvider>
+        <CreditProvider>
+          <LanguageProvider>
+            <WebSocketProvider>
+              <NotificationProvider>
+                <AppWrapper>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Layout><Home /></Layout>} />
+                    <Route path="/library" element={<Layout><Library /></Layout>} />
+                    <Route path="/resources" element={<Layout><Resources /></Layout>} />
+                    <Route path="/stories" element={<Layout><Stories /></Layout>} />
+                    <Route path="/circles" element={<Layout><StudyCircles /></Layout>} />
+                    <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
+                    <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                    <Route path="/events" element={<Layout><Events /></Layout>} />
+                    
+                    {/* Authentication Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/signup" element={<Signup />} />
+                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+                    
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={
+                      <ProtectedRoute>
+                        <Layout><Dashboard /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/upload" element={
+                      <ProtectedRoute>
+                        <Layout><Upload /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/files" element={
+                      <ProtectedRoute>
+                        <Layout><FileList /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/notifications" element={
+                      <ProtectedRoute>
+                        <Layout><NotificationsPage /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    
+                    {/* AI Routes */}
+                    <Route path="/ai" element={
+                      <ProtectedRoute>
+                        <Layout><AIDashboard /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/dashboard" element={
+                      <ProtectedRoute>
+                        <Layout><AIDashboard /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/recommendations" element={
+                      <ProtectedRoute>
+                        <Layout><AIDashboard /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/chat" element={
+                      <ProtectedRoute>
+                        <Layout><Chat /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/summarize" element={
+                      <ProtectedRoute>
+                        <Layout><Summarize /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/search" element={
+                      <ProtectedRoute>
+                        <Layout><Search /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/auto-tag" element={
+                      <ProtectedRoute>
+                        <Layout><AutoTag /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/trend-detection" element={
+                      <ProtectedRoute>
+                        <Layout><TrendDetection /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/sentiment" element={
+                      <ProtectedRoute>
+                        <Layout><SentimentAnalysis /></Layout>
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/ai/event-suggestions" element={
+                      <ProtectedRoute>
+                        <Layout><EventSuggestions /></Layout>
+                      </ProtectedRoute>
+                    } />
+                  </Routes>
+                </AppWrapper>
+              </NotificationProvider>
+            </WebSocketProvider>
+          </LanguageProvider>
+        </CreditProvider>
+      </AuthProvider>
+    </ThemeProvider>
+  );
 }
 
 export default App;

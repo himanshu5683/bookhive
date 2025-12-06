@@ -19,7 +19,8 @@ router.get('/', async (req, res) => {
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } }
+        { email: { $regex: search, $options: 'i' } },
+        { tags: { $in: [new RegExp(search, 'i')] } }
       ];
     }
     
@@ -122,17 +123,18 @@ router.get('/:id', async (req, res) => {
 /**
  * PUT /api/users/:id
  * Update user profile
- * Body: { name, bio, avatar }
+ * Body: { name, bio, avatar, tags }
  */
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, bio, avatar } = req.body;
+    const { name, bio, avatar, tags } = req.body;
     
     const updateFields = {};
     if (name) updateFields.name = name;
     if (bio !== undefined) updateFields.bio = bio;
     if (avatar) updateFields.avatar = avatar;
+    if (tags && Array.isArray(tags)) updateFields.tags = tags;
     
     const user = await User.findByIdAndUpdate(id, updateFields, { 
       new: true,
@@ -277,6 +279,74 @@ router.post('/:id/follow', async (req, res) => {
   } catch (error) {
     console.error('Error following user:', error);
     res.status(500).json({ error: 'Server error following user' });
+  }
+});
+
+/**
+ * PUT /api/users/:id/tags
+ * Update user tags based on activity
+ * Body: { tags }
+ */
+router.put('/:id/tags', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tags } = req.body;
+
+    if (!tags || !Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Tags array required' });
+    }
+
+    // Find user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update tags
+    await user.updateTags(tags);
+
+    res.status(200).json({
+      message: 'Tags updated successfully',
+      userId: id,
+      tags: user.tags
+    });
+  } catch (error) {
+    console.error('Error updating user tags:', error);
+    res.status(500).json({ error: 'Server error updating user tags' });
+  }
+});
+
+/**
+ * PUT /api/users/:id/tags
+ * Update user tags based on activity
+ * Body: { tags }
+ */
+router.put('/:id/tags', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { tags } = req.body;
+
+    if (!tags || !Array.isArray(tags)) {
+      return res.status(400).json({ error: 'Tags array required' });
+    }
+
+    // Find user
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update tags
+    await user.updateTags(tags);
+
+    res.status(200).json({
+      message: 'Tags updated successfully',
+      userId: id,
+      tags: user.tags
+    });
+  } catch (error) {
+    console.error('Error updating user tags:', error);
+    res.status(500).json({ error: 'Server error updating user tags' });
   }
 });
 

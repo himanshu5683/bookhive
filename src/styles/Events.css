@@ -1,0 +1,463 @@
+/* Events.css - Events Page Styling */
+
+.events-page {
+  min-height: 100vh;
+  background: var(--bh-bg);
+  padding: 2rem 1rem;
+}
+
+.events-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Header */
+.events-header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.events-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: var(--bh-text-primary);
+  margin: 0 0 0.5rem 0;
+}
+
+.events-header p {
+  font-size: 1.1rem;
+  color: var(--bh-text-secondary);
+  margin: 0;
+}
+
+/* Messages */
+.success-message {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-left: 4px solid #22c55e;
+  color: #22c55e;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.error-message {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-left: 4px solid #ef4444;
+  color: #ef4444;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+/* Create Event Section */
+.create-event-section {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.create-event-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--bh-gradient-1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--bh-shadow-md);
+}
+
+.create-event-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bh-shadow-lg);
+}
+
+/* Create Event Form */
+.create-event-form {
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: var(--bh-shadow-sm);
+}
+
+.create-event-form h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bh-text-primary);
+  margin: 0 0 1.5rem 0;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  color: var(--bh-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--bh-border);
+  border-radius: 8px;
+  background: var(--bh-bg);
+  color: var(--bh-text-primary);
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--bh-accent-1);
+  box-shadow: 0 0 0 2px rgba(107, 140, 255, 0.2);
+}
+
+.form-actions {
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.submit-btn {
+  padding: 0.75rem 2rem;
+  background: var(--bh-gradient-1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: var(--bh-shadow-md);
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--bh-shadow-lg);
+}
+
+/* Events Section */
+.events-section {
+  margin-bottom: 3rem;
+}
+
+.events-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--bh-text-primary);
+  margin: 0 0 1.5rem 0;
+}
+
+/* Events Grid */
+.events-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Event Card */
+.event-card {
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: var(--bh-shadow-sm);
+}
+
+.event-card:hover {
+  border-color: var(--bh-accent-1);
+  box-shadow: var(--bh-shadow-md);
+  transform: translateY(-2px);
+}
+
+.event-card.past-event {
+  opacity: 0.7;
+}
+
+.event-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.event-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--bh-text-primary);
+  margin: 0;
+  flex: 1;
+}
+
+.event-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+}
+
+.event-status.status-scheduled {
+  background: rgba(107, 140, 255, 0.1);
+  color: var(--bh-accent-1);
+}
+
+.event-status.status-live {
+  background: rgba(245, 181, 10, 0.1);
+  color: #f5b50a;
+}
+
+.event-status.status-completed {
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+}
+
+.event-status.status-cancelled {
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+}
+
+.event-description {
+  font-size: 0.95rem;
+  color: var(--bh-text-secondary);
+  margin: 0 0 1.5rem 0;
+  line-height: 1.5;
+}
+
+.event-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--bh-text-secondary);
+}
+
+.detail-value {
+  color: var(--bh-text-primary);
+  text-align: right;
+}
+
+.meeting-link,
+.recording-link {
+  background: rgba(107, 140, 255, 0.05);
+  border-left: 3px solid var(--bh-accent-1);
+  padding: 0.75rem;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 1.5rem;
+}
+
+.meeting-link strong,
+.recording-link strong {
+  color: var(--bh-text-primary);
+  margin-right: 0.5rem;
+}
+
+.meeting-link a,
+.recording-link a {
+  color: var(--bh-accent-1);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.meeting-link a:hover,
+.recording-link a:hover {
+  text-decoration: underline;
+}
+
+.event-actions {
+  text-align: center;
+}
+
+.join-btn {
+  padding: 0.75rem 1.5rem;
+  background: var(--bh-gradient-1);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.join-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--bh-shadow-md);
+}
+
+.join-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.joined-btn {
+  padding: 0.75rem 1.5rem;
+  background: rgba(34, 197, 94, 0.1);
+  color: #22c55e;
+  border: 1px solid #22c55e;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: not-allowed;
+  width: 100%;
+}
+
+/* No Events */
+.no-events {
+  text-align: center;
+  padding: 3rem;
+  background: var(--bh-bg);
+  border: 1px solid var(--bh-border);
+  border-radius: 12px;
+}
+
+.no-events p {
+  color: var(--bh-text-secondary);
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Loading */
+.loading-text {
+  text-align: center;
+  padding: 3rem 2rem;
+  font-size: 1.1rem;
+  color: var(--bh-text-secondary);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .events-page {
+    padding: 1.5rem 1rem;
+  }
+  
+  .events-header h1 {
+    font-size: 2rem;
+  }
+  
+  .events-header p {
+    font-size: 1rem;
+  }
+  
+  .create-event-form {
+    padding: 1.5rem;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .events-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .event-header {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .event-title {
+    margin-bottom: 0.5rem;
+  }
+  
+  .detail-item {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .detail-value {
+    text-align: left;
+  }
+  
+  .meeting-link,
+  .recording-link {
+    padding: 0.5rem;
+  }
+  
+  .meeting-link strong,
+  .recording-link strong {
+    display: block;
+    margin-bottom: 0.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .events-page {
+    padding: 1rem 0.75rem;
+  }
+  
+  .events-header h1 {
+    font-size: 1.75rem;
+  }
+  
+  .create-event-form {
+    padding: 1.25rem;
+  }
+  
+  .create-event-form h2 {
+    font-size: 1.25rem;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    padding: 0.65rem 0.9rem;
+    font-size: 0.9rem;
+  }
+  
+  .event-card {
+    padding: 1.25rem;
+  }
+  
+  .event-title {
+    font-size: 1.1rem;
+  }
+  
+  .event-description {
+    font-size: 0.9rem;
+  }
+  
+  .detail-item {
+    font-size: 0.85rem;
+  }
+  
+  .detail-label,
+  .detail-value {
+    font-size: 0.8rem;
+  }
+  
+  .event-actions .join-btn,
+  .event-actions .joined-btn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}

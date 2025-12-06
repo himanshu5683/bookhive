@@ -1,17 +1,15 @@
 import React, { useContext } from "react";
-import AuthContext from "../../auth/AuthContext";
+import { useLocation } from "react-router-dom";
 import Loading from "./Loading";
-
+import AuthContext from "../../auth/AuthContext";
+import AIChatWidget from '../../components/AIChatWidget';
 const AppWrapper = ({ children }) => {
-    const { loading } = useContext(AuthContext);
-    
-    // Show loading spinner while auth state is being determined
-    if (loading) {
-        return <Loading />;
-    }
-    
-    // Render children once auth state is determined
-    return children;
+  return (
+    <>
+      {children}
+      <AIChatWidget />
+    </>
+  );
 };
 
 export default AppWrapper;
