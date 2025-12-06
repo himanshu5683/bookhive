@@ -198,7 +198,7 @@ export const circlesAPI = {
     }),
 };
 
-// ============ USERS ENDPOINTS ============
+// ============ AI ENDPOINTS ============
 
 export const usersAPI = {
   getAll: (params = {}) => {
@@ -247,12 +247,41 @@ export const usersAPI = {
 
 export { getToken, setToken, isAuthenticated } from '../utils/auth';
 
+// ============ AI ENDPOINTS ============
+
+export const aiAPI = {
+  getRecommendations: (params) =>
+    request('/ai/recommendations', {
+      method: 'POST',
+      body: params,
+    }),
+
+  chat: (messageData) =>
+    request('/ai/chat', {
+      method: 'POST',
+      body: messageData,
+    }),
+
+  summarize: (textData) =>
+    request('/ai/summarize', {
+      method: 'POST',
+      body: textData,
+    }),
+
+  search: (searchData) =>
+    request('/ai/search', {
+      method: 'POST',
+      body: searchData,
+    }),
+};
+
 const apiClient = {
   authAPI,
   resourcesAPI,
   storiesAPI,
   circlesAPI,
   usersAPI,
+  aiAPI,
   getToken,
   setToken,
   isAuthenticated,

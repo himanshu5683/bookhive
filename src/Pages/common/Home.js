@@ -51,7 +51,7 @@ const Home = ({ setActiveComponent }) => {
                     <div className="hero-cta-buttons">
                         <button
                             className="btn-hero btn-hero-primary"
-                            onClick={() => setActiveComponent('Upload')}
+                            onClick={() => user ? setActiveComponent('Upload') : navigate('/auth')}
                         >
                             📤 Share Your Notes
                         </button>
@@ -177,7 +177,7 @@ const Home = ({ setActiveComponent }) => {
                     <p>Earn credits, build your reputation, and help the community grow by sharing your resources.</p>
                     <button
                         className="btn-hero btn-hero-primary"
-                        onClick={() => user ? setActiveComponent('Upload') : navigate('/auth')}
+                        onClick={() => user ? navigate('/upload') : navigate('/auth')}
                     >
                         {user ? '📤 Upload Now' : '🔑 Sign Up to Share'}
                     </button>

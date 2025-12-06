@@ -33,6 +33,7 @@ app.use('/api/resources', require('./routes/resources'));
 app.use('/api/stories', require('./routes/stories'));
 app.use('/api/circles', require('./routes/circles'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/ai', require('./routes/ai'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -57,6 +58,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 BookHive Backend running on http://localhost:${PORT}`);
   console.log(`📚 API Documentation at http://localhost:${PORT}/api`);
+  console.log(`🤖 AI Features available at http://localhost:${PORT}/api/ai`);
 });
 
 module.exports = app;

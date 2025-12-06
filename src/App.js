@@ -17,6 +17,12 @@ import UserProfile from "./Pages/UserProfile";
 import Upload from "./Pages/Upload";
 import FileList from "./Pages/FileList";
 
+// AI Components
+import Recommendations from "./Pages/ai/Recommendations";
+import Chat from "./Pages/ai/Chat";
+import Summarize from "./Pages/ai/Summarize";
+import Search from "./Pages/ai/Search";
+
 // Authentication Pages
 import Login from "./Pages/auth/Login";
 import Signup from "./Pages/auth/Signup";
@@ -111,6 +117,12 @@ function App() {
                             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                             <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
                             <Route path="/files" element={<ProtectedRoute><FileList /></ProtectedRoute>} />
+                            
+                            {/* AI Routes */}
+                            <Route path="/ai/recommendations" element={<ProtectedRoute><Recommendations /></ProtectedRoute>} />
+                            <Route path="/ai/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+                            <Route path="/ai/summarize" element={<ProtectedRoute><Summarize /></ProtectedRoute>} />
+                            <Route path="/ai/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
                         </Routes>
                     </AppWrapper>
                 </CreditProvider>

@@ -20,7 +20,7 @@ const Navbar = ({ activeComponent, setActiveComponent }) => {
         e && e.preventDefault();
         // Save search to session so Library can read it on activation
         sessionStorage.setItem("bh_search", query || "");
-        setActiveComponent("Library");
+        navigate("/"); // Navigate to home/library instead of using setActiveComponent
     };
 
     return (
@@ -49,6 +49,10 @@ const Navbar = ({ activeComponent, setActiveComponent }) => {
                             <div className="dropdown-menu">
                                 <div className="dropdown-item" onClick={() => setActiveComponent("Library")}>📚 Library</div>
                                 <div className="dropdown-item" onClick={() => setActiveComponent("Upload")}>📤 Upload</div>
+                                <div className="dropdown-item" onClick={() => navigate("/ai/recommendations")}>🤖 Recommendations</div>
+                                <div className="dropdown-item" onClick={() => navigate("/ai/chat")}>💬 AI Chat</div>
+                                <div className="dropdown-item" onClick={() => navigate("/ai/summarize")}>📝 Summarize</div>
+                                <div className="dropdown-item" onClick={() => navigate("/ai/search")}>🔍 Smart Search</div>
                                 <div className="dropdown-item" onClick={() => setActiveComponent("UserProfile")}>👤 Profile</div>
                             </div>
                         </div>
@@ -92,6 +96,10 @@ const Navbar = ({ activeComponent, setActiveComponent }) => {
                             <div className="nav-dropdown-mobile">
                                 <div className="dropdown-item" onClick={() => { setActiveComponent("Library"); setMobileOpen(false); }}>📚 Library</div>
                                 <div className="dropdown-item" onClick={() => { setActiveComponent("Upload"); setMobileOpen(false); }}>📤 Upload</div>
+                                <div className="dropdown-item" onClick={() => { navigate("/ai/recommendations"); setMobileOpen(false); }}>🤖 Recommendations</div>
+                                <div className="dropdown-item" onClick={() => { navigate("/ai/chat"); setMobileOpen(false); }}>💬 AI Chat</div>
+                                <div className="dropdown-item" onClick={() => { navigate("/ai/summarize"); setMobileOpen(false); }}>📝 Summarize</div>
+                                <div className="dropdown-item" onClick={() => { navigate("/ai/search"); setMobileOpen(false); }}>🔍 Smart Search</div>
                                 <div className="dropdown-item" onClick={() => { setActiveComponent("UserProfile"); setMobileOpen(false); }}>👤 Profile</div>
                             </div>
                         </div>

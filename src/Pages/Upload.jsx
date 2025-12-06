@@ -122,6 +122,7 @@ const Upload = () => {
         description: description.trim(),
         type: resourceType,
         category: category,
+
         url: `https://storage.example.com/${Date.now()}_${file.name}`, // Placeholder URL
         tags: [category.toLowerCase()]
       };
