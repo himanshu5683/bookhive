@@ -8,28 +8,28 @@ import { CreditProvider } from "./context/CreditContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./auth/ProtectedRoute";
 // Page Components
-import Dashboard from "./pages/Dashboard";
-import Resources from "./pages/Resources";
-import Stories from "./pages/Stories";
-import StudyCircles from "./pages/StudyCircles";
-import Leaderboard from "./pages/Leaderboard";
-import UserProfile from "./pages/UserProfile";
-import Upload from "./pages/Upload";
-import FileList from "./pages/FileList";
+import Dashboard from "./Pages/Dashboard";
+import Resources from "./Pages/Resources";
+import Stories from "./Pages/Stories";
+import StudyCircles from "./Pages/StudyCircles";
+import Leaderboard from "./Pages/Leaderboard";
+import UserProfile from "./Pages/UserProfile";
+import Upload from "./Pages/Upload";
+import FileList from "./Pages/FileList";
 
 // Authentication Pages
-import Login from "./pages/auth/Login";
-import Signup from "./pages/auth/Signup";
+import Login from "./Pages/auth/Login";
+import Signup from "./Pages/auth/Signup";
 
 // Common Components
-import Loading from "./pages/common/Loading";
-import AppWrapper from "./pages/common/AppWrapper";
-import Navbar from "./pages/common/Navbar";
-import Home from "./pages/common/Home";
-import Library from "./pages/common/Library";
-import Profile from "./pages/common/Profile";
-import AuthPage from "./pages/common/AuthPage";
-import Footer from "./pages/common/Footer";
+import Loading from "./Pages/common/Loading";
+import AppWrapper from "./Pages/common/AppWrapper";
+import Navbar from "./Pages/common/Navbar";
+import Home from "./Pages/common/Home";
+import Library from "./Pages/common/Library";
+import Profile from "./Pages/common/Profile";
+import AuthPage from "./Pages/common/AuthPage";
+import Footer from "./Pages/common/Footer";
 
 function App() {
     const [activeComponent, setActiveComponent] = useState("Home");
