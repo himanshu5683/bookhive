@@ -1,8 +1,0 @@
-.bh-footer { background: transparent; border-top: 1px solid var(--bh-border); padding: 2rem 0; }
-.footer-inner { display: flex; flex-direction: column; gap: 1rem; }
-.footer-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(180px,1fr)); gap: 1rem; }
-.footer-col h4 { margin-bottom: .5rem; }
-.footer-col ul { list-style: none; padding-left: 0; }
-.footer-col a { color: var(--bh-accent-1); }
-.footer-newsletter .footer-input { width: 100%; padding: .6rem .75rem; border:1px solid var(--bh-border); border-radius:8px; }
-@media (min-width: 900px) { .footer-inner { flex-direction: row; justify-content: space-between; align-items: flex-start; } }
