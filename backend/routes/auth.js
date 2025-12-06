@@ -2,7 +2,7 @@
 
 const express = require('express');
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+// bcrypt is used in the User model for password hashing
 const User = require('../models/User');
 
 const router = express.Router();

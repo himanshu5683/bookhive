@@ -265,7 +265,7 @@ router.post('/:id/follow', async (req, res) => {
     }
     
     // Update follower's following count
-    const follower = await User.findByIdAndUpdate(followerId, {
+    await User.findByIdAndUpdate(followerId, {
       $inc: { following: 1 }
     });
     
