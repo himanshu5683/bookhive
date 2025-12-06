@@ -1,7 +1,7 @@
-/* bookhive/src/components/Upload.js */
+/* bookhive/src/Pages/common/SimpleUpload.js */
 import React, { useState } from "react";
 
-const Upload = () => {
+const SimpleUpload = () => {
     const [name, setName] = useState("");
     const [file, setFile] = useState(null);
 
@@ -37,4 +37,4 @@ const Upload = () => {
     );
 };
 
-export default Upload;
+export default SimpleUpload;
