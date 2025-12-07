@@ -1,270 +1,301 @@
 // backend/routes/stories.js - Story Sharing Routes
 
-const express = require('express');
-const Story = require('../models/Story');
-const User = require('../models/User');
-const { OpenAI } = require('openai');
-require('dotenv').config();
+import express from 'express';
+import Story from '../models/Story.js';
+import User from '../models/User.js';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 const router = express.Router();
 
 /**
  * GET /api/stories
- * Fetch all stories with pagination and sorting
- * Query: ?sort=recent&page=1&limit=20
- * Response: { total, stories: [...], pagination }
+ * Fetch all stories with filtering and pagination
  */
 router.get('/', async (req, res) => {
   try {
-    const { sort = 'recent', page = 1, limit = 20 } = req.query;
+    const { page = 1, limit = 10, category, search, sortBy = 'createdAt', sortOrder = -1 } = req.query;
     
-    // Build sort
-    const sortObj = {};
-    if (sort === 'trending') sortObj.likes = -1;
-    else if (sort === 'popular') sortObj.comments = -1;
-    else sortObj.createdAt = -1; // default to recent
+    // Build query
+    let query = {};
     
-    // Calculate pagination
-    const skip = (page - 1) * limit;
+    // Search by title or content
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } }
+      ];
+    }
     
-    // Execute query
-    const total = await Story.countDocuments();
-    const stories = await Story.find()
-      .sort(sortObj)
-      .skip(skip)
-      .limit(parseInt(limit));
+    // Filter by category
+    if (category && category !== 'all') {
+      query.category = category;
+    }
     
-    res.status(200).json({
-      total,
+    // Build sort object
+    let sort = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    
+    // Fetch stories with pagination
+    const stories = await Story.find(query)
+      .populate('author', 'name email avatar')
+      .populate({
+        path: 'comments.author',
+        select: 'name email avatar'
+      })
+      .sort(sort)
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+    
+    // Get total count
+    const total = await Story.countDocuments(query);
+    
+    res.json({
       stories,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total }
+      totalPages: Math.ceil(total / limit),
+      currentPage: parseInt(page),
+      total
     });
   } catch (error) {
     console.error('Error fetching stories:', error);
-    res.status(500).json({ error: 'Server error fetching stories' });
+    res.status(500).json({ error: 'Failed to fetch stories' });
   }
 });
 
 /**
  * POST /api/stories
- * Create a new story
- * Body: { content, userId, author }
- * Response: { id, ...story }
+ * Create new story
  */
 router.post('/', async (req, res) => {
   try {
-    const { title, content, userId, author } = req.body;
-
-    if (!content || !userId || !author) {
-      return res.status(400).json({ error: 'Content, userId, and author required' });
+    const { title, content, category, mood } = req.body;
+    const userId = req.user?.id; // Assuming user is attached by auth middleware
+    
+    // Validate required fields
+    if (!title || !content) {
+      return res.status(400).json({ error: 'Title and content are required' });
     }
-
-    // Generate tags using AI
-    let tags = [];
+    
+    // Generate AI summary
+    let summary = '';
     try {
-      const prompt = `Based on this story content, generate 3-5 relevant tags:
-Title: ${title || 'Untitled'}
-Content: ${content}
-
-Return the tags as a JSON array with the following format:
-[
-  "tag1",
-  "tag2",
-  "tag3"
-]`;
-
       const completion = await openai.chat.completions.create({
         model: "gpt-3.5-turbo",
         messages: [
           {
             role: "system",
-            content: "You are a helpful assistant that generates relevant tags for content. Always respond with valid JSON array of tags."
+            content: "You are a story summarizer. Create a brief, engaging summary of the story."
           },
           {
             role: "user",
-            content: prompt
+            content: `Summarize this story in one sentence:\n\n${content.substring(0, 1000)}`
           }
         ],
-        temperature: 0.5,
-        max_tokens: 200,
+        max_tokens: 100,
+        temperature: 0.7
       });
-
-      const responseText = completion.choices[0].message.content;
       
-      // Try to parse as JSON
-      try {
-        tags = JSON.parse(responseText);
-      } catch (parseError) {
-        // If JSON parsing fails, try to extract from markdown code blocks
-        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          tags = JSON.parse(jsonMatch[1]);
-        } else {
-          // Fallback to basic parsing
-          tags = ['story'];
-        }
-      }
-    } catch (error) {
-      console.error('AI Tag Generation Error:', error);
-      tags = ['story'];
+      summary = completion.choices[0].message.content.trim();
+    } catch (aiError) {
+      console.warn('Failed to generate AI summary:', aiError.message);
+      // Use first sentence as fallback
+      summary = content.split('.')[0] + '.';
     }
-
-    // Create story
+    
+    // Create new story
     const story = new Story({
-      title: title || 'Untitled',
+      title,
       content,
-      author,
-      authorId: userId,
-      tags
+      category: category || 'general',
+      mood: mood || 'neutral',
+      summary,
+      author: userId
     });
-
+    
     await story.save();
-
-    // Award credits to user for creating story (50 credits)
-    await User.findByIdAndUpdate(userId, {
-      $inc: { contributions: 1, credits: 50 }
-    });
-
-    // Send real-time story update via WebSocket if available
-    const wsService = req.app.get('wsService');
-    if (wsService) {
-      wsService.sendStoryUpdate(story);
-    }
-
-    res.status(201).json({
-      message: 'Story created successfully. 50 credits awarded.',
-      story
-    });
+    
+    // Populate author reference
+    await story.populate('author', 'name email');
+    
+    res.status(201).json({ story });
   } catch (error) {
     console.error('Error creating story:', error);
-    res.status(500).json({ error: 'Server error creating story' });
-  }
-});
-
-/**
- * POST /api/stories/:id/like
- * Like or unlike a story
- * Body: { userId }
- */
-router.post('/:id/like', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    // Find story
-    const story = await Story.findByIdAndUpdate(id, {
-      $inc: { likes: 1 }
-    }, { new: true });
-    
-    if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-    
-    res.status(200).json({
-      message: 'Like recorded',
-      likes: story.likes
-    });
-  } catch (error) {
-    console.error('Error liking story:', error);
-    res.status(500).json({ error: 'Server error liking story' });
-  }
-});
-
-/**
- * POST /api/stories/:id/comment
- * Add comment to a story
- * Body: { userId, content }
- * Response: { comment: { id, userId, content, timestamp } }
- */
-router.post('/:id/comment', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { userId, content } = req.body;
-    
-    if (!content || !userId) {
-      return res.status(400).json({ error: 'Content and userId required' });
-    }
-
-    // Find story
-    const story = await Story.findByIdAndUpdate(id, {
-      $inc: { comments: 1 }
-    }, { new: true });
-    
-    if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
-    }
-    
-    res.status(201).json({
-      message: 'Comment added',
-      comment: {
-        id: 'comment_' + Date.now(),
-        userId,
-        content,
-        timestamp: new Date()
-      }
-    });
-  } catch (error) {
-    console.error('Error adding comment:', error);
-    res.status(500).json({ error: 'Server error adding comment' });
+    res.status(500).json({ error: 'Failed to create story' });
   }
 });
 
 /**
  * PUT /api/stories/:id
- * Update a story
- * Body: { content }
+ * Update story
  */
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { content } = req.body;
+    const { title, content, category, mood } = req.body;
+    const userId = req.user?.id;
     
-    if (!content) {
-      return res.status(400).json({ error: 'Content required' });
-    }
-
-    // Find and update story
-    const story = await Story.findByIdAndUpdate(id, {
-      content,
-      updatedAt: Date.now()
-    }, { new: true });
-    
+    // Find story and check ownership
+    const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
     
-    res.status(200).json({
-      message: 'Story updated successfully',
-      story
-    });
+    if (story.author.toString() !== userId) {
+      return res.status(403).json({ error: 'Only the author can update the story' });
+    }
+    
+    // Update fields
+    if (title) story.title = title;
+    if (content) story.content = content;
+    if (category) story.category = category;
+    if (mood) story.mood = mood;
+    
+    await story.save();
+    
+    res.json({ story });
   } catch (error) {
     console.error('Error updating story:', error);
-    res.status(500).json({ error: 'Server error updating story' });
+    res.status(500).json({ error: 'Failed to update story' });
   }
 });
 
 /**
  * DELETE /api/stories/:id
- * Delete a story
+ * Delete story
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const userId = req.user?.id;
     
-    const story = await Story.findByIdAndDelete(id);
+    // Find story and check ownership
+    const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
     
-    res.status(200).json({ message: 'Story deleted successfully' });
+    if (story.author.toString() !== userId) {
+      return res.status(403).json({ error: 'Only the author can delete the story' });
+    }
+    
+    // Delete story
+    await story.remove();
+    
+    res.json({ message: 'Story deleted successfully' });
   } catch (error) {
     console.error('Error deleting story:', error);
-    res.status(500).json({ error: 'Server error deleting story' });
+    res.status(500).json({ error: 'Failed to delete story' });
   }
 });
 
-module.exports = router;
+/**
+ * POST /api/stories/:id/like
+ * Like story
+ */
+router.post('/:id/like', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Check if user already liked
+    if (story.likes.includes(userId)) {
+      return res.status(400).json({ error: 'You have already liked this story' });
+    }
+    
+    // Add like
+    story.likes.push(userId);
+    await story.save();
+    
+    res.json({ story });
+  } catch (error) {
+    console.error('Error liking story:', error);
+    res.status(500).json({ error: 'Failed to like story' });
+  }
+});
+
+/**
+ * DELETE /api/stories/:id/like
+ * Unlike story
+ */
+router.delete('/:id/like', async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Check if user liked
+    if (!story.likes.includes(userId)) {
+      return res.status(400).json({ error: 'You have not liked this story' });
+    }
+    
+    // Remove like
+    story.likes = story.likes.filter(id => id.toString() !== userId);
+    await story.save();
+    
+    res.json({ story });
+  } catch (error) {
+    console.error('Error unliking story:', error);
+    res.status(500).json({ error: 'Failed to unlike story' });
+  }
+});
+
+/**
+ * POST /api/stories/:id/comment
+ * Add comment to story
+ */
+router.post('/:id/comment', async (req, res) => {
+  try {
+    const { content } = req.body;
+    const userId = req.user?.id;
+    
+    // Validate content
+    if (!content) {
+      return res.status(400).json({ error: 'Comment content is required' });
+    }
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Add comment
+    const comment = {
+      content,
+      author: userId
+    };
+    
+    story.comments.push(comment);
+    await story.save();
+    
+    // Populate author reference
+    await story.populate({
+      path: 'comments.author',
+      select: 'name email avatar'
+    });
+    
+    res.status(201).json({ 
+      comment: story.comments[story.comments.length - 1],
+      story 
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+export default router;

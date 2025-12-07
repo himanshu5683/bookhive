@@ -1,9 +1,11 @@
-const express = require("express");
-const router = express.Router();
-const { generateInbuiltAIResponse } = require("../services/inbuiltAI");
+import express from "express";
+import { generateInbuiltAIResponse } from "../services/inbuiltAI.js";
+import { generateAIResponse } from "../services/openaiService.js";
 
 // Store conversation history in memory (in production, you might want to use a database)
 const conversationHistories = new Map();
+
+const router = express.Router();
 
 router.post("/chat", async (req, res) => {
   try {
@@ -30,8 +32,15 @@ router.post("/chat", async (req, res) => {
       history = history.slice(-10);
     }
 
-    // Generate AI response using inbuilt rule-based logic
-    const reply = generateInbuiltAIResponse(userMessage, history, user);
+    // Try to generate AI response using OpenAI
+    let reply;
+    try {
+      reply = await generateAIResponse(userMessage, history);
+    } catch (openAiError) {
+      console.warn("OpenAI failed, falling back to inbuilt AI:", openAiError.message);
+      // Fallback to inbuilt rule-based logic
+      reply = generateInbuiltAIResponse(userMessage, history, user);
+    }
 
     // Add AI response to history
     history.push({
@@ -51,4 +60,4 @@ router.post("/chat", async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -17,14 +17,18 @@ router.post('/signup', async (req, res) => {
   try {
     const { email, password, name } = req.body;
     
+    console.log('Signup attempt for email:', email);
+
     // Validate input
     if (!email || !password || !name) {
+      console.log('Missing required fields for signup');
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.log('User already exists:', email);
       return res.status(400).json({ error: 'User already exists' });
     }
 
@@ -42,6 +46,8 @@ router.post('/signup', async (req, res) => {
       expiresIn: '7d'
     });
 
+    console.log('Signup successful for user:', email);
+
     res.status(201).json({
       message: 'User created successfully',
       token,
@@ -54,7 +60,7 @@ router.post('/signup', async (req, res) => {
     });
   } catch (error) {
     console.error('Signup error:', error);
-    res.status(500).json({ error: 'Server error during signup' });
+    res.status(500).json({ error: 'Server error during signup: ' + error.message });
   }
 });
 
@@ -68,19 +74,24 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password, twoFactorToken } = req.body;
 
+    console.log('Login attempt for email:', email);
+
     if (!email || !password) {
+      console.log('Missing email or password');
       return res.status(400).json({ error: 'Email and password required' });
     }
 
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
+      console.log('User not found for email:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
     // Verify password
     const validPassword = await user.comparePassword(password);
     if (!validPassword) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -88,6 +99,7 @@ router.post('/login', async (req, res) => {
     if (user.twoFactorEnabled) {
       // If 2FA token is not provided, request it
       if (!twoFactorToken) {
+        console.log('2FA required for user:', email);
         return res.status(200).json({ 
           requires2FA: true,
           message: '2FA required'
@@ -97,6 +109,7 @@ router.post('/login', async (req, res) => {
       // Verify 2FA token
       const isValid2FA = user.verifyTwoFactorToken(twoFactorToken);
       if (!isValid2FA) {
+        console.log('Invalid 2FA token for user:', email);
         return res.status(401).json({ error: 'Invalid 2FA token' });
       }
     }
@@ -105,6 +118,8 @@ router.post('/login', async (req, res) => {
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
+
+    console.log('Login successful for user:', email);
 
     res.status(200).json({
       message: 'Login successful',
@@ -118,7 +133,7 @@ router.post('/login', async (req, res) => {
     });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error during login' });
+    res.status(500).json({ error: 'Server error during login: ' + error.message });
   }
 });
 
@@ -139,7 +154,10 @@ router.get('/verify', async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     
+    console.log('Token verification attempt');
+
     if (!token) {
+      console.log('No token provided for verification');
       return res.status(401).json({ error: 'No token provided' });
     }
 
@@ -149,8 +167,11 @@ router.get('/verify', async (req, res) => {
     // Find user
     const user = await User.findById(decoded.userId);
     if (!user) {
+      console.log('Invalid token - user not found');
       return res.status(401).json({ error: 'Invalid token' });
     }
+
+    console.log('Token verification successful for user:', user.email);
 
     res.status(200).json({
       valid: true,
@@ -163,7 +184,8 @@ router.get('/verify', async (req, res) => {
       }
     });
   } catch (err) {
-    res.status(401).json({ valid: false, error: 'Invalid token' });
+    console.log('Token verification failed:', err.message);
+    res.status(401).json({ valid: false, error: 'Invalid token: ' + err.message });
   }
 });
 

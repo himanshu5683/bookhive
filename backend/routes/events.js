@@ -1,352 +1,325 @@
 // backend/routes/events.js - Events Routes for Live Events/Webinars
 
-const express = require('express');
-const Event = require('../models/Event');
-const User = require('../models/User');
-const Notification = require('../models/Notification');
-const { OpenAI } = require('openai');
-require('dotenv').config();
+import express from 'express';
+import Event from '../models/Event.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
 
 // Initialize OpenAI client
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 /**
  * GET /api/events
- * Fetch events with optional filters
- * Query params: ?category=&status=&limit=&page=
+ * Fetch all events
  */
 router.get('/', async (req, res) => {
   try {
-    const { category, status, limit = 20, page = 1 } = req.query;
+    const { page = 1, limit = 10, category, upcoming = true, search } = req.query;
     
     // Build query
-    const query = {};
-    if (category) query.category = category;
-    if (status) query.status = status;
+    let query = {};
     
-    // Calculate pagination
-    const skip = (page - 1) * limit;
+    // Filter by category
+    if (category) {
+      query.category = category;
+    }
     
-    // Execute query
-    const total = await Event.countDocuments(query);
+    // Filter by upcoming events
+    if (upcoming === 'true' || upcoming === true) {
+      query.date = { $gte: new Date() };
+    }
+    
+    // Search by title or description
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    // Fetch events with pagination
     const events = await Event.find(query)
-      .sort({ startDate: 1 })
-      .skip(skip)
-      .limit(parseInt(limit));
+      .populate('host', 'name email avatar')
+      .populate('attendees', 'name email avatar')
+      .sort({ date: 1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
     
-    res.status(200).json({
-      total,
+    // Get total count
+    const total = await Event.countDocuments(query);
+    
+    res.json({
       events,
-      pagination: { page: parseInt(page), limit: parseInt(limit), total }
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total
     });
   } catch (error) {
     console.error('Error fetching events:', error);
-    res.status(500).json({ error: 'Server error fetching events' });
+    res.status(500).json({ error: 'Failed to fetch events' });
   }
 });
 
 /**
  * GET /api/events/:id
- * Fetch a specific event
+ * Fetch specific event
  */
 router.get('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const event = await Event.findById(req.params.id)
+      .populate('host', 'name email avatar')
+      .populate('attendees', 'name email avatar');
     
-    const event = await Event.findById(id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    res.status(200).json(event);
+    res.json({ event });
   } catch (error) {
     console.error('Error fetching event:', error);
-    res.status(500).json({ error: 'Server error fetching event' });
+    res.status(500).json({ error: 'Failed to fetch event' });
   }
 });
 
 /**
  * POST /api/events
- * Create a new event
- * Body: { title, description, host, hostId, startDate, endDate, timezone, category, maxParticipants, meetingLink }
+ * Create new event
  */
 router.post('/', async (req, res) => {
   try {
-    const { title, description, host, hostId, startDate, endDate, timezone, category, maxParticipants, meetingLink } = req.body;
-
-    if (!title || !description || !host || !hostId || !startDate || !endDate || !category) {
-      return res.status(400).json({ error: 'Required fields missing' });
-    }
-
-    // Validate dates
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const { title, description, date, duration, category, format, maxAttendees, registrationRequired } = req.body;
+    const userId = req.user?.id; // Assuming user is attached by auth middleware
     
-    if (start >= end) {
-      return res.status(400).json({ error: 'End date must be after start date' });
+    // Validate required fields
+    if (!title || !description || !date || !category || !format) {
+      return res.status(400).json({ error: 'Title, description, date, category, and format are required' });
     }
     
-    if (start < new Date()) {
-      return res.status(400).json({ error: 'Start date must be in the future' });
+    // Validate date
+    const eventDate = new Date(date);
+    if (isNaN(eventDate.getTime())) {
+      return res.status(400).json({ error: 'Invalid date format' });
     }
-
-    // Generate tags using AI
-    let tags = [category.toLowerCase()];
-    try {
-      const prompt = `Based on this event, generate 3-5 relevant tags:
-Title: ${title}
-Description: ${description}
-Category: ${category}
-
-Return the tags as a JSON array with the following format:
-[
-  "tag1",
-  "tag2",
-  "tag3"
-]`;
-
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant that generates relevant tags for events. Always respond with valid JSON array of tags."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.5,
-        max_tokens: 200,
-      });
-
-      const responseText = completion.choices[0].message.content;
-      
-      // Try to parse as JSON
-      try {
-        const aiTags = JSON.parse(responseText);
-        tags = [...new Set([...tags, ...aiTags])]; // Merge and deduplicate
-      } catch (parseError) {
-        // If JSON parsing fails, try to extract from markdown code blocks
-        const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-        if (jsonMatch && jsonMatch[1]) {
-          const aiTags = JSON.parse(jsonMatch[1]);
-          tags = [...new Set([...tags, ...aiTags])]; // Merge and deduplicate
-        }
-      }
-    } catch (error) {
-      console.error('AI Tag Generation Error:', error);
+    
+    if (eventDate < new Date()) {
+      return res.status(400).json({ error: 'Event date must be in the future' });
     }
-
-    // Create event
+    
+    // Create new event
     const event = new Event({
       title,
       description,
-      host,
-      hostId,
-      startDate: start,
-      endDate: end,
-      timezone: timezone || 'UTC',
+      date: eventDate,
+      duration,
       category,
-      maxParticipants: maxParticipants || 100,
-      meetingLink,
-      tags
+      format,
+      maxAttendees: maxAttendees || 100,
+      registrationRequired: registrationRequired || false,
+      host: userId,
+      attendees: [userId]
     });
-
+    
     await event.save();
     
-    // Create notification for host
-    const notification = new Notification({
-      userId: hostId,
-      type: 'system',
-      title: 'Event Created!',
-      message: `Your event "${title}" has been scheduled for ${start.toLocaleDateString()}.`,
-      relatedId: event._id,
-      relatedType: 'event',
-      priority: 'medium'
-    });
-    await notification.save();
-
-    res.status(201).json({
-      message: 'Event created successfully',
-      event
-    });
+    // Populate references
+    await event.populate('host', 'name email');
+    
+    res.status(201).json({ event });
   } catch (error) {
     console.error('Error creating event:', error);
-    res.status(500).json({ error: 'Server error creating event' });
+    res.status(500).json({ error: 'Failed to create event' });
   }
 });
 
 /**
  * PUT /api/events/:id
- * Update an event
- * Body: { title?, description?, startDate?, endDate?, timezone?, category?, maxParticipants?, meetingLink?, status? }
+ * Update event
  */
 router.put('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { title, description, startDate, endDate, timezone, category, maxParticipants, meetingLink, status } = req.body;
+    const { title, description, date, duration, category, format, maxAttendees, registrationRequired } = req.body;
+    const userId = req.user?.id;
     
-    const updateFields = {};
-    if (title) updateFields.title = title;
-    if (description) updateFields.description = description;
-    if (startDate) updateFields.startDate = new Date(startDate);
-    if (endDate) updateFields.endDate = new Date(endDate);
-    if (timezone) updateFields.timezone = timezone;
-    if (category) updateFields.category = category;
-    if (maxParticipants) updateFields.maxParticipants = maxParticipants;
-    if (meetingLink) updateFields.meetingLink = meetingLink;
-    if (status) updateFields.status = status;
-    
-    const event = await Event.findByIdAndUpdate(id, updateFields, { new: true });
+    // Find event and check ownership
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // If event status changed to live or completed, notify participants
-    if (status && (status === 'live' || status === 'completed')) {
-      for (const participant of event.participants) {
-        const notification = new Notification({
-          userId: participant.userId,
-          type: 'system',
-          title: `Event ${status === 'live' ? 'Started' : 'Ended'}!`,
-          message: `The event "${event.title}" is now ${status === 'live' ? 'live' : 'completed'}.`,
-          relatedId: event._id,
-          relatedType: 'event',
-          priority: 'medium'
-        });
-        await notification.save();
-      }
+    if (event.host.toString() !== userId) {
+      return res.status(403).json({ error: 'Only the host can update the event' });
     }
     
-    res.status(200).json({
-      message: 'Event updated successfully',
-      event
-    });
+    // Update event fields
+    if (title) event.title = title;
+    if (description) event.description = description;
+    if (date) {
+      const eventDate = new Date(date);
+      if (!isNaN(eventDate.getTime()) && eventDate > new Date()) {
+        event.date = eventDate;
+      }
+    }
+    if (duration !== undefined) event.duration = duration;
+    if (category) event.category = category;
+    if (format) event.format = format;
+    if (maxAttendees !== undefined) event.maxAttendees = maxAttendees;
+    if (registrationRequired !== undefined) event.registrationRequired = registrationRequired;
+    
+    await event.save();
+    
+    res.json({ event });
   } catch (error) {
     console.error('Error updating event:', error);
-    res.status(500).json({ error: 'Server error updating event' });
+    res.status(500).json({ error: 'Failed to update event' });
   }
 });
 
 /**
  * DELETE /api/events/:id
- * Delete an event
+ * Delete event
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const { id } = req.params;
+    const userId = req.user?.id;
     
-    const event = await Event.findByIdAndDelete(id);
+    // Find event and check ownership
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    res.status(200).json({ message: 'Event deleted successfully' });
+    if (event.host.toString() !== userId) {
+      return res.status(403).json({ error: 'Only the host can delete the event' });
+    }
+    
+    // Delete event
+    await event.remove();
+    
+    res.json({ message: 'Event deleted successfully' });
   } catch (error) {
     console.error('Error deleting event:', error);
-    res.status(500).json({ error: 'Server error deleting event' });
+    res.status(500).json({ error: 'Failed to delete event' });
   }
 });
 
 /**
- * POST /api/events/:id/join
- * Join an event
- * Body: { userId, userName }
+ * POST /api/events/:id/register
+ * Register for event
  */
-router.post('/:id/join', async (req, res) => {
+router.post('/:id/register', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { userId, userName } = req.body;
+    const userId = req.user?.id;
     
-    if (!userId || !userName) {
-      return res.status(400).json({ error: 'userId and userName required' });
-    }
-    
-    const event = await Event.findById(id);
+    // Find event
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Check if event is full
-    if (event.currentParticipants >= event.maxParticipants) {
-      return res.status(400).json({ error: 'Event is full' });
+    // Check if registration is required
+    if (!event.registrationRequired) {
+      return res.status(400).json({ error: 'Registration not required for this event' });
     }
     
-    // Check if user already joined
-    const alreadyJoined = event.participants.some(p => p.userId === userId);
-    if (alreadyJoined) {
-      return res.status(400).json({ error: 'Already joined this event' });
+    // Check if user is already registered
+    if (event.attendees.includes(userId)) {
+      return res.status(400).json({ error: 'Already registered for this event' });
     }
     
-    // Add participant
-    event.participants.push({
-      userId,
-      name: userName
-    });
+    // Check capacity
+    if (event.attendees.length >= event.maxAttendees) {
+      return res.status(400).json({ error: 'Event is at full capacity' });
+    }
     
-    event.currentParticipants = event.participants.length;
+    // Add user to attendees
+    event.attendees.push(userId);
     await event.save();
     
-    // Create notification for event host
-    const notification = new Notification({
-      userId: event.hostId,
-      type: 'system',
-      title: 'New Participant!',
-      message: `${userName} joined your event "${event.title}".`,
-      relatedId: event._id,
-      relatedType: 'event',
-      priority: 'low'
+    // Create notification
+    await Notification.create({
+      userId: userId,
+      type: 'event_registration',
+      message: `You've successfully registered for "${event.title}"`,
+      data: { eventId: event._id }
     });
-    await notification.save();
     
-    res.status(200).json({
-      message: 'Successfully joined event',
-      event
-    });
+    res.json({ message: 'Successfully registered for the event', event });
   } catch (error) {
-    console.error('Error joining event:', error);
-    res.status(500).json({ error: 'Server error joining event' });
+    console.error('Error registering for event:', error);
+    res.status(500).json({ error: 'Failed to register for event' });
   }
 });
 
 /**
- * POST /api/events/:id/leave
- * Leave an event
- * Body: { userId }
+ * POST /api/events/:id/suggest
+ * Get AI-powered event suggestions
  */
-router.post('/:id/leave', async (req, res) => {
+router.post('/:id/suggest', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { userId } = req.body;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required' });
-    }
-    
-    const event = await Event.findById(id);
+    const event = await Event.findById(req.params.id);
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Remove participant
-    event.participants = event.participants.filter(p => p.userId !== userId);
-    event.currentParticipants = event.participants.length;
-    await event.save();
+    // Generate AI suggestions based on event details
+    const prompt = `
+      Based on this event:
+      Title: ${event.title}
+      Description: ${event.description}
+      Category: ${event.category}
+      Format: ${event.format}
+      
+      Suggest 3 related events that users might be interested in. Return as JSON array with:
+      - title
+      - briefDescription
+      - suggestedCategory
+      - format
+    `;
     
-    res.status(200).json({
-      message: 'Successfully left event',
-      event
+    const completion = await openai.chat.completions.create({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are an event suggestion engine. Return only valid JSON array."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      max_tokens: 500,
+      temperature: 0.7
     });
+    
+    // Try to parse AI response
+    let suggestions;
+    try {
+      suggestions = JSON.parse(completion.choices[0].message.content);
+    } catch (parseError) {
+      suggestions = [
+        {
+          title: "Related Educational Event",
+          briefDescription: "An event related to your interests",
+          suggestedCategory: event.category,
+          format: event.format
+        }
+      ];
+    }
+    
+    res.json({ suggestions });
   } catch (error) {
-    console.error('Error leaving event:', error);
-    res.status(500).json({ error: 'Server error leaving event' });
+    console.error('Error generating event suggestions:', error);
+    res.status(500).json({ error: 'Failed to generate event suggestions' });
   }
 });
 
-module.exports = router;
+export default router;
