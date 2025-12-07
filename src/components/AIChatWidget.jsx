@@ -4,7 +4,8 @@ import apiClient from "../services/api";
 import "../styles/AI.css";
 
 const AIChatWidget = () => {
-  const { user } = useContext(AuthContext);
+  // Removed unused user variable
+  useContext(AuthContext);
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
@@ -44,16 +45,13 @@ const AIChatWidget = () => {
     setLoading(true);
     
     try {
-      // Get AI response
-      const response = await apiClient.aiAPI.chat({
-        message: inputMessage,
-        userId: user?.id
-      });
+      // Get AI response using the correct format
+      const response = await apiClient.post("/ai/chat", { message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.response,
+        text: response.data.reply,
         sender: "ai",
         timestamp: new Date()
       };

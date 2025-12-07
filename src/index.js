@@ -12,7 +12,7 @@ if (!container) {
 
 const root = createRoot(container);
 root.render(
-  <BrowserRouter basename={process.env.REACT_APP_BASENAME || '/bookhive'}>
+  <BrowserRouter basename='/bookhive'>
     <App />
   </BrowserRouter>
 );

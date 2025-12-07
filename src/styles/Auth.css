@@ -245,20 +245,96 @@
   }
 }
 
-@media (max-width: 480px) {
-  .auth-page {
-    padding: var(--bh-space-2);
+  @media (max-width: 480px) {
+    .auth-page {
+      padding: var(--bh-space-2);
+    }
+    
+    .auth-card {
+      padding: var(--bh-space-5);
+    }
+    
+    .auth-title {
+      font-size: var(--bh-font-xl);
+    }
+    
+    .auth-subtitle {
+      font-size: var(--bh-font-sm);
+    }
+  }
+  /* Language Selector Styles */
+  .language-selector {
+    position: relative;
+    display: inline-block;
   }
   
-  .auth-card {
-    padding: var(--bh-space-5);
-  }
-  
-  .auth-title {
-    font-size: var(--bh-font-xl);
-  }
-  
-  .auth-subtitle {
+  .language-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--bh-space-2);
+    padding: var(--bh-space-2) var(--bh-space-3);
+    background: var(--bh-bg-input);
+    border: 1px solid var(--bh-border);
+    border-radius: var(--bh-radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
     font-size: var(--bh-font-sm);
   }
-}
+  
+  .language-dropdown-btn:hover {
+    background: var(--bh-bg-hover);
+    border-color: var(--bh-border-focus);
+  }
+  
+  .language-flag {
+    font-size: 1.2em;
+  }
+  
+  .dropdown-arrow {
+    transition: transform 0.2s ease;
+    font-size: 0.8em;
+    color: var(--bh-text-secondary);
+  }
+  
+  .dropdown-arrow.open {
+    transform: rotate(180deg);
+  }
+  
+  .language-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    min-width: 180px;
+    background: var(--bh-bg-card);
+    border: 1px solid var(--bh-border);
+    border-radius: var(--bh-radius-md);
+    box-shadow: var(--bh-shadow-lg);
+    list-style: none;
+    padding: var(--bh-space-2) 0;
+    margin: var(--bh-space-1) 0 0 0;
+  }
+  
+  .language-option {
+    display: flex;
+    align-items: center;
+    gap: var(--bh-space-2);
+    width: 100%;
+    padding: var(--bh-space-2) var(--bh-space-3);
+    background: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    font-size: var(--bh-font-sm);
+    color: var(--bh-text-primary);
+    transition: background 0.2s ease;
+  }
+  
+  .language-option:hover,
+  .language-option.active {
+    background: var(--bh-bg-hover);
+  }
+  
+  .language-option.active {
+    font-weight: var(--bh-font-semibold);
+  }

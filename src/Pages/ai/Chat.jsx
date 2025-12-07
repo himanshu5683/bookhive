@@ -13,7 +13,6 @@ const Chat = () => {
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -37,22 +36,20 @@ const Chat = () => {
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, userMessage]);
+    // Update messages state with user message
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputMessage("");
     setLoading(true);
-    setError("");
     
     try {
-      // Get AI response
-      const response = await apiClient.aiAPI.chat({
-        message: inputMessage,
-        context: "BookHive user seeking assistance with books or the platform"
-      });
+      // Call backend AI API using the correct format
+      const response = await apiClient.post("/ai/chat", { message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.response,
+        text: response.data.reply,
         sender: "ai",
         timestamp: new Date()
       };
@@ -60,12 +57,11 @@ const Chat = () => {
       setMessages(prev => [...prev, aiMessage]);
     } catch (err) {
       console.error("Error sending message:", err);
-      setError("Failed to get response. Please try again.");
       
-      // Add error message to chat
+      // Create a fallback error message
       const errorMessage = {
         id: Date.now() + 1,
-        text: "Sorry, I encountered an error. Please try again.",
+        text: "I'm temporarily unavailable. Please try again in a moment.",
         sender: "ai",
         timestamp: new Date()
       };
@@ -111,8 +107,6 @@ const Chat = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
-
-        {error && <div className="error-message">{error}</div>}
 
         <form onSubmit={handleSendMessage} className="chat-input-form">
           <input

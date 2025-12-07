@@ -33,19 +33,17 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // CORS configuration
-const corsOptions = {
+app.use(cors({
   origin: [
-    'http://localhost:3000',
-    'http://localhost:5000',
-    'https://himanshu5683.github.io/bookhive',
-    'https://himanshu5683.github.io'
+    "http://localhost:3000",
+    "https://himanshu5683.github.io",
+    "https://himanshu5683.github.io/bookhive"
   ],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
+  methods: ["GET", "POST"],
+  credentials: true
+}));
 
 // Middleware
-app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,27 +65,22 @@ app.use('/api/twofactor', require('./routes/twoFactor'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', timestamp: new Date().toISOString() });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal Server Error',
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    message: 'BookHive Backend is running successfully'
   });
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+// Error logging middleware
+app.use((err, req, res, next) => {
+  console.error("SERVER ERROR:", err);
+  res.status(500).json({ reply: "Server crashed internally." });
 });
 
-// Initialize WebSocket service
+// Make WebSocket service available to routes
 const WebSocketService = require('./services/websocket');
 const wsService = new WebSocketService(server);
-
-// Make WebSocket service available to routes
 app.set('wsService', wsService);
 
 // Start server
