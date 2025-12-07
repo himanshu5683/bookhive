@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
-import apiClient from "../services/api";
+import { authAPI } from "../services/api";
+import { getToken, setToken, removeToken } from "../utils/auth";
 
 const AuthContext = createContext();
 
@@ -19,24 +20,24 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check if user is already logged in
-        const token = localStorage.getItem('authToken');
+        const token = getToken();
         console.log('Checking for existing auth token:', token ? 'Found' : 'Not found');
         if (token) {
             // Verify token with backend
-            apiClient.authAPI.verify()
+            authAPI.verify()
                 .then(response => {
                     console.log('Token verification response:', response);
-                    if (response.valid) {
-                        setUser(response.user);
-                        console.log('User authenticated:', response.user);
+                    if (response.data && response.data.valid) {
+                        setUser(response.data.user);
+                        console.log('User authenticated:', response.data.user);
                     } else {
                         console.log('Token invalid, removing from localStorage');
-                        localStorage.removeItem('authToken');
+                        removeToken();
                     }
                 })
                 .catch((error) => {
                     console.warn('Token verification failed:', error);
-                    localStorage.removeItem('authToken');
+                    removeToken();
                 })
                 .finally(() => {
                     setLoading(false);
@@ -50,13 +51,13 @@ export const AuthProvider = ({ children }) => {
     const signup = async (email, password, name) => {
         console.log('Attempting signup for:', email);
         try {
-            const response = await apiClient.authAPI.signup({ email, password, name });
-            console.log('Signup successful, received token:', response.token ? 'Yes' : 'No');
+            const response = await authAPI.signup({ email, password, name });
+            console.log('Signup successful, received token:', response.data.token ? 'Yes' : 'No');
             // Store token
-            localStorage.setItem('authToken', response.token);
-            setUser(response.user);
-            console.log('User set after signup:', response.user);
-            return response.user;
+            setToken(response.data.token);
+            setUser(response.data.user);
+            console.log('User set after signup:', response.data.user);
+            return response.data.user;
         } catch (error) {
             console.error('Signup failed:', error);
             throw error;
@@ -66,13 +67,13 @@ export const AuthProvider = ({ children }) => {
     const login = async (email, password) => {
         console.log('Attempting login for:', email);
         try {
-            const response = await apiClient.authAPI.login({ email, password });
-            console.log('Login successful, received token:', response.token ? 'Yes' : 'No');
+            const response = await authAPI.login({ email, password });
+            console.log('Login successful, received token:', response.data.token ? 'Yes' : 'No');
             // Store token
-            localStorage.setItem('authToken', response.token);
-            setUser(response.user);
-            console.log('User set after login:', response.user);
-            return response.user;
+            setToken(response.data.token);
+            setUser(response.data.user);
+            console.log('User set after login:', response.data.user);
+            return response.data.user;
         } catch (error) {
             console.error('Login failed:', error);
             throw error;
@@ -92,13 +93,13 @@ export const AuthProvider = ({ children }) => {
         try {
             // Logout from our backend
             try {
-                await apiClient.authAPI.logout();
+                await authAPI.logout();
             } catch (error) {
                 console.warn('Backend logout failed:', error);
             }
             
             // Clear token
-            localStorage.removeItem('authToken');
+            removeToken();
             setUser(null);
             console.log('User logged out and token cleared');
         } catch (error) {

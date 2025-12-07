@@ -1,9 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-router.post("/generate", async (req, res) => {
+// Use /chat endpoint to match frontend expectations
+router.post("/chat", async (req, res) => {
   try {
-    const userMessage = req.body.prompt;
+    const userMessage = req.body.message;
 
     if (!userMessage) {
       return res.status(400).json({ reply: "Please type a message." });

@@ -28,7 +28,7 @@ apiClient.interceptors.request.use(
 
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => response, // Return full response object, not just data
   (error) => {
     if (error.response) {
       // Server responded with error status
@@ -114,6 +114,7 @@ export const aiAPI = {
   sentimentAnalysis: (textData) => apiClient.post('/ai/sentiment-analysis', textData),
   eventSuggestions: (params) => apiClient.post('/ai/event-suggestions', params),
 };
+
 // ============ ACTIVITY ENDPOINTS ============
 
 export const activityAPI = {
@@ -147,5 +148,16 @@ export const feedbackAPI = {
   create: (feedbackData) => apiClient.post('/feedback', feedbackData),
 };
 
-// Export the axios instance as default
-export default apiClient;
+// Export all APIs as default
+export default {
+  authAPI,
+  resourcesAPI,
+  storiesAPI,
+  circlesAPI,
+  usersAPI,
+  aiAPI,
+  activityAPI,
+  twoFactorAPI,
+  requestsAPI,
+  feedbackAPI,
+};

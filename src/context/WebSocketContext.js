@@ -36,7 +36,7 @@ export const WebSocketProvider = ({ children }) => {
   const listenersRef = useRef({});
 
   // WebSocket URL - adjust based on environment
-  const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-backend-production.up.railway.app/ws";
+  const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-backend-production.up.railway.app";
   const wsUrl = `${WS_URL}/ws`;
 
   // Connect to WebSocket server
@@ -50,7 +50,7 @@ export const WebSocketProvider = ({ children }) => {
       const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
-        console.log('WebSocket connected');
+        console.log('WebSocket connected to:', wsUrl);
         setConnected(true);
         setReconnectAttempts(0);
         wsRef.current = websocket;
