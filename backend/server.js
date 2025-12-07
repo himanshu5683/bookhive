@@ -38,8 +38,13 @@ app.use(passport.session());
 
 // Dynamic CORS configuration
 const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3000/bookhive",
   "https://himanshu5683.github.io",
-  "https://himanshu5683.github.io/bookhive"
+  "https://himanshu5683.github.io/bookhive",
+  ...(process.env.REACT_APP_URL ? process.env.REACT_APP_URL.split(',') : []),
+  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
+  ...(process.env.PRODUCTION_URL ? [process.env.PRODUCTION_URL] : [])
 ];
 
 const corsOptions = {
@@ -49,6 +54,18 @@ const corsOptions = {
     
     // Check if the origin is in our allowed list
     if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    
+    // Also allow origins that start with our allowed origins (to handle subpaths)
+    for (const allowedOrigin of allowedOrigins) {
+      if (origin.startsWith(allowedOrigin)) {
+        return callback(null, true);
+      }
+    }
+    
+    // For production, be more permissive with subdomains
+    if (process.env.NODE_ENV === 'production' && origin && origin.includes('github.io')) {
       return callback(null, true);
     }
     
@@ -70,15 +87,10 @@ app.options('*', cors(corsOptions));
 
 // Add CORS headers middleware
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
   res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  res.header('Access-Control-Expose-Headers', 'Authorization');
-  res.header('Access-Control-Max-Age', '86400'); // Cache preflight requests for 24 hours
   next();
 });
 

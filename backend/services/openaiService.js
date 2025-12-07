@@ -1,12 +1,19 @@
 // backend/services/openaiService.js - OpenAI Service for BookHive Chatbot
 
-const OpenAI = require('openai');
-require('dotenv').config();
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai = null;
+
+// Only initialize if API key is provided
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-actual-openai-api-key-here') {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 /**
  * Generate AI response using OpenAI GPT
@@ -15,6 +22,11 @@ const openai = new OpenAI({
  * @returns {Promise<string>} - Generated response
  */
 const generateAIResponse = async (message, history = []) => {
+  // Check if OpenAI is initialized
+  if (!openai) {
+    throw new Error('OpenAI API key not configured');
+  }
+  
   try {
     // Prepare the conversation history for OpenAI
     const messages = [
@@ -67,6 +79,4 @@ const generateAIResponse = async (message, history = []) => {
   }
 };
 
-module.exports = {
-  generateAIResponse
-};
+export { generateAIResponse };

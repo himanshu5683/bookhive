@@ -1,8 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import AuthContext from "../../auth/AuthContext";
+import apiClient from "../../services/api";
 import "../../styles/AI.css";
 
 const AIDashboard = () => {
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("recommendations");
 
