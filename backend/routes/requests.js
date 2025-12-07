@@ -1,7 +1,7 @@
 // backend/routes/requests.js - Resource Requests Routes
 
 import express from 'express';
-import ResourceRequest from '../models/ResourceRequest';
+import ResourceRequest from '../models/ResourceRequest.js';
 
 const router = express.Router();
 

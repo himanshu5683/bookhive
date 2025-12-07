@@ -3,7 +3,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 // bcrypt is used in the User model for password hashing
-import User from '../models/User';
+import User from '../models/User.js';
 
 const router = express.Router();
 

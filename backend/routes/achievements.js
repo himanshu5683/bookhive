@@ -1,8 +1,8 @@
 // backend/routes/achievements.js - Achievements Routes
 
 import express from 'express';
-import Achievement from '../models/Achievement';
-import User from '../models/User';
+import Achievement from '../models/Achievement.js';
+import User from '../models/User.js';
 
 const router = express.Router();
 

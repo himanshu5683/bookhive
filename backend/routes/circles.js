@@ -1,7 +1,7 @@
 // backend/routes/circles.js - Study Circles Routes
 
 import express from 'express';
-import StudyCircle from '../models/StudyCircle';
+import StudyCircle from '../models/StudyCircle.js';
 
 const router = express.Router();
 

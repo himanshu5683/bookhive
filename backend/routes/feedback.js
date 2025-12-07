@@ -1,7 +1,7 @@
 // backend/routes/feedback.js - User Feedback Routes
 
 import express from 'express';
-import Feedback from '../models/Feedback';
+import Feedback from '../models/Feedback.js';
 
 const router = express.Router();
 

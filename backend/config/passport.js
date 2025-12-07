@@ -1,11 +1,11 @@
 // backend/config/passport.js - Passport OAuth Configuration
 
 import passport from 'passport';
-import GoogleStrategy from 'passport-google-oauth20';.Strategy;
-import GitHubStrategy from 'passport-github2';.Strategy;
-import FacebookStrategy from 'passport-facebook';.Strategy;
-import TwitterStrategy from 'passport-twitter';.Strategy;
-import User from '../models/User';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy as FacebookStrategy } from 'passport-facebook';
+import { Strategy as TwitterStrategy } from 'passport-twitter';
+import User from '../models/User.js';
 
 // Serialize user for session
 passport.serializeUser((user, done) => {

@@ -1,7 +1,7 @@
 // backend/routes/twoFactor.js - Two-Factor Authentication Routes
 
 import express from 'express';
-import User from '../models/User';
+import User from '../models/User.js';
 import qrcode from 'qrcode';
 
 const router = express.Router();

@@ -2,6 +2,8 @@
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import speakeasy from 'speakeasy';
+import crypto from 'crypto';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -124,7 +126,6 @@ userSchema.methods.updateTags = async function(newTags) {
 
 // Generate 2FA secret
 userSchema.methods.generateTwoFactorSecret = function() {
-  import speakeasy from 'speakeasy';
   const secret = speakeasy.generateSecret({
     name: `BookHive (${this.email})`,
     issuer: 'BookHive'
@@ -136,7 +137,6 @@ userSchema.methods.generateTwoFactorSecret = function() {
 
 // Verify 2FA token
 userSchema.methods.verifyTwoFactorToken = function(token) {
-  import speakeasy from 'speakeasy';
   return speakeasy.totp.verify({
     secret: this.twoFactorSecret,
     encoding: 'base32',
@@ -147,7 +147,6 @@ userSchema.methods.verifyTwoFactorToken = function(token) {
 
 // Generate recovery codes
 userSchema.methods.generateRecoveryCodes = function(count = 10) {
-  import crypto from 'crypto';
   const codes = [];
   
   for (let i = 0; i < count; i++) {

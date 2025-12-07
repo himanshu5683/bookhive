@@ -3,7 +3,7 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import passport from 'passport';
-import User from '../models/User';
+import User from '../models/User.js';
 
 const router = express.Router();
 

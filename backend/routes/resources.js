@@ -1,10 +1,11 @@
 // backend/routes/resources.js - Resources (Notes/PDFs) Routes
 
 import express from 'express';
-import Resource from '../models/Resource';
-import User from '../models/User';
-import Notification from '../models/Notification';
-import { generateResourceTags } from '../services/inbuiltAI'; // Import our inbuilt AI service
+import Resource from '../models/Resource.js';
+import User from '../models/User.js';
+import Notification from '../models/Notification.js';
+import inbuiltAIService from '../services/inbuiltAI.js'; // Import our inbuilt AI service
+const { generateResourceTags } = inbuiltAIService;
 require('dotenv').config();
 
 const router = express.Router();
