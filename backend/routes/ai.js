@@ -1,5 +1,13 @@
 const express = require("express");
+const { OpenAI } = require('openai');
+require('dotenv').config();
+
 const router = express.Router();
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Use /chat endpoint to match frontend expectations
 router.post("/chat", async (req, res) => {
@@ -13,9 +21,26 @@ router.post("/chat", async (req, res) => {
     // Ensure we always have a response
     let reply;
     try {
-      reply = generateAIResponse(userMessage);
+      // Call OpenAI API to generate a response
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "You are a helpful AI assistant for a book recommendation platform called BookHive. Help users find books, recommend titles based on genres, and assist with platform features. Keep responses concise and friendly."
+          },
+          {
+            role: "user",
+            content: userMessage
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7
+      });
+
+      reply = completion.choices[0].message.content.trim();
     } catch (err) {
-      console.error("AI Logic Error:", err);
+      console.error("OpenAI API Error:", err);
       reply = "I am here to help! How can I assist you?";
     }
 
@@ -26,33 +51,5 @@ router.post("/chat", async (req, res) => {
     return res.status(500).json({ reply: "I am here to help! How can I assist you?" });
   }
 });
-
-function generateAIResponse(message) {
-  try {
-    const m = message.toLowerCase().trim();
-
-    if (m.includes("hi") || m.includes("hello") || m.includes("hey")) {
-      return "Hi there! How can I help you today?";
-    }
-    if (m.includes("recommend")) {
-      return "Tell me what genre you like and I'll suggest a book!";
-    }
-    if (m.includes("help")) {
-      return "Sure! You can ask me about books, authors, genres, or BookHive features.";
-    }
-    if (m.includes("thank")) {
-      return "You're welcome! Is there anything else I can help with?";
-    }
-    if (m.includes("bye") || m.includes("goodbye")) {
-      return "Goodbye! Feel free to chat again anytime.";
-    }
-
-    return "I'm still learning, but I'll improve over time!";
-  } catch (error) {
-    console.error("Error in generateAIResponse:", error);
-    // This will be caught by the outer try-catch and fallback will be used
-    throw error;
-  }
-}
 
 module.exports = router;
