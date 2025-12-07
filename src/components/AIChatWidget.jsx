@@ -45,8 +45,8 @@ const AIChatWidget = () => {
     setLoading(true);
     
     try {
-      // Get AI response using the correct format
-      const response = await apiClient.post("/ai/chat", { message: inputMessage });
+      // Get AI response using the new format
+      const response = await apiClient.post("/ai/generate", { prompt: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {
@@ -63,7 +63,7 @@ const AIChatWidget = () => {
       // Add error message to chat
       const errorMessage = {
         id: Date.now() + 1,
-        text: "Sorry, I encountered an error. Please try again.",
+        text: "I'm temporarily unavailable. Please try again in a moment.",
         sender: "ai",
         timestamp: new Date()
       };

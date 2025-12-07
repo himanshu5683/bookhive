@@ -43,8 +43,8 @@ const Chat = () => {
     setLoading(true);
     
     try {
-      // Call backend AI API using the correct format
-      const response = await apiClient.post("/ai/chat", { message: inputMessage });
+      // Call backend AI API using the new format
+      const response = await apiClient.post("/ai/generate", { prompt: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {

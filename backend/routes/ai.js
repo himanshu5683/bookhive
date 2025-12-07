@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 
-router.post("/chat", async (req, res) => {
+router.post("/generate", async (req, res) => {
   try {
-    const userMessage = req.body.message;
+    const userMessage = req.body.prompt;
 
     if (!userMessage) {
       return res.status(400).json({ reply: "Please type a message." });
