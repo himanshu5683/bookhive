@@ -1,14 +1,14 @@
 // backend/server.js - Main Express Server Entry Point
 
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo').default;
-const passport = require('passport');
-const http = require('http');
-const path = require('path');
-const connectDB = require('./db/database');
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';.default;
+import passport from 'passport';
+import http from 'http';
+import path from 'path';
+import connectDB from './db/database';
 require('dotenv').config();
 
 // Database connection
@@ -136,7 +136,7 @@ app.use((err, req, res, next) => {
 });
 
 // Make WebSocket service available to routes
-const WebSocketService = require('./services/websocket');
+import WebSocketService from './services/websocket';
 const wsService = new WebSocketService(server);
 app.set('wsService', wsService);
 

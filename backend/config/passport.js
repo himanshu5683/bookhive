@@ -1,11 +1,11 @@
 // backend/config/passport.js - Passport OAuth Configuration
 
-const passport = require('passport');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const GitHubStrategy = require('passport-github2').Strategy;
-const FacebookStrategy = require('passport-facebook').Strategy;
-const TwitterStrategy = require('passport-twitter').Strategy;
-const User = require('../models/User');
+import passport from 'passport';
+import GoogleStrategy from 'passport-google-oauth20';.Strategy;
+import GitHubStrategy from 'passport-github2';.Strategy;
+import FacebookStrategy from 'passport-facebook';.Strategy;
+import TwitterStrategy from 'passport-twitter';.Strategy;
+import User from '../models/User';
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
@@ -81,4 +81,4 @@ passport.use(new FacebookStrategy({
 //   }
 // }));
 
-module.exports = passport;
+export default passport;

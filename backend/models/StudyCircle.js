@@ -1,6 +1,6 @@
 // backend/models/StudyCircle.js - Study Circle Schema
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const studyCircleSchema = new mongoose.Schema({
   name: {
@@ -43,4 +43,4 @@ const studyCircleSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('StudyCircle', studyCircleSchema);
+export default mongoose.model('StudyCircle', studyCircleSchema);

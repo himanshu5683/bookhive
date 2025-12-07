@@ -1,13 +1,13 @@
 // backend/routes/activity.js - User Activity Logging Routes
 
-const express = require('express');
-const User = require('../models/User.js');
-const Resource = require('../models/Resource.js');
-const Notification = require('../models/Notification.js');
-const Achievement = require('../models/Achievement.js');
-const Activity = require('../models/Activity.js');
-const OpenAI = require('openai');
-const dotenv = require('dotenv');
+import express from 'express';
+import User from '../models/User.js';
+import Resource from '../models/Resource.js';
+import Notification from '../models/Notification.js';
+import Achievement from '../models/Achievement.js';
+import Activity from '../models/Activity.js';
+import OpenAI from 'openai';
+import dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -254,4 +254,4 @@ async function checkAchievements(userId, action) {
   }
 }
 
-module.exports = router;
+export default router;

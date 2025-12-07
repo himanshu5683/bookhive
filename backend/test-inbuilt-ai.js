@@ -1,5 +1,5 @@
 // Test script for inbuilt AI service
-const { generateInbuiltAIResponse } = require('./services/inbuiltAI');
+import { generateInbuiltAIResponse } from './services/inbuiltAI';
 
 console.log('Testing inbuilt AI service...\n');
 

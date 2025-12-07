@@ -1,9 +1,9 @@
 // backend/routes/auth.js - Authentication Routes
 
-const express = require('express');
-const jwt = require('jsonwebtoken');
+import express from 'express';
+import jwt from 'jsonwebtoken';
 // bcrypt is used in the User model for password hashing
-const User = require('../models/User');
+import User from '../models/User';
 
 const router = express.Router();
 
@@ -189,4 +189,4 @@ router.get('/verify', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

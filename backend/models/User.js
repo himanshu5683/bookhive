@@ -1,7 +1,7 @@
 // backend/models/User.js - User Schema
 
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -124,7 +124,7 @@ userSchema.methods.updateTags = async function(newTags) {
 
 // Generate 2FA secret
 userSchema.methods.generateTwoFactorSecret = function() {
-  const speakeasy = require('speakeasy');
+  import speakeasy from 'speakeasy';
   const secret = speakeasy.generateSecret({
     name: `BookHive (${this.email})`,
     issuer: 'BookHive'
@@ -136,7 +136,7 @@ userSchema.methods.generateTwoFactorSecret = function() {
 
 // Verify 2FA token
 userSchema.methods.verifyTwoFactorToken = function(token) {
-  const speakeasy = require('speakeasy');
+  import speakeasy from 'speakeasy';
   return speakeasy.totp.verify({
     secret: this.twoFactorSecret,
     encoding: 'base32',
@@ -147,7 +147,7 @@ userSchema.methods.verifyTwoFactorToken = function(token) {
 
 // Generate recovery codes
 userSchema.methods.generateRecoveryCodes = function(count = 10) {
-  const crypto = require('crypto');
+  import crypto from 'crypto';
   const codes = [];
   
   for (let i = 0; i < count; i++) {
@@ -170,4 +170,4 @@ userSchema.methods.verifyRecoveryCode = function(code) {
   return false;
 };
 
-module.exports = mongoose.model('User', userSchema);
+export default mongoose.model('User', userSchema);

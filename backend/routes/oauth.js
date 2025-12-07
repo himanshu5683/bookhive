@@ -1,9 +1,9 @@
 // backend/routes/oauth.js - OAuth Authentication Routes
 
-const express = require('express');
-const jwt = require('jsonwebtoken');
-const passport = require('passport');
-const User = require('../models/User');
+import express from 'express';
+import jwt from 'jsonwebtoken';
+import passport from 'passport';
+import User from '../models/User';
 
 const router = express.Router();
 
@@ -128,4 +128,4 @@ router.get('/twitter/callback',
   }
 );
 
-module.exports = router;
+export default router;

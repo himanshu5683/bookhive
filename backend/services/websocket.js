@@ -1,6 +1,6 @@
 // backend/services/websocket.js - WebSocket Service for Real-Time Updates
 
-const WebSocket = require('ws');
+import WebSocket from 'ws';
 
 class WebSocketService {
   constructor(server) {
@@ -214,4 +214,4 @@ class WebSocketService {
   }
 }
 
-module.exports = WebSocketService;
+export default WebSocketService;

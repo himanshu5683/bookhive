@@ -1,10 +1,10 @@
 // backend/routes/resources.js - Resources (Notes/PDFs) Routes
 
-const express = require('express');
-const Resource = require('../models/Resource');
-const User = require('../models/User');
-const Notification = require('../models/Notification');
-const { generateResourceTags } = require('../services/inbuiltAI'); // Import our inbuilt AI service
+import express from 'express';
+import Resource from '../models/Resource';
+import User from '../models/User';
+import Notification from '../models/Notification';
+import { generateResourceTags } from '../services/inbuiltAI'; // Import our inbuilt AI service
 require('dotenv').config();
 
 const router = express.Router();
@@ -327,4 +327,4 @@ router.post('/:id/rate', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

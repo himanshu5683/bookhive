@@ -1,8 +1,8 @@
 // backend/routes/achievements.js - Achievements Routes
 
-const express = require('express');
-const Achievement = require('../models/Achievement');
-const User = require('../models/User');
+import express from 'express';
+import Achievement from '../models/Achievement';
+import User from '../models/User';
 
 const router = express.Router();
 
@@ -178,4 +178,4 @@ router.get('/types', (req, res) => {
   });
 });
 
-module.exports = router;
+export default router;
