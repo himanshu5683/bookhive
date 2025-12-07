@@ -1,6 +1,6 @@
 // backend/models/Achievement.js - Achievement Schema
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const achievementSchema = new mongoose.Schema({
   userId: {
@@ -43,4 +43,4 @@ const achievementSchema = new mongoose.Schema({
 // Index for efficient querying
 achievementSchema.index({ userId: 1, type: 1 });
 
-module.exports = mongoose.model('Achievement', achievementSchema);
+export default mongoose.model('Achievement', achievementSchema);

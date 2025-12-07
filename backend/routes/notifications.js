@@ -1,7 +1,7 @@
 // backend/routes/notifications.js - Notifications Routes
 
-const express = require('express');
-const Notification = require('../models/Notification');
+import express from 'express';
+import Notification from '../models/Notification.js';
 
 const router = express.Router();
 
@@ -154,4 +154,4 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

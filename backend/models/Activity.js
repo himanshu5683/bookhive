@@ -1,6 +1,6 @@
 // backend/models/Activity.js - Activity Logging Model
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const activitySchema = new mongoose.Schema({
   userId: {
@@ -67,4 +67,4 @@ const activitySchema = new mongoose.Schema({
 activitySchema.index({ userId: 1, createdAt: -1 });
 activitySchema.index({ activityType: 1, createdAt: -1 });
 
-module.exports = mongoose.model('Activity', activitySchema);
+export default mongoose.model('Activity', activitySchema);

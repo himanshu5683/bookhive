@@ -1,6 +1,6 @@
 // backend/models/Resource.js - Resource Schema (Notes/PDFs)
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const resourceSchema = new mongoose.Schema({
   title: {
@@ -126,4 +126,4 @@ resourceSchema.methods.addRating = async function(userId, rating, review = '') {
   return await this.save();
 };
 
-module.exports = mongoose.model('Resource', resourceSchema);
+export default mongoose.model('Resource', resourceSchema);

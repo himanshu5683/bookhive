@@ -1,7 +1,7 @@
 // backend/routes/requests.js - Resource Requests Routes
 
-const express = require('express');
-const ResourceRequest = require('../models/ResourceRequest');
+import express from 'express';
+import ResourceRequest from '../models/ResourceRequest.js';
 
 const router = express.Router();
 
@@ -108,4 +108,4 @@ router.put('/:id/status', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

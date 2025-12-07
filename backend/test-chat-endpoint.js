@@ -1,6 +1,6 @@
 // Test script for the new chat endpoint
-const express = require('express');
-const axios = require('axios');
+import express from 'express';
+import axios from 'axios';
 
 async function testChatEndpoint() {
   console.log('Testing new AI chat endpoint...\n');

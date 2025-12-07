@@ -1,7 +1,7 @@
 // backend/routes/feedback.js - User Feedback Routes
 
-const express = require('express');
-const Feedback = require('../models/Feedback');
+import express from 'express';
+import Feedback from '../models/Feedback.js';
 
 const router = express.Router();
 
@@ -73,4 +73,4 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

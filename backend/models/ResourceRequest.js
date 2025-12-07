@@ -1,6 +1,6 @@
 // backend/models/ResourceRequest.js - Resource Request Schema
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const resourceRequestSchema = new mongoose.Schema({
   title: {
@@ -46,4 +46,4 @@ const resourceRequestSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('ResourceRequest', resourceRequestSchema);
+export default mongoose.model('ResourceRequest', resourceRequestSchema);

@@ -1,5 +1,5 @@
 // Test script for AI endpoint
-const axios = require('axios');
+import axios from 'axios';
 
 async function testAIEndpoint() {
   console.log('Testing AI endpoint...\n');

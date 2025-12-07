@@ -1,20 +1,22 @@
 // backend/server.js - Main Express Server Entry Point
 
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const passport = require('passport');
-const http = require('http');
-const path = require('path');
-const connectDB = require('./db/database');
-require('dotenv').config();
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+import passport from 'passport';
+import http from 'http';
+import path from 'path';
+import connectDB from './db/database.js';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Database connection
 connectDB();
 
 // Passport configuration
-require('./config/passport');
+import './config/passport.js';
 
 const app = express();
 const server = http.createServer(app);
@@ -24,6 +26,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'bookhive_secret_key',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/bookhive',
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60 // 24 hours
+  }),
   cookie: {
     secure: true, // Always use secure cookies (HTTPS)
     httpOnly: true, // Prevent XSS attacks
@@ -99,20 +106,37 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/oauth', require('./routes/oauth')); // OAuth routes
-app.use('/api/resources', require('./routes/resources'));
-app.use('/api/stories', require('./routes/stories'));
-app.use('/api/circles', require('./routes/circles'));
-app.use('/api/users', require('./routes/users'));
-app.use('/api/ai', require('./routes/ai'));
-app.use('/api/activity', require('./routes/activity'));
-app.use('/api/requests', require('./routes/requests'));
-app.use('/api/feedback', require('./routes/feedback'));
-app.use('/api/notifications', require('./routes/notifications'));
-app.use('/api/achievements', require('./routes/achievements'));
-app.use('/api/events', require('./routes/events'));
-app.use('/api/twofactor', require('./routes/twoFactor'));
+// Import API routes
+import authRoutes from './routes/auth.js';
+import oauthRoutes from './routes/oauth.js';
+import resourcesRoutes from './routes/resources.js';
+import storiesRoutes from './routes/stories.js';
+import circlesRoutes from './routes/circles.js';
+import usersRoutes from './routes/users.js';
+import aiRoutes from './routes/ai.js';
+import activityRoutes from './routes/activity.js';
+import requestsRoutes from './routes/requests.js';
+import feedbackRoutes from './routes/feedback.js';
+import notificationsRoutes from './routes/notifications.js';
+import achievementsRoutes from './routes/achievements.js';
+import eventsRoutes from './routes/events.js';
+import twoFactorRoutes from './routes/twoFactor.js';
+
+// Mount API routes
+app.use('/api/auth', authRoutes);
+app.use('/api/oauth', oauthRoutes); // OAuth routes
+app.use('/api/resources', resourcesRoutes);
+app.use('/api/stories', storiesRoutes);
+app.use('/api/circles', circlesRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/activity', activityRoutes);
+app.use('/api/requests', requestsRoutes);
+app.use('/api/feedback', feedbackRoutes);
+app.use('/api/notifications', notificationsRoutes);
+app.use('/api/achievements', achievementsRoutes);
+app.use('/api/events', eventsRoutes);
+app.use('/api/twofactor', twoFactorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -130,7 +154,7 @@ app.use((err, req, res, next) => {
 });
 
 // Make WebSocket service available to routes
-const WebSocketService = require('./services/websocket');
+import WebSocketService from './services/websocket.js';
 const wsService = new WebSocketService(server);
 app.set('wsService', wsService);
 

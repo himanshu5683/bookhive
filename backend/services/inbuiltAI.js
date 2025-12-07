@@ -189,7 +189,7 @@ const generateResourceTags = (title, description, category, type) => {
   }
 };
 
-module.exports = {
+export default {
   generateInbuiltAIResponse,
   generateResourceTags
 };

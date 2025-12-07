@@ -79,4 +79,4 @@ const generateAIResponse = async (message, history = []) => {
   }
 };
 
-export { generateAIResponse };
+export default { generateAIResponse };

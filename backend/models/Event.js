@@ -1,6 +1,6 @@
 // backend/models/Event.js - Event Schema for Live Events/Webinars
 
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const eventSchema = new mongoose.Schema({
   title: {
@@ -85,4 +85,4 @@ eventSchema.index({ startDate: 1, status: 1 });
 eventSchema.index({ hostId: 1 });
 eventSchema.index({ category: 1 });
 
-module.exports = mongoose.model('Event', eventSchema);
+export default mongoose.model('Event', eventSchema);

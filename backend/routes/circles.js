@@ -1,7 +1,7 @@
 // backend/routes/circles.js - Study Circles Routes
 
-const express = require('express');
-const StudyCircle = require('../models/StudyCircle');
+import express from 'express';
+import StudyCircle from '../models/StudyCircle.js';
 
 const router = express.Router();
 
@@ -225,4 +225,4 @@ router.post('/:circleId/thread/:threadId/reply', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

@@ -1,8 +1,8 @@
 // backend/routes/twoFactor.js - Two-Factor Authentication Routes
 
-const express = require('express');
-const User = require('../models/User');
-const qrcode = require('qrcode');
+import express from 'express';
+import User from '../models/User.js';
+import qrcode from 'qrcode';
 
 const router = express.Router();
 
@@ -183,4 +183,4 @@ router.get('/status/:userId', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

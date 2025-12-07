@@ -1,7 +1,7 @@
 // backend/routes/users.js - User Management Routes
 
-const express = require('express');
-const User = require('../models/User');
+import express from 'express';
+import User from '../models/User.js';
 
 const router = express.Router();
 
@@ -350,4 +350,4 @@ router.put('/:id/tags', async (req, res) => {
   }
 });
 
-module.exports = router;
+export default router;

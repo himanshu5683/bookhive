@@ -1,6 +1,8 @@
-import express from "express";
-import { generateInbuiltAIResponse } from "../services/inbuiltAI.js";
-import { generateAIResponse } from "../services/openaiService.js";
+import express from 'express';
+import inbuiltAIService from '../services/inbuiltAI.js';
+const { generateInbuiltAIResponse } = inbuiltAIService;
+import openaiService from '../services/openaiService.js';
+const { generateAIResponse } = openaiService;
 
 // Store conversation history in memory (in production, you might want to use a database)
 const conversationHistories = new Map();
