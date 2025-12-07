@@ -23,47 +23,59 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // Google OAuth Strategy
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: process.env.GOOGLE_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const user = await findOrCreateUser(profile, 'google');
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const user = await findOrCreateUser(profile, 'google');
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  }));
+} else {
+  console.log('Google OAuth not configured (missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET)');
+}
 
 // GitHub OAuth Strategy
-passport.use(new GitHubStrategy({
-  clientID: process.env.GITHUB_CLIENT_ID,
-  clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  callbackURL: process.env.GITHUB_CALLBACK_URL
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const user = await findOrCreateUser(profile, 'github');
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+if (process.env.GITHUB_CLIENT_ID && process.env.GITHUB_CLIENT_SECRET) {
+  passport.use(new GitHubStrategy({
+    clientID: process.env.GITHUB_CLIENT_ID,
+    clientSecret: process.env.GITHUB_CLIENT_SECRET,
+    callbackURL: process.env.GITHUB_CALLBACK_URL
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const user = await findOrCreateUser(profile, 'github');
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  }));
+} else {
+  console.log('GitHub OAuth not configured (missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET)');
+}
 
 // Facebook OAuth Strategy
-passport.use(new FacebookStrategy({
-  clientID: process.env.FACEBOOK_APP_ID,
-  clientSecret: process.env.FACEBOOK_APP_SECRET,
-  callbackURL: process.env.FACEBOOK_CALLBACK_URL,
-  profileFields: ['id', 'emails', 'name', 'picture.type(large)']
-}, async (accessToken, refreshToken, profile, done) => {
-  try {
-    const user = await findOrCreateUser(profile, 'facebook');
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+  passport.use(new FacebookStrategy({
+    clientID: process.env.FACEBOOK_APP_ID,
+    clientSecret: process.env.FACEBOOK_APP_SECRET,
+    callbackURL: process.env.FACEBOOK_CALLBACK_URL,
+    profileFields: ['id', 'emails', 'name', 'picture.type(large)']
+  }, async (accessToken, refreshToken, profile, done) => {
+    try {
+      const user = await findOrCreateUser(profile, 'facebook');
+      return done(null, user);
+    } catch (error) {
+      return done(error, null);
+    }
+  }));
+} else {
+  console.log('Facebook OAuth not configured (missing FACEBOOK_APP_ID or FACEBOOK_APP_SECRET)');
+}
 
 // Twitter OAuth Strategy
 // Commented out temporarily to avoid startup issues

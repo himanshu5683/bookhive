@@ -6,7 +6,8 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import inbuiltAIService from '../services/inbuiltAI.js'; // Import our inbuilt AI service
 const { generateResourceTags } = inbuiltAIService;
-require('dotenv').config();
+import dotenv from 'dotenv';
+dotenv.config();
 
 const router = express.Router();
 

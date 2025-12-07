@@ -1,10 +1,10 @@
 // backend/services/websocket.js - WebSocket Service for Real-Time Updates
 
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 
 class WebSocketService {
   constructor(server) {
-    this.wss = new WebSocket.Server({
+    this.wss = new WebSocketServer({
       server,
       path: "/ws"
     });
