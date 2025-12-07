@@ -15,14 +15,9 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    // Only add auth token to non-auth routes
-    const isAuthRoute = config.url.includes('/auth/');
-    
-    if (!isAuthRoute) {
-      const token = getToken();
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -40,10 +35,10 @@ apiClient.interceptors.response.use(
       const errorMessage = error.response.data?.message || `API Error: ${error.response.status}`;
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
-      // Request was made but no response received
-      return Promise.reject(new Error('Network error - please check your connection'));
+      // Network error
+      return Promise.reject(new Error('Network error. Please check your connection.'));
     } else {
-      // Something else happened
+      // Other error
       return Promise.reject(new Error('An unexpected error occurred'));
     }
   }
