@@ -36,9 +36,8 @@ export const WebSocketProvider = ({ children }) => {
   const listenersRef = useRef({});
 
   // WebSocket URL - adjust based on environment
-  const wsUrl = process.env.REACT_APP_WS_URL || 
-    (window.location.protocol === 'https:' ? 'wss://' : 'ws://') + 
-    window.location.host.replace(':3000', ':5000');
+  const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-backend-production.up.railway.app/ws";
+  const wsUrl = `${WS_URL}/ws`;
 
   // Connect to WebSocket server
   const connect = useCallback(() => {
@@ -48,7 +47,7 @@ export const WebSocketProvider = ({ children }) => {
     }
 
     try {
-      const websocket = new WebSocket(`${wsUrl.replace('http', 'ws')}/ws`);
+      const websocket = new WebSocket(wsUrl);
       
       websocket.onopen = () => {
         console.log('WebSocket connected');

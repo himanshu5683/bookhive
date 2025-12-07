@@ -4,7 +4,10 @@ const WebSocket = require('ws');
 
 class WebSocketService {
   constructor(server) {
-    this.wss = new WebSocket.Server({ server });
+    this.wss = new WebSocket.Server({
+      server,
+      path: "/ws"
+    });
     this.clients = new Map(); // Map userId to WebSocket connections
     this.initialize();
   }

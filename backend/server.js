@@ -34,21 +34,20 @@ app.use(passport.session());
 
 // Dynamic CORS configuration
 const allowedOrigins = [
-  'http://localhost:3000',
+  "http://localhost:3000",
   process.env.FRONTEND_URL
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
-      return callback(new Error(msg), false);
+    if (!allowedOrigins.includes(origin)) {
+      return callback(new Error("Blocked by CORS: " + origin), false);
     }
     return callback(null, true);
   },
-  methods: ["GET", "POST"],
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE"]
 }));
 
 // Middleware
