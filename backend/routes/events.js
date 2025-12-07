@@ -1,11 +1,11 @@
 // backend/routes/events.js - Events Routes for Live Events/Webinars
 
-import express from 'express';
-import Event from '../models/Event.js';
-import User from '../models/User.js';
-import Notification from '../models/Notification.js';
-import OpenAI from 'openai';
-import dotenv from 'dotenv';
+const express = require('express');
+const Event = require('../models/Event.js');
+const User = require('../models/User.js');
+const Notification = require('../models/Notification.js');
+const OpenAI = require('openai');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -322,4 +322,4 @@ router.post('/:id/suggest', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

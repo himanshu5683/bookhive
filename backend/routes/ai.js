@@ -1,6 +1,6 @@
-import express from "express";
-import { generateInbuiltAIResponse } from "../services/inbuiltAI.js";
-import { generateAIResponse } from "../services/openaiService.js";
+const express = require("express");
+const { generateInbuiltAIResponse } = require("../services/inbuiltAI.js");
+const { generateAIResponse } = require("../services/openaiService.js");
 
 // Store conversation history in memory (in production, you might want to use a database)
 const conversationHistories = new Map();
@@ -60,4 +60,4 @@ router.post("/chat", async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;

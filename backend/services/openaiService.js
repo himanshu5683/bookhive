@@ -1,7 +1,7 @@
 // backend/services/openaiService.js - OpenAI Service for BookHive Chatbot
 
-import OpenAI from 'openai';
-import dotenv from 'dotenv';
+const OpenAI = require('openai');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -79,4 +79,4 @@ const generateAIResponse = async (message, history = []) => {
   }
 };
 
-export { generateAIResponse };
+module.exports = { generateAIResponse };

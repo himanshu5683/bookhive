@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const passport = require('passport');
 const http = require('http');
 const path = require('path');
@@ -24,6 +25,11 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'bookhive_secret_key',
   resave: false,
   saveUninitialized: false,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/bookhive',
+    collectionName: 'sessions',
+    ttl: 24 * 60 * 60 // 24 hours
+  }),
   cookie: {
     secure: true, // Always use secure cookies (HTTPS)
     httpOnly: true, // Prevent XSS attacks

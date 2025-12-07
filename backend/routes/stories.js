@@ -1,10 +1,10 @@
 // backend/routes/stories.js - Story Sharing Routes
 
-import express from 'express';
-import Story from '../models/Story.js';
-import User from '../models/User.js';
-import OpenAI from 'openai';
-import dotenv from 'dotenv';
+const express = require('express');
+const Story = require('../models/Story.js');
+const User = require('../models/User.js');
+const OpenAI = require('openai');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
@@ -298,4 +298,4 @@ router.post('/:id/comment', async (req, res) => {
   }
 });
 
-export default router;
+module.exports = router;
