@@ -10,6 +10,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // Enable sending cookies with requests
 });
 
 // Request interceptor to add auth token
@@ -33,13 +34,36 @@ apiClient.interceptors.response.use(
     if (error.response) {
       // Server responded with error status
       const errorMessage = error.response.data?.message || `API Error: ${error.response.status}`;
-      return Promise.reject(new Error(errorMessage));
+      const errorDetails = {
+        message: errorMessage,
+        status: error.response.status,
+        data: error.response.data,
+        url: error.config?.url,
+        method: error.config?.method
+      };
+      console.error('API Error:', errorDetails);
+      return Promise.reject(new Error(JSON.stringify(errorDetails)));
     } else if (error.request) {
-      // Network error
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      // Network error - provide more detailed information
+      const networkError = {
+        message: 'Network error. Please check your connection and try again.',
+        request: error.request,
+        config: error.config,
+        url: error.config?.url,
+        method: error.config?.method,
+        code: error.code,
+        syscall: error.syscall
+      };
+      console.error('Network Error:', networkError);
+      return Promise.reject(new Error(JSON.stringify(networkError)));
     } else {
       // Other error
-      return Promise.reject(new Error('An unexpected error occurred'));
+      const otherError = {
+        message: 'An unexpected error occurred: ' + error.message,
+        originalError: error
+      };
+      console.error('Other Error:', otherError);
+      return Promise.reject(new Error(JSON.stringify(otherError)));
     }
   }
 );
@@ -47,10 +71,10 @@ apiClient.interceptors.response.use(
 // ============ AUTH ENDPOINTS ============
 
 export const authAPI = {
-  signup: (userData) => apiClient.post('/auth/signup', userData),
-  login: (credentials) => apiClient.post('/auth/login', credentials),
-  logout: () => apiClient.post('/auth/logout'),
-  verify: () => apiClient.get('/auth/verify'),
+  signup: (userData) => apiClient.post('/auth/signup', userData, { withCredentials: true }),
+  login: (credentials) => apiClient.post('/auth/login', credentials, { withCredentials: true }),
+  logout: () => apiClient.post('/auth/logout', {}, { withCredentials: true }),
+  verify: () => apiClient.get('/auth/verify', { withCredentials: true }),
 };
 
 // ============ RESOURCES ENDPOINTS ============

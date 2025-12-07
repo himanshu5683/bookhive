@@ -54,15 +54,28 @@ const Login = () => {
     } catch (err) {
       console.error('Login error:', err);
       // Handle backend API errors
-      const errorMessage = err.message || "Failed to log in";
-      if (errorMessage.includes("Invalid credentials")) {
-        setError("Invalid email or password");
-      } else if (errorMessage.includes("not found")) {
-        setError("No account found with this email");
-      } else if (errorMessage.includes("Network")) {
-        setError("Network error. Please check your connection.");
-      } else {
-        setError(errorMessage);
+      try {
+        // Try to parse detailed error message
+        const errorObj = JSON.parse(err.message);
+        if (errorObj.status) {
+          setError(`Login failed (${errorObj.status}): ${errorObj.message}`);
+        } else if (errorObj.message) {
+          setError(errorObj.message);
+        } else {
+          setError("Failed to log in: " + err.message);
+        }
+      } catch (parseErr) {
+        // If parsing fails, use original message
+        const errorMessage = err.message || "Failed to log in";
+        if (errorMessage.includes("Invalid credentials")) {
+          setError("Invalid email or password");
+        } else if (errorMessage.includes("not found")) {
+          setError("No account found with this email");
+        } else if (errorMessage.includes("Network")) {
+          setError("Network error. Please check your connection.");
+        } else {
+          setError(errorMessage);
+        }
       }
     } finally {
       setLoading(false);

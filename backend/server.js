@@ -25,7 +25,9 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Always use secure cookies (HTTPS)
+    httpOnly: true, // Prevent XSS attacks
+    sameSite: 'none', // Allow cross-site requests
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -36,12 +38,11 @@ app.use(passport.session());
 
 // Dynamic CORS configuration
 const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3000/bookhive",
-  ...(process.env.REACT_APP_URL ? process.env.REACT_APP_URL.split(',') : [])
+  "https://himanshu5683.github.io",
+  "https://himanshu5683.github.io/bookhive"
 ];
 
-app.use(cors({
+const corsOptions = {
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
@@ -51,19 +52,35 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // Also allow origins that start with our allowed origins (to handle subpaths)
-    for (const allowedOrigin of allowedOrigins) {
-      if (origin.startsWith(allowedOrigin)) {
-        return callback(null, true);
-      }
-    }
-    
     // Block the request if the origin is not allowed
+    console.log("Blocked by CORS: " + origin);
+    console.log("Allowed origins: ", allowedOrigins);
     return callback(new Error("Blocked by CORS: " + origin), false);
   },
   credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE"]
-}));
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  exposedHeaders: ['Authorization'],
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
+app.options('*', cors(corsOptions));
+
+// Add CORS headers middleware
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (allowedOrigins.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Access-Control-Expose-Headers', 'Authorization');
+  res.header('Access-Control-Max-Age', '86400'); // Cache preflight requests for 24 hours
+  next();
+});
 
 // Middleware
 app.use(express.json());

@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 
 const LanguageSelector = () => {
   const { language, languages, changeLanguage } = useLanguage();
-  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 

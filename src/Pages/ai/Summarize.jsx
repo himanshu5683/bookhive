@@ -1,11 +1,9 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import AuthContext from "../../auth/AuthContext";
 import apiClient from "../../services/api";
 import "../../styles/AI.css";
 
 const Summarize = () => {
-  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
   const [summary, setSummary] = useState("");

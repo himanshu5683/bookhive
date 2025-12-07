@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import AuthContext from "../auth/AuthContext";
-import apiClient, { resourcesAPI, activityAPI } from "../services/api";
+import { resourcesAPI, activityAPI } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/Upload.css";
 

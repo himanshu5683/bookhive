@@ -70,17 +70,30 @@ const Signup = () => {
     } catch (err) {
       console.error('Signup error:', err);
       // Handle backend API errors
-      const errorMessage = err.message || "Failed to create account";
-      if (errorMessage.includes("already exists")) {
-        setError("Email is already registered");
-      } else if (errorMessage.includes("Invalid email") || errorMessage.includes("Valid email")) {
-        setError("Please enter a valid email address");
-      } else if (errorMessage.includes("Password") || errorMessage.includes("6 characters")) {
-        setError("Password must be at least 6 characters");
-      } else if (errorMessage.includes("Network")) {
-        setError("Network error. Please check your connection.");
-      } else {
-        setError(errorMessage);
+      try {
+        // Try to parse detailed error message
+        const errorObj = JSON.parse(err.message);
+        if (errorObj.status) {
+          setError(`Signup failed (${errorObj.status}): ${errorObj.message}`);
+        } else if (errorObj.message) {
+          setError(errorObj.message);
+        } else {
+          setError("Failed to create account: " + err.message);
+        }
+      } catch (parseErr) {
+        // If parsing fails, use original message
+        const errorMessage = err.message || "Failed to create account";
+        if (errorMessage.includes("already exists")) {
+          setError("Email is already registered");
+        } else if (errorMessage.includes("Invalid email") || errorMessage.includes("Valid email")) {
+          setError("Please enter a valid email address");
+        } else if (errorMessage.includes("Password") || errorMessage.includes("6 characters")) {
+          setError("Password must be at least 6 characters");
+        } else if (errorMessage.includes("Network")) {
+          setError("Network error. Please check your connection.");
+        } else {
+          setError(errorMessage);
+        }
       }
     } finally {
       setLoading(false);
