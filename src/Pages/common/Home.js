@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import "../../styles/Home.css";
 import ResourceCard from "./ResourceCard";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import apiClient, { resourcesAPI, storiesAPI } from "../../services/api";
 
 const Home = () => {
     const { user } = useContext(AuthContext);
@@ -14,41 +14,40 @@ const Home = () => {
     const [popularCircles, setPopularCircles] = useState([]);
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
-        resources: 0,
-        users: 0,
-        circles: 0
+        totalResources: 0,
+        totalUsers: 0,
+        totalDownloads: 0
     });
 
-    // Fetch data from backend
-    useEffect(() => {
-        const fetchHomeData = async () => {
+    // Fetch home page data
+    const fetchHomeData = async () => {
+        try {
             setLoading(true);
             try {
                 // Fetch trending resources
-                const resourcesRes = await apiClient.resourcesAPI.getAll({ limit: 6, sort: 'rating' });
+                const resourcesRes = await resourcesAPI.getAll({ limit: 6, sort: 'rating' });
                 setTrendingResources(resourcesRes.resources || []);
                 
                 // Fetch latest stories
-                const storiesRes = await apiClient.storiesAPI.getAll({ limit: 4 });
+                const storiesRes = await storiesAPI.getAll({ limit: 4 });
                 setLatestStories(storiesRes.stories || []);
                 
                 // Fetch popular circles
-                const circlesRes = await apiClient.circlesAPI.getAll({ limit: 4 });
-                setPopularCircles(circlesRes.circles || []);
+                // const circlesRes = await apiClient.get('/circles/popular?limit=4');
+                // setPopularCircles(circlesRes.data.circles || []);
                 
-                // Fetch stats (mock data for now)
-                setStats({
-                    resources: 1247,
-                    users: 892,
-                    circles: 43
-                });
-            } catch (error) {
-                console.error("Error fetching home data:", error);
-            } finally {
-                setLoading(false);
+                // Fetch stats
+                // const statsRes = await apiClient.get('/stats/home');
+                // setStats(statsRes.data);
+            } catch (err) {
+                console.error('Error fetching home data:', err);
             }
-        };
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchHomeData();
     }, []);
 
@@ -62,16 +61,16 @@ const Home = () => {
                         <p className="hero-subtitle">Connect, Share, and Learn with Fellow Students</p>
                         <div className="hero-stats">
                             <div className="stat-item">
-                                <span className="stat-number">{stats.resources.toLocaleString()}</span>
+                                <span className="stat-number">{stats.totalResources.toLocaleString()}</span>
                                 <span className="stat-label">Resources</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-number">{stats.users.toLocaleString()}</span>
+                                <span className="stat-number">{stats.totalUsers.toLocaleString()}</span>
                                 <span className="stat-label">Learners</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-number">{stats.circles}</span>
-                                <span className="stat-label">Study Groups</span>
+                                <span className="stat-number">{stats.totalDownloads.toLocaleString()}</span>
+                                <span className="stat-label">Downloads</span>
                             </div>
                         </div>
                     </div>

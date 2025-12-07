@@ -4,33 +4,25 @@ const express = require('express');
 const Resource = require('../models/Resource');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
-const { OpenAI } = require('openai');
+const { generateResourceTags } = require('../services/inbuiltAI'); // Import our inbuilt AI service
 require('dotenv').config();
-
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const router = express.Router();
 
 /**
  * GET /api/resources
- * Fetch all resources with optional filters
- * Query params: ?type=note&category=Programming&sort=rating&page=1&limit=10&search=query
- * Response: { total, resources: [...], pagination }
+ * Get all resources with optional filters
+ * Query: { page, limit, category, type, search, sort }
+ * Response: { total, resources, pagination }
  */
 router.get('/', async (req, res) => {
   try {
-    const { type, category, sort = 'rating', page = 1, limit = 10, search, authorId } = req.query;
+    const { page = 1, limit = 12, category, type, search, sort } = req.query;
     
     // Build query
     const query = {};
-    if (type) query.type = type;
-    if (category) query.category = category;
-    if (authorId) query.authorId = authorId;
-    
-    // Add search functionality
+    if (category && category !== 'All') query.category = category;
+    if (type && type !== 'All') query.type = type;
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
@@ -81,55 +73,16 @@ router.post('/', async (req, res) => {
       return res.status(400).json({ error: 'Title, type, author, and authorId required' });
     }
 
-    // Generate tags using AI if not provided
+    // Generate tags using our inbuilt AI if not provided
     let finalTags = tags || [category.toLowerCase()];
     if (!tags || tags.length === 0) {
       try {
-        const prompt = `Based on this resource, generate 3-5 relevant tags:
-Title: ${title}
-Description: ${description}
-Category: ${category}
-Type: ${type}
-
-Return the tags as a JSON array with the following format:
-[
-  "tag1",
-  "tag2",
-  "tag3"
-]`;
-
-        const completion = await openai.chat.completions.create({
-          model: "gpt-3.5-turbo",
-          messages: [
-            {
-              role: "system",
-              content: "You are a helpful assistant that generates relevant tags for content. Always respond with valid JSON array of tags."
-            },
-            {
-              role: "user",
-              content: prompt
-            }
-          ],
-          temperature: 0.5,
-          max_tokens: 200,
-        });
-
-        const responseText = completion.choices[0].message.content;
-        
-        // Try to parse as JSON
-        try {
-          const aiTags = JSON.parse(responseText);
-          finalTags = [...new Set([...finalTags, ...aiTags])]; // Merge and deduplicate
-        } catch (parseError) {
-          // If JSON parsing fails, try to extract from markdown code blocks
-          const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-          if (jsonMatch && jsonMatch[1]) {
-            const aiTags = JSON.parse(jsonMatch[1]);
-            finalTags = [...new Set([...finalTags, ...aiTags])]; // Merge and deduplicate
-          }
-        }
+        const aiTags = generateResourceTags(title, description, category, type);
+        finalTags = [...new Set([...finalTags, ...aiTags])]; // Merge and deduplicate
       } catch (error) {
         console.error('AI Tag Generation Error:', error);
+        // Fallback to basic category-based tags
+        finalTags = [category.toLowerCase(), type];
       }
     }
 
@@ -158,42 +111,30 @@ Return the tags as a JSON array with the following format:
       userId: authorId,
       type: 'resource',
       title: 'Resource Uploaded!',
-      message: `Your resource "${title}" has been uploaded successfully. 100 credits awarded!`,
-      relatedId: resource._id,
-      relatedType: 'resource',
-      priority: 'medium'
+      message: `Your resource "${title}" has been successfully uploaded. You earned 100 credits!`,
+      link: `/resources/${resource._id}`
     });
+    
     await notification.save();
-
-    // Send real-time update via WebSocket
-    const wsService = req.app.get('wsService');
-    if (wsService) {
-      // Broadcast resource creation to all connected clients
-      wsService.sendResourceUpdate(resource);
-      
-      // Send user activity update to the uploader
-      wsService.sendUserActivityUpdate(authorId, {
-        type: 'resource_upload',
-        resourceId: resource._id,
-        title: resource.title,
-        creditsEarned: 100
-      });
-    }
-
-    res.status(201).json({
-      message: 'Resource uploaded successfully. 100 credits awarded.',
-      resource
+    
+    res.status(201).json({ 
+      message: 'Resource created successfully', 
+      resource,
+      notification
     });
   } catch (error) {
     console.error('Error uploading resource:', error);
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Invalid resource data' });
+    }
     res.status(500).json({ error: 'Server error uploading resource' });
   }
 });
 
 /**
  * GET /api/resources/:id
- * Fetch a specific resource
- * Response: { ...resource, content? }
+ * Get a specific resource by ID
+ * Response: { resource }
  */
 router.get('/:id', async (req, res) => {
   try {
@@ -204,9 +145,12 @@ router.get('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    res.status(200).json(resource);
+    res.status(200).json({ resource });
   } catch (error) {
     console.error('Error fetching resource:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid resource ID' });
+    }
     res.status(500).json({ error: 'Server error fetching resource' });
   }
 });
@@ -214,36 +158,43 @@ router.get('/:id', async (req, res) => {
 /**
  * PUT /api/resources/:id
  * Update a resource
- * Body: { title?, description?, category? }
+ * Body: { title, description, category, tags, isPremium, premiumPrice }
+ * Response: { resource }
  */
 router.put('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, category } = req.body;
+    const updateData = req.body;
     
-    const updateFields = {};
-    if (title) updateFields.title = title;
-    if (description) updateFields.description = description;
-    if (category) updateFields.category = category;
+    // Remove protected fields from update
+    delete updateData.author;
+    delete updateData.authorId;
+    delete updateData.fileName;
+    delete updateData.fileSize;
+    delete updateData.type;
+    delete updateData.downloads;
+    delete updateData.rating;
+    delete updateData.ratings;
     
-    const resource = await Resource.findByIdAndUpdate(id, updateFields, { new: true });
+    const resource = await Resource.findByIdAndUpdate(
+      id, 
+      updateData, 
+      { new: true, runValidators: true }
+    );
+    
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    // Send real-time update via WebSocket
-    const wsService = req.app.get('wsService');
-    if (wsService) {
-      // Broadcast resource update to all connected clients
-      wsService.sendResourceUpdate(resource);
-    }
-    
-    res.status(200).json({
-      message: 'Resource updated successfully',
-      resource
-    });
+    res.status(200).json({ resource });
   } catch (error) {
     console.error('Error updating resource:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid resource ID' });
+    }
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ error: 'Invalid update data' });
+    }
     res.status(500).json({ error: 'Server error updating resource' });
   }
 });
@@ -251,6 +202,7 @@ router.put('/:id', async (req, res) => {
 /**
  * DELETE /api/resources/:id
  * Delete a resource
+ * Response: { message: 'Resource deleted successfully' }
  */
 router.delete('/:id', async (req, res) => {
   try {
@@ -261,218 +213,117 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    // Send real-time update via WebSocket
-    const wsService = req.app.get('wsService');
-    if (wsService) {
-      // Broadcast resource deletion to all connected clients
-      wsService.sendResourceUpdate({
-        _id: id,
-        deleted: true
-      });
-    }
-    
     res.status(200).json({ message: 'Resource deleted successfully' });
   } catch (error) {
     console.error('Error deleting resource:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid resource ID' });
+    }
     res.status(500).json({ error: 'Server error deleting resource' });
   }
 });
 
 /**
  * POST /api/resources/:id/download
- * Record download and award/deduct credits
+ * Download a resource (decrement credits if premium)
+ * Body: { userId }
+ * Response: { downloadUrl }
  */
 router.post('/:id/download', async (req, res) => {
   try {
     const { id } = req.params;
     const { userId } = req.body;
     
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required' });
-    }
-    
-    // Find resource
+    // Fetch resource
     const resource = await Resource.findById(id);
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    // Increment download count
-    resource.downloads += 1;
-    await resource.save();
-    
-    // Determine credit cost
-    const creditCost = resource.isPremium ? resource.premiumPrice : resource.credits;
-    
-    // Deduct credits from downloader
-    const downloader = await User.findById(userId);
-    if (downloader && downloader.credits >= creditCost) {
-      downloader.credits -= creditCost;
-      downloader.downloads = (downloader.downloads || 0) + 1; // Track downloads for achievements
-      await downloader.save();
-      
-      // Award credits to uploader
-      const uploader = await User.findById(resource.authorId);
-      if (uploader) {
-        uploader.credits += creditCost;
-        await uploader.save();
-        
-        // Create notification for uploader
-        const notification = new Notification({
-          userId: resource.authorId,
-          type: 'resource',
-          title: 'Resource Downloaded!',
-          message: `Someone downloaded your resource "${resource.title}". You've earned ${creditCost} credits!`,
-          relatedId: resource._id,
-          relatedType: 'resource',
-          priority: 'low'
-        });
-        await notification.save();
+    // Check if user has enough credits for premium resources
+    if (resource.isPremium && userId) {
+      const user = await User.findById(userId);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
       }
       
-      // Log activity for achievements
-      // In a real implementation, you would call the activity logging endpoint
-      
-      // Send real-time update via WebSocket
-      const wsService = req.app.get('wsService');
-      if (wsService) {
-        // Broadcast updated resource to all connected clients
-        wsService.sendResourceUpdate(resource);
-        
-        // Send user activity updates
-        wsService.sendUserActivityUpdate(userId, {
-          type: 'resource_download',
-          resourceId: resource._id,
-          title: resource.title,
-          creditsSpent: creditCost
-        });
-        
-        if (uploader) {
-          wsService.sendUserActivityUpdate(resource.authorId, {
-            type: 'resource_sale',
-            resourceId: resource._id,
-            title: resource.title,
-            creditsEarned: creditCost
-          });
-        }
+      if (user.credits < resource.premiumPrice) {
+        return res.status(400).json({ error: 'Insufficient credits' });
       }
       
-      res.status(200).json({
-        message: 'Download recorded',
-        creditsDeducted: creditCost,
-        creditsAwarded: creditCost,
-        newCredits: downloader.credits,
-        uploaderCredits: uploader ? uploader.credits : 0
+      // Deduct credits
+      await User.findByIdAndUpdate(userId, {
+        $inc: { credits: -resource.premiumPrice }
       });
-    } else {
-      res.status(400).json({ error: 'Insufficient credits to download this resource' });
+      
+      // Award credits to author
+      await User.findByIdAndUpdate(resource.authorId, {
+        $inc: { credits: Math.floor(resource.premiumPrice * 0.7) } // 70% to author
+      });
     }
+    
+    // Increment download count
+    await Resource.findByIdAndUpdate(id, { $inc: { downloads: 1 } });
+    
+    // In a real app, this would return a signed URL to the actual file
+    // For now, we'll just return a mock URL
+    const downloadUrl = `${process.env.BACKEND_URL || 'http://localhost:5002'}/uploads/${resource.fileName}`;
+    
+    res.status(200).json({ downloadUrl });
   } catch (error) {
-    console.error('Error recording download:', error);
-    res.status(500).json({ error: 'Server error recording download' });
+    console.error('Error downloading resource:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid resource or user ID' });
+    }
+    res.status(500).json({ error: 'Server error downloading resource' });
   }
 });
 
 /**
  * POST /api/resources/:id/rate
- * Rate and review a resource
- * Body: { userId, rating, review }
+ * Rate a resource
+ * Body: { userId, rating }
+ * Response: { resource }
  */
 router.post('/:id/rate', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, rating, review } = req.body;
+    const { userId, rating } = req.body;
     
-    if (!userId || !rating) {
-      return res.status(400).json({ error: 'userId and rating required' });
+    if (!userId || !rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Valid userId and rating (1-5) required' });
     }
     
-    if (rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
-    }
-    
-    // Find resource
+    // Fetch resource
     const resource = await Resource.findById(id);
     if (!resource) {
       return res.status(404).json({ error: 'Resource not found' });
     }
     
-    // Add/update rating
-    await resource.addRating(userId, rating, review || '');
+    // Check if user already rated
+    const existingRatingIndex = resource.ratings.findIndex(r => r.userId.toString() === userId);
     
-    // Award credits to reviewer (10 credits for rating)
-    const reviewer = await User.findById(userId);
-    if (reviewer) {
-      reviewer.credits += 10;
-      reviewer.ratings = (reviewer.ratings || 0) + 1; // Track ratings for achievements
-      if (review) {
-        reviewer.reviews = (reviewer.reviews || 0) + 1; // Track reviews for achievements
-      }
-      await reviewer.save();
+    if (existingRatingIndex > -1) {
+      // Update existing rating
+      resource.ratings[existingRatingIndex].rating = rating;
+    } else {
+      // Add new rating
+      resource.ratings.push({ userId, rating });
     }
     
-    // Create notification for resource owner if reviewer is not the owner
-    if (resource.authorId !== userId) {
-      const notification = new Notification({
-        userId: resource.authorId,
-        type: 'resource',
-        title: 'Resource Rated!',
-        message: `Your resource "${resource.title}" received a ${rating}-star rating${review ? ' and review' : ''}.`,
-        relatedId: resource._id,
-        relatedType: 'resource',
-        priority: 'low'
-      });
-      await notification.save();
-    }
+    // Recalculate average rating
+    const totalRating = resource.ratings.reduce((sum, r) => sum + r.rating, 0);
+    resource.rating = totalRating / resource.ratings.length;
     
-    // Send real-time update via WebSocket
-    const wsService = req.app.get('wsService');
-    if (wsService) {
-      // Broadcast updated resource to all connected clients
-      wsService.sendResourceUpdate(resource);
-      
-      // Send user activity update to the reviewer
-      if (reviewer) {
-        wsService.sendUserActivityUpdate(userId, {
-          type: 'resource_rating',
-          resourceId: resource._id,
-          title: resource.title,
-          rating: rating,
-          creditsEarned: 10
-        });
-      }
-    }
+    await resource.save();
     
-    res.status(200).json({
-      message: 'Rating submitted successfully. 10 credits awarded.',
-      resource,
-      newCredits: reviewer ? reviewer.credits : 0
-    });
+    res.status(200).json({ resource });
   } catch (error) {
-    console.error('Error submitting rating:', error);
-    res.status(500).json({ error: 'Server error submitting rating' });
-  }
-});
-
-/**
- * GET /api/resources/:id/ratings
- * Get all ratings for a resource
- */
-router.get('/:id/ratings', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const resource = await Resource.findById(id);
-    if (!resource) {
-      return res.status(404).json({ error: 'Resource not found' });
+    console.error('Error rating resource:', error);
+    if (error.name === 'CastError') {
+      return res.status(400).json({ error: 'Invalid resource or user ID' });
     }
-    
-    res.status(200).json({
-      ratings: resource.ratings || []
-    });
-  } catch (error) {
-    console.error('Error fetching ratings:', error);
-    res.status(500).json({ error: 'Server error fetching ratings' });
+    res.status(500).json({ error: 'Server error rating resource' });
   }
 });
 

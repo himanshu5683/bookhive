@@ -29,37 +29,7 @@ passport.use(new GoogleStrategy({
   callbackURL: process.env.GOOGLE_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check if user already exists with this OAuth ID
-    let user = await User.findOne({ oauthId: profile.id, provider: 'google' });
-    
-    if (user) {
-      return done(null, user);
-    }
-    
-    // Check if user exists with this email (they may have signed up with email/password)
-    user = await User.findOne({ email: profile.emails[0].value });
-    
-    if (user) {
-      // Update existing user with OAuth info
-      user.oauthId = profile.id;
-      user.provider = 'google';
-      if (!user.avatar) {
-        user.avatar = profile.photos[0].value;
-      }
-      await user.save();
-      return done(null, user);
-    }
-    
-    // Create new user
-    user = new User({
-      name: profile.displayName || profile.name.givenName,
-      email: profile.emails[0].value,
-      oauthId: profile.id,
-      provider: 'google',
-      avatar: profile.photos[0].value
-    });
-    
-    await user.save();
+    const user = await findOrCreateUser(profile, 'google');
     return done(null, user);
   } catch (error) {
     return done(error, null);
@@ -73,40 +43,7 @@ passport.use(new GitHubStrategy({
   callbackURL: process.env.GITHUB_CALLBACK_URL
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check if user already exists with this OAuth ID
-    let user = await User.findOne({ oauthId: profile.id, provider: 'github' });
-    
-    if (user) {
-      return done(null, user);
-    }
-    
-    // Check if user exists with this email (they may have signed up with email/password)
-    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-    if (email) {
-      user = await User.findOne({ email });
-      
-      if (user) {
-        // Update existing user with OAuth info
-        user.oauthId = profile.id;
-        user.provider = 'github';
-        if (!user.avatar) {
-          user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : null;
-        }
-        await user.save();
-        return done(null, user);
-      }
-    }
-    
-    // Create new user
-    user = new User({
-      name: profile.displayName || profile.username,
-      email: email,
-      oauthId: profile.id,
-      provider: 'github',
-      avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null
-    });
-    
-    await user.save();
+    const user = await findOrCreateUser(profile, 'github');
     return done(null, user);
   } catch (error) {
     return done(error, null);
@@ -121,40 +58,7 @@ passport.use(new FacebookStrategy({
   profileFields: ['id', 'emails', 'name', 'picture.type(large)']
 }, async (accessToken, refreshToken, profile, done) => {
   try {
-    // Check if user already exists with this OAuth ID
-    let user = await User.findOne({ oauthId: profile.id, provider: 'facebook' });
-    
-    if (user) {
-      return done(null, user);
-    }
-    
-    // Check if user exists with this email (they may have signed up with email/password)
-    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-    if (email) {
-      user = await User.findOne({ email });
-      
-      if (user) {
-        // Update existing user with OAuth info
-        user.oauthId = profile.id;
-        user.provider = 'facebook';
-        if (!user.avatar) {
-          user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : null;
-        }
-        await user.save();
-        return done(null, user);
-      }
-    }
-    
-    // Create new user
-    user = new User({
-      name: `${profile.name.givenName} ${profile.name.familyName}`,
-      email: email,
-      oauthId: profile.id,
-      provider: 'facebook',
-      avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null
-    });
-    
-    await user.save();
+    const user = await findOrCreateUser(profile, 'facebook');
     return done(null, user);
   } catch (error) {
     return done(error, null);
@@ -162,51 +66,19 @@ passport.use(new FacebookStrategy({
 }));
 
 // Twitter OAuth Strategy
-passport.use(new TwitterStrategy({
-  consumerKey: process.env.TWITTER_CONSUMER_KEY,
-  consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
-  callbackURL: process.env.TWITTER_CALLBACK_URL,
-  includeEmail: true
-}, async (token, tokenSecret, profile, done) => {
-  try {
-    // Check if user already exists with this OAuth ID
-    let user = await User.findOne({ oauthId: profile.id, provider: 'twitter' });
-    
-    if (user) {
-      return done(null, user);
-    }
-    
-    // Check if user exists with this email (they may have signed up with email/password)
-    const email = profile.emails && profile.emails[0] ? profile.emails[0].value : null;
-    if (email) {
-      user = await User.findOne({ email });
-      
-      if (user) {
-        // Update existing user with OAuth info
-        user.oauthId = profile.id;
-        user.provider = 'twitter';
-        if (!user.avatar) {
-          user.avatar = profile.photos && profile.photos[0] ? profile.photos[0].value : null;
-        }
-        await user.save();
-        return done(null, user);
-      }
-    }
-    
-    // Create new user
-    user = new User({
-      name: profile.displayName || profile.username,
-      email: email,
-      oauthId: profile.id,
-      provider: 'twitter',
-      avatar: profile.photos && profile.photos[0] ? profile.photos[0].value : null
-    });
-    
-    await user.save();
-    return done(null, user);
-  } catch (error) {
-    return done(error, null);
-  }
-}));
+// Commented out temporarily to avoid startup issues
+// passport.use(new TwitterStrategy({
+//   consumerKey: process.env.TWITTER_CONSUMER_KEY,
+//   consumerSecret: process.env.TWITTER_CONSUMER_SECRET,
+//   callbackURL: process.env.TWITTER_CALLBACK_URL,
+//   includeEmail: true
+// }, async (token, tokenSecret, profile, done) => {
+//   try {
+//     const user = await findOrCreateUser(profile, 'twitter');
+//     return done(null, user);
+//   } catch (error) {
+//     return done(error, null);
+//   }
+// }));
 
 module.exports = passport;

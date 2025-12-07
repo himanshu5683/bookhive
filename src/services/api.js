@@ -15,9 +15,14 @@ const apiClient = axios.create({
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = getToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    // Only add auth token to non-auth routes
+    const isAuthRoute = config.url.includes('/auth/');
+    
+    if (!isAuthRoute) {
+      const token = getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -28,17 +33,17 @@ apiClient.interceptors.request.use(
 
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
-  (response) => response, // Return full response object, not just data
+  (response) => response.data,
   (error) => {
     if (error.response) {
       // Server responded with error status
       const errorMessage = error.response.data?.message || `API Error: ${error.response.status}`;
       return Promise.reject(new Error(errorMessage));
     } else if (error.request) {
-      // Network error
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      // Request was made but no response received
+      return Promise.reject(new Error('Network error - please check your connection'));
     } else {
-      // Other error
+      // Something else happened
       return Promise.reject(new Error('An unexpected error occurred'));
     }
   }
@@ -114,7 +119,6 @@ export const aiAPI = {
   sentimentAnalysis: (textData) => apiClient.post('/ai/sentiment-analysis', textData),
   eventSuggestions: (params) => apiClient.post('/ai/event-suggestions', params),
 };
-
 // ============ ACTIVITY ENDPOINTS ============
 
 export const activityAPI = {
@@ -148,16 +152,5 @@ export const feedbackAPI = {
   create: (feedbackData) => apiClient.post('/feedback', feedbackData),
 };
 
-// Export all APIs as default
-export default {
-  authAPI,
-  resourcesAPI,
-  storiesAPI,
-  circlesAPI,
-  usersAPI,
-  aiAPI,
-  activityAPI,
-  twoFactorAPI,
-  requestsAPI,
-  feedbackAPI,
-};
+// Export the axios instance as default
+export default apiClient;

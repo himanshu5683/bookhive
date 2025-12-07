@@ -1,6 +1,5 @@
 import React, { createContext, useState, useEffect } from "react";
 import { authAPI } from "../services/api";
-import { getToken, setToken, clearAuth } from "../utils/auth";
 
 const AuthContext = createContext();
 
@@ -20,24 +19,24 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         // Check if user is already logged in
-        const token = getToken();
+        const token = localStorage.getItem('authToken');
         console.log('Checking for existing auth token:', token ? 'Found' : 'Not found');
         if (token) {
             // Verify token with backend
             authAPI.verify()
                 .then(response => {
                     console.log('Token verification response:', response);
-                    if (response.data && response.data.valid) {
-                        setUser(response.data.user);
-                        console.log('User authenticated:', response.data.user);
+                    if (response.valid) {
+                        setUser(response.user);
+                        console.log('User authenticated:', response.user);
                     } else {
                         console.log('Token invalid, removing from localStorage');
-                        clearAuth();
+                        localStorage.removeItem('authToken');
                     }
                 })
                 .catch((error) => {
                     console.warn('Token verification failed:', error);
-                    clearAuth();
+                    localStorage.removeItem('authToken');
                 })
                 .finally(() => {
                     setLoading(false);
@@ -52,12 +51,12 @@ export const AuthProvider = ({ children }) => {
         console.log('Attempting signup for:', email);
         try {
             const response = await authAPI.signup({ email, password, name });
-            console.log('Signup successful, received token:', response.data.token ? 'Yes' : 'No');
+            console.log('Signup successful, received token:', response.token ? 'Yes' : 'No');
             // Store token
-            setToken(response.data.token);
-            setUser(response.data.user);
-            console.log('User set after signup:', response.data.user);
-            return response.data.user;
+            localStorage.setItem('authToken', response.token);
+            setUser(response.user);
+            console.log('User set after signup:', response.user);
+            return response.user;
         } catch (error) {
             console.error('Signup failed:', error);
             throw error;
@@ -68,12 +67,12 @@ export const AuthProvider = ({ children }) => {
         console.log('Attempting login for:', email);
         try {
             const response = await authAPI.login({ email, password });
-            console.log('Login successful, received token:', response.data.token ? 'Yes' : 'No');
+            console.log('Login successful, received token:', response.token ? 'Yes' : 'No');
             // Store token
-            setToken(response.data.token);
-            setUser(response.data.user);
-            console.log('User set after login:', response.data.user);
-            return response.data.user;
+            localStorage.setItem('authToken', response.token);
+            setUser(response.user);
+            console.log('User set after login:', response.user);
+            return response.user;
         } catch (error) {
             console.error('Login failed:', error);
             throw error;
@@ -99,7 +98,7 @@ export const AuthProvider = ({ children }) => {
             }
             
             // Clear token
-            clearAuth();
+            localStorage.removeItem('authToken');
             setUser(null);
             console.log('User logged out and token cleared');
         } catch (error) {

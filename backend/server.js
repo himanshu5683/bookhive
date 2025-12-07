@@ -1,14 +1,16 @@
-// server.js - BookHive Backend Server
+// backend/server.js - Main Express Server Entry Point
 
 const express = require('express');
 const cors = require('cors');
-const http = require('http');
+const mongoose = require('mongoose');
 const session = require('express-session');
 const passport = require('passport');
+const http = require('http');
+const path = require('path');
+const connectDB = require('./db/database');
 require('dotenv').config();
 
 // Database connection
-const connectDB = require('./db/database');
 connectDB();
 
 // Passport configuration
@@ -17,9 +19,9 @@ require('./config/passport');
 const app = express();
 const server = http.createServer(app);
 
-// Session middleware (required for Passport)
+// Session configuration
 app.use(session({
-  secret: process.env.JWT_SECRET || 'bookhive_session_secret',
+  secret: process.env.SESSION_SECRET || 'bookhive_secret_key',
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -35,16 +37,29 @@ app.use(passport.session());
 // Dynamic CORS configuration
 const allowedOrigins = [
   "http://localhost:3000",
-  process.env.FRONTEND_URL
+  "http://localhost:3000/bookhive",
+  ...(process.env.REACT_APP_URL ? process.env.REACT_APP_URL.split(',') : [])
 ];
 
 app.use(cors({
   origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    if (!allowedOrigins.includes(origin)) {
-      return callback(new Error("Blocked by CORS: " + origin), false);
+    
+    // Check if the origin is in our allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
-    return callback(null, true);
+    
+    // Also allow origins that start with our allowed origins (to handle subpaths)
+    for (const allowedOrigin of allowedOrigins) {
+      if (origin.startsWith(allowedOrigin)) {
+        return callback(null, true);
+      }
+    }
+    
+    // Block the request if the origin is not allowed
+    return callback(new Error("Blocked by CORS: " + origin), false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"]
@@ -90,8 +105,15 @@ const WebSocketService = require('./services/websocket');
 const wsService = new WebSocketService(server);
 app.set('wsService', wsService);
 
-// Start server
-const PORT = process.env.PORT || 5000;
+// Graceful shutdown
+process.on('SIGINT', async () => {
+  console.log('\nGracefully shutting down...');
+  await mongoose.connection.close();
+  console.log('MongoDB connection closed.');
+  process.exit(0);
+});
+
+const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
   console.log(`🚀 BookHive Backend running on http://localhost:${PORT}`);
   console.log(`📚 API Documentation at http://localhost:${PORT}/api`);

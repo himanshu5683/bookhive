@@ -15,8 +15,8 @@ async function testAIEndpoint() {
     try {
       console.log(`Testing: ${testCase.description} ("${testCase.message}")`);
       
-      const response = await axios.post('https://bookhive-backend-production.up.railway.app/api/ai/generate', {
-        prompt: testCase.message,
+      const response = await axios.post('https://bookhive-backend-production.up.railway.app/api/ai/chat', {
+        message: testCase.message,
         history: []
       }, {
         headers: {

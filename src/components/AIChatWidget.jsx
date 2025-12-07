@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import AuthContext from "../auth/AuthContext";
-import { aiAPI } from "../services/api";
+import apiClient from "../services/api";
 import "../styles/AI.css";
 
 const AIChatWidget = () => {
@@ -46,7 +46,7 @@ const AIChatWidget = () => {
     
     try {
       // Get AI response using the correct format
-      const response = await aiAPI.chat({ message: inputMessage });
+      const response = await apiClient.post("/ai/chat", { message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {
@@ -63,7 +63,7 @@ const AIChatWidget = () => {
       // Add error message to chat
       const errorMessage = {
         id: Date.now() + 1,
-        text: "I am here to help! How can I assist you?",
+        text: "Sorry, I encountered an error. Please try again.",
         sender: "ai",
         timestamp: new Date()
       };

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { aiAPI } from "../../services/api";
+import apiClient from "../../services/api";
 import "../../styles/AI.css";
 
 const Chat = () => {
@@ -36,13 +36,15 @@ const Chat = () => {
       timestamp: new Date()
     };
     
-    setMessages(prev => [...prev, userMessage]);
+    // Update messages state with user message
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
     setInputMessage("");
     setLoading(true);
     
     try {
       // Call backend AI API using the correct format
-      const response = await aiAPI.chat({ message: inputMessage });
+      const response = await apiClient.post("/ai/chat", { message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {
@@ -59,7 +61,7 @@ const Chat = () => {
       // Create a fallback error message
       const errorMessage = {
         id: Date.now() + 1,
-        text: "I am here to help! How can I assist you?",
+        text: "I'm temporarily unavailable. Please try again in a moment.",
         sender: "ai",
         timestamp: new Date()
       };
