@@ -32,13 +32,21 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-// CORS configuration
+// Dynamic CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  process.env.FRONTEND_URL
+];
+
 app.use(cors({
-  origin: [
-    "http://localhost:3000",
-    "https://himanshu5683.github.io",
-    "https://himanshu5683.github.io/bookhive"
-  ],
+  origin: function(origin, callback) {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = `The CORS policy for this site does not allow access from the specified Origin: ${origin}`;
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
   methods: ["GET", "POST"],
   credentials: true
 }));
