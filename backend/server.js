@@ -84,7 +84,7 @@ const wsService = new WebSocketService(server);
 app.set('wsService', wsService);
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
   console.log(`🚀 BookHive Backend running on http://localhost:${PORT}`);
   console.log(`📚 API Documentation at http://localhost:${PORT}/api`);
