@@ -1,6 +1,6 @@
 import React, { createContext, useState, useEffect } from "react";
 import { authAPI } from "../services/api";
-import { getToken, setToken, removeToken } from "../utils/auth";
+import { getToken, setToken, clearAuth } from "../utils/auth";
 
 const AuthContext = createContext();
 
@@ -32,12 +32,12 @@ export const AuthProvider = ({ children }) => {
                         console.log('User authenticated:', response.data.user);
                     } else {
                         console.log('Token invalid, removing from localStorage');
-                        removeToken();
+                        clearAuth();
                     }
                 })
                 .catch((error) => {
                     console.warn('Token verification failed:', error);
-                    removeToken();
+                    clearAuth();
                 })
                 .finally(() => {
                     setLoading(false);
@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }) => {
             }
             
             // Clear token
-            removeToken();
+            clearAuth();
             setUser(null);
             console.log('User logged out and token cleared');
         } catch (error) {
