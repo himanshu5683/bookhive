@@ -12,7 +12,7 @@ if (!container) {
 
 const root = createRoot(container);
 root.render(
-  <BrowserRouter basename='/bookhive'>
+  <BrowserRouter basename='/bookhive' future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
     <App />
   </BrowserRouter>
 );
@@ -20,7 +20,7 @@ root.render(
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('/bookhive/sw.js')
       .then((registration) => {
         console.log('SW registered: ', registration);
       })
