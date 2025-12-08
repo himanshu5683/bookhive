@@ -18,7 +18,7 @@
       "sizes": "512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/bookhive/",
   "display": "standalone",
   "theme_color": "#6b8cff",
   "background_color": "#ffffff"

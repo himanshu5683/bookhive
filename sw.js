@@ -1,9 +1,9 @@
 // Service worker for PWA functionality
 const CACHE_NAME = 'bookhive-v1';
 const urlsToCache = [
-  '/',
-  '/static/js/bundle.js',
-  '/static/css/main.css'
+  '/bookhive/',
+  '/bookhive/static/js/bundle.js',
+  '/bookhive/static/css/main.css'
 ];
 
 // Install event
