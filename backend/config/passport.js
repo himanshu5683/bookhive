@@ -22,6 +22,72 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// Helper function to find or create user
+async function findOrCreateUser(profile, provider) {
+  try {
+    // Try to find existing user
+    let user = await User.findOne({
+      oauthId: profile.id,
+      provider: provider
+    });
+
+    if (user) {
+      return user;
+    }
+
+    // If user doesn't exist, create new user
+    // Extract email (different providers have different structures)
+    let email;
+    if (profile.emails && profile.emails.length > 0) {
+      email = profile.emails[0].value;
+    } else if (profile.email) {
+      email = profile.email;
+    } else {
+      // Generate a placeholder email if none provided
+      email = `${provider}_${profile.id}@bookhive.local`;
+    }
+
+    // Check if user with this email already exists
+    user = await User.findOne({ email: email });
+    
+    if (user) {
+      // Link OAuth account to existing user
+      user.oauthId = profile.id;
+      user.provider = provider;
+      // Update name if available
+      if (profile.displayName) {
+        user.name = profile.displayName;
+      } else if (profile.name) {
+        user.name = profile.name.givenName + ' ' + profile.name.familyName;
+      }
+      // Update avatar if available
+      if (profile.photos && profile.photos.length > 0) {
+        user.avatar = profile.photos[0].value;
+      }
+      await user.save();
+    } else {
+      // Create new user
+      const name = profile.displayName || 
+                  (profile.name ? profile.name.givenName + ' ' + profile.name.familyName : 'User');
+      
+      user = new User({
+        oauthId: profile.id,
+        provider: provider,
+        email: email,
+        name: name,
+        // Avatar if available
+        avatar: profile.photos && profile.photos.length > 0 ? profile.photos[0].value : undefined
+      });
+      
+      await user.save();
+    }
+
+    return user;
+  } catch (error) {
+    throw error;
+  }
+}
+
 // Google OAuth Strategy
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   passport.use(new GoogleStrategy({

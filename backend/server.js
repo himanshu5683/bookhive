@@ -27,7 +27,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/bookhive',
+    mongoUrl: process.env.MONGODB_URI,
     collectionName: 'sessions',
     ttl: 24 * 60 * 60 // 24 hours
   }),
@@ -140,8 +140,11 @@ app.use('/api/twofactor', twoFactorRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  
   res.status(200).json({ 
-    status: 'OK', 
+    status: 'ok', 
+    db: dbStatus,
     timestamp: new Date().toISOString(),
     message: 'BookHive Backend is running successfully'
   });

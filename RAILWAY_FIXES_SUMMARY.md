@@ -32,7 +32,7 @@
 Added MongoDB-backed session storage using connect-mongo:
 ```javascript
 store: MongoStore.create({
-  mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/bookhive',
+  mongoUrl: process.env.MONGODB_URI,
   collectionName: 'sessions',
   ttl: 24 * 60 * 60 // 24 hours
 })
