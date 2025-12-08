@@ -1,6 +1,7 @@
 // backend/routes/resources.js - Resources (Notes/PDFs) Routes
 
 import express from 'express';
+import { body, validationResult } from 'express-validator';
 import Resource from '../models/Resource.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
@@ -67,8 +68,21 @@ router.get('/', async (req, res) => {
  * Body: { title, description, type, category, author, authorId, fileName, fileSize, tags }
  * Response: { id, ...resource }
  */
-router.post('/', async (req, res) => {
+router.post('/',
+  [
+    body('title').notEmpty().withMessage('Title is required'),
+    body('type').notEmpty().withMessage('Type is required'),
+    body('author').notEmpty().withMessage('Author is required'),
+    body('authorId').notEmpty().withMessage('Author ID is required')
+  ],
+  async (req, res) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     const { title, description, type, category, author, authorId, fileName, fileSize, tags } = req.body;
 
     if (!title || !type || !author || !authorId) {

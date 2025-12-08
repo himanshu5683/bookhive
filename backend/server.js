@@ -10,6 +10,8 @@ import http from 'http';
 import path from 'path';
 import connectDB from './db/database.js';
 import dotenv from 'dotenv';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 dotenv.config();
 
 // Database connection
@@ -21,9 +23,23 @@ import './config/passport.js';
 const app = express();
 const server = http.createServer(app);
 
+// Security middleware
+app.use(helmet());
+
+// Rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use(limiter);
+
 // Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'bookhive_secret_key',
+  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your_session_secret_key_here',
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
@@ -46,12 +62,7 @@ app.use(passport.session());
 // Dynamic CORS configuration
 const allowedOrigins = [
   "http://localhost:3000",
-  "http://localhost:3000/bookhive",
-  "https://himanshu5683.github.io",
-  "https://himanshu5683.github.io/bookhive",
-  ...(process.env.REACT_APP_URL ? process.env.REACT_APP_URL.split(',') : []),
-  ...(process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : []),
-  ...(process.env.PRODUCTION_URL ? [process.env.PRODUCTION_URL] : [])
+  "https://himanshu5683.github.io/bookhive"
 ];
 
 const corsOptions = {
@@ -91,15 +102,6 @@ app.use(cors(corsOptions));
 
 // Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
-
-// Add CORS headers middleware
-app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  next();
-});
 
 // Middleware
 app.use(express.json());
@@ -153,7 +155,12 @@ app.get('/api/health', (req, res) => {
 // Error logging middleware
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
-  res.status(500).json({ reply: "Server crashed internally." });
+  // Don't expose sensitive error information in production
+  if (process.env.NODE_ENV === 'production') {
+    res.status(500).json({ error: "Internal server error" });
+  } else {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Make WebSocket service available to routes

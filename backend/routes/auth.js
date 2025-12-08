@@ -2,6 +2,7 @@
 
 import express from 'express';
 import jwt from 'jsonwebtoken';
+import { body, validationResult } from 'express-validator';
 // bcrypt is used in the User model for password hashing
 import User from '../models/User.js';
 
@@ -13,8 +14,20 @@ const router = express.Router();
  * Body: { email, password, name }
  * Response: { token, user: { id, name, email, credits } }
  */
-router.post('/signup', async (req, res) => {
+router.post('/signup', 
+  [
+    body('name').notEmpty().withMessage('Name is required'),
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long')
+  ],
+  async (req, res) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     const { email, password, name } = req.body;
     
     console.log('Signup attempt for email:', email);
@@ -70,8 +83,19 @@ router.post('/signup', async (req, res) => {
  * Body: { email, password, twoFactorToken }
  * Response: { token, user: { id, name, email, credits }, requires2FA }
  */
-router.post('/login', async (req, res) => {
+router.post('/login',
+  [
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').notEmpty().withMessage('Password is required')
+  ],
+  async (req, res) => {
   try {
+    // Check for validation errors
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    
     const { email, password, twoFactorToken } = req.body;
 
     console.log('Login attempt for email:', email);
