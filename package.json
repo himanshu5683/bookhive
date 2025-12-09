@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "homepage": "https://himanshu5683.github.io/bookhive",
+  "engines": {
+    "node": ">=20.8.0"
+  },
   "dependencies": {
     "@testing-library/dom": "^8.20.0",
     "@testing-library/jest-dom": "^5.16.5",
