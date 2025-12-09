@@ -7,7 +7,9 @@ const connectDB = async () => {
     // Use cloud MongoDB for production, local for development
     const mongoURI = process.env.MONGODB_URI;
       
-    const conn = await mongoose.connect(mongoURI);
+    const conn = await mongoose.connect(mongoURI, {
+      tls: true
+    });
     
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
