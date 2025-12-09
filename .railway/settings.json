@@ -1,0 +1,6 @@
+{
+  "build": {
+    "builder": "NIXPACKS",
+    "nodeVersion": "20.8.0"
+  }
+}
