@@ -33,7 +33,7 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_ap
  */
 router.post('/log', async (req, res) => {
   try {
-    const { action, resourceId, metadata } = req.body;
+    const { action, details } = req.body;
     const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Validate required fields
@@ -41,12 +41,16 @@ router.post('/log', async (req, res) => {
       return res.status(400).json({ error: 'action is required' });
     }
     
+    // Validate payload before logging
+    if (details && typeof details !== 'object') {
+      return res.status(400).json({ error: 'details must be an object' });
+    }
+    
     // Create activity record
     const activity = new Activity({
       userId,
       action,
-      resourceId,
-      metadata
+      details
     });
     
     await activity.save();

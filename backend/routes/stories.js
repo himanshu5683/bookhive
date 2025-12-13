@@ -85,7 +85,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user._id; // Using _id from authenticated user
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Validate required fields
     if (!title || !content) {
@@ -153,7 +153,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user._id; // Using _id from authenticated user
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find story and check ownership
     const story = await Story.findById(req.params.id);
@@ -186,14 +186,15 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const userId = req.user._id; // Using _id from authenticated user
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    // Find story and check ownership
+    // Check if story exists
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ error: 'Story not found' });
     }
     
+    // Check if user is authorized to delete the story
     if (story.authorId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the author can delete the story' });
     }
@@ -204,6 +205,10 @@ router.delete('/:id', async (req, res) => {
     res.json({ message: 'Story deleted successfully' });
   } catch (error) {
     console.error('Error deleting story:', error);
+    // Return appropriate error status
+    if (error.name === 'CastError') {
+      return res.status(404).json({ error: 'Story not found' });
+    }
     res.status(500).json({ error: 'Failed to delete story' });
   }
 });

@@ -13,6 +13,51 @@ const router = express.Router();
 // Apply authentication middleware to all routes
 router.use(authenticate);
 
+// POST /api/ai/recommendations
+// Generate personalized recommendations for the user
+router.post("/recommendations", async (req, res) => {
+  try {
+    const { userId } = req.body;
+    
+    // Validate required fields
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // In a real implementation, you would fetch user data and generate personalized recommendations
+    // For now, we'll return sample recommendations
+    const recommendations = [
+      {
+        title: "JavaScript: The Good Parts",
+        author: "Douglas Crockford",
+        description: "A detailed look at the good parts of JavaScript and a survey of the bad parts.",
+        genre: "Programming",
+        reasoning: "Based on your interest in web development"
+      },
+      {
+        title: "Clean Code",
+        author: "Robert C. Martin",
+        description: "Even bad code can function. But if code isn't clean, it can bring a development organization to its knees.",
+        genre: "Software Engineering",
+        reasoning: "Recommended for improving coding practices"
+      },
+      {
+        title: "Design Patterns",
+        author: "Gang of Four",
+        description: "Capturing reusable object-oriented design expertise, this book catalogs proven techniques for making designs more flexible and elegant.",
+        genre: "Software Architecture",
+        reasoning: "To enhance your software design skills"
+      }
+    ];
+    
+    return res.json({ recommendations });
+  } catch (err) {
+    console.error("AI Recommendations Error:", err);
+    // Always return a safe fallback response instead of throwing errors
+    return res.json({ recommendations: [] });
+  }
+});
+
 router.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;

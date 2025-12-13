@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
     
     // Filter by upcoming events
     if (upcoming === 'true' || upcoming === true) {
-      query.date = { $gte: new Date() };
+      query.startDate = { $gte: new Date() };
     }
     
     // Search by title or description
@@ -57,8 +57,8 @@ router.get('/', async (req, res) => {
     // Fetch events with pagination
     const events = await Event.find(query)
       .populate('host', 'name email avatar')
-      .populate('attendees', 'name email avatar')
-      .sort({ date: 1 })
+      .populate('participants.userId', 'name email avatar')
+      .sort({ startDate: 1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
     
@@ -85,7 +85,7 @@ router.get('/:id', async (req, res) => {
   try {
     const event = await Event.findById(req.params.id)
       .populate('host', 'name email avatar')
-      .populate('attendees', 'name email avatar');
+      .populate('participants.userId', 'name email avatar');
     
     if (!event) {
       return res.status(404).json({ error: 'Event not found' });
@@ -108,9 +108,16 @@ router.post('/', async (req, res) => {
     const userId = req.user.id; // Using id from authenticated user (as requested)
     const userName = req.user.name;
     
-    // Validate required fields
-    if (!title || !description || !startDate || !endDate || !category || !format) {
-      return res.status(400).json({ error: 'Title, description, startDate, endDate, category, and format are required' });
+    // Validate all required fields
+    const requiredFields = { title, description, startDate, endDate, category, format };
+    const missingFields = Object.entries(requiredFields)
+      .filter(([key, value]) => !value)
+      .map(([key]) => key);
+    
+    if (missingFields.length > 0) {
+      return res.status(400).json({ 
+        error: `Missing required fields: ${missingFields.join(', ')}` 
+      });
     }
     
     // Validate dates

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from "react";
 import AuthContext from "../auth/AuthContext";
-import apiClient, { resourcesAPI, activityAPI } from "../services/api";
+import { resourcesService, activityService } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import "../styles/Upload.css";
 
@@ -136,18 +136,18 @@ const Upload = () => {
       };
 
       // Create resource
-      const response = await resourcesAPI.create(resourceData);
+      const response = await resourcesService.create(resourceData);
       
       // Log activity for credit award
       try {
-        await activityAPI.logActivity({
-          userId: user.id,
-          activityType: 'upload',
-          content: `${title} - ${description}`,
-          metadata: {
+        await activityService.log({
+          action: 'upload',
+          details: {
             resourceId: response.resource._id,
             category,
-            type: resourceType
+            type: resourceType,
+            title: title.trim(),
+            description: description.trim()
           }
         });
       } catch (activityError) {
