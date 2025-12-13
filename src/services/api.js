@@ -11,6 +11,9 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Enable sending cookies with requests
+  // Ensure proper handling of HTTPS credentials
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
 // Request interceptor to add auth token
@@ -20,6 +23,8 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Ensure credentials are sent with every request
+    config.withCredentials = true;
     return config;
   },
   (error) => {
@@ -71,10 +76,10 @@ apiClient.interceptors.response.use(
 // ============ AUTH ENDPOINTS ============
 
 export const authAPI = {
-  signup: (userData) => apiClient.post('/auth/signup', userData, { withCredentials: true }),
-  login: (credentials) => apiClient.post('/auth/login', credentials, { withCredentials: true }),
-  logout: () => apiClient.post('/auth/logout', {}, { withCredentials: true }),
-  verify: () => apiClient.get('/auth/verify', { withCredentials: true }),
+  signup: (userData) => apiClient.post('/auth/signup', userData),
+  login: (credentials) => apiClient.post('/auth/login', credentials),
+  logout: () => apiClient.post('/auth/logout'),
+  verify: () => apiClient.get('/auth/verify'),
 };
 
 // ============ RESOURCES ENDPOINTS ============

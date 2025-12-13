@@ -96,9 +96,11 @@ const corsOptions = {
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   exposedHeaders: ['Authorization'],
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  preflightContinue: false // Important: set to false to let express handle preflight
 };
 
+// Apply CORS middleware BEFORE any routes
 app.use(cors(corsOptions));
 
 // Handle preflight requests explicitly
