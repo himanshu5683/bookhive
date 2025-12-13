@@ -18,10 +18,8 @@ const connectDB = async () => {
     const conn = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
-      minPoolSize: 1,
-      maxPoolSize: 10,
-      retryWrites: true
+      retryWrites: true,
+      tls: true // Explicitly enable TLS for MongoDB Atlas
     });
     
     isConnected = true;
@@ -29,7 +27,7 @@ const connectDB = async () => {
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1); // Exit in production if DB connection fails
+    process.exit(1); // Exit in production if DB connection fails - DO NOT retry
   }
 };
 

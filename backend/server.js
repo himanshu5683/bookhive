@@ -21,6 +21,7 @@ connectDB();
 import './config/passport.js';
 
 const app = express();
+app.set("trust proxy", 1);
 const server = http.createServer(app);
 
 // Security middleware
