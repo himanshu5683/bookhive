@@ -24,7 +24,8 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'sk-your-actual
 const generateAIResponse = async (message, history = []) => {
   // Check if OpenAI is initialized
   if (!openai) {
-    throw new Error('OpenAI API key not configured');
+    // Return a safe fallback response instead of throwing an error
+    return "I'm currently unable to access advanced AI features. Please try again later or ask me something else!";
   }
   
   try {
@@ -63,18 +64,21 @@ const generateAIResponse = async (message, history = []) => {
   } catch (error) {
     console.error('OpenAI API Error:', error);
     
-    // Provide more specific error messages based on the error type
+    // Handle specific error cases safely
     if (error.status === 429) {
       if (error.error && error.error.code === 'insufficient_quota') {
-        throw new Error("I'm sorry, but the AI service is currently unavailable due to quota limitations. Please contact the site administrator to resolve this issue.");
+        // Return a safe fallback response instead of throwing an error
+        return "I'm sorry, but I'm currently experiencing high demand and need to take a short break. Please try asking me again in a few moments!";
       } else {
-        throw new Error("I'm experiencing high demand right now. Please wait a moment and try again.");
+        // Return a safe fallback response instead of throwing an error
+        return "I'm experiencing high demand right now. Please wait a moment and try again.";
       }
     } else if (error.status === 401) {
-      throw new Error("I'm currently experiencing authentication issues. Please contact the site administrator.");
+      // Return a safe fallback response instead of throwing an error
+      return "I'm temporarily having trouble accessing my knowledge base. Please try again in a moment!";
     } else {
-      // Safe fallback response
-      throw new Error("I'm currently experiencing some technical difficulties. Please try again in a moment, or feel free to ask me about books, resources, or how to use BookHive!");
+      // Safe fallback response for all other errors
+      return "I'm experiencing some technical difficulties right now. Please try asking me something else or come back later!";
     }
   }
 };

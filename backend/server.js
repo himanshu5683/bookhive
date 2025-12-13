@@ -170,12 +170,83 @@ function startServer() {
   wss.on("connection", (ws, req) => {
     console.log("WS client connected");
     
+    // Add authentication flag
+    ws.isAuthenticated = false;
+    ws.userId = null;
+    
     ws.on("message", (msg) => {
-      console.log("WS message:", msg.toString());
+      try {
+        const data = JSON.parse(msg.toString());
+        
+        // Handle authentication
+        if (data.type === 'authenticate') {
+          // Prevent multiple auth attempts
+          if (ws.isAuthenticated) {
+            console.log("WS client already authenticated, ignoring duplicate auth request");
+            return;
+          }
+          
+          if (data.userId) {
+            ws.isAuthenticated = true;
+            ws.userId = data.userId;
+            console.log(`WS client authenticated for user ${data.userId}`);
+            
+            // Send confirmation back to client
+            ws.send(JSON.stringify({
+              type: 'authenticated',
+              message: 'Successfully authenticated'
+            }));
+          } else {
+            console.log("WS authentication failed: missing userId");
+            ws.send(JSON.stringify({
+              type: 'auth_error',
+              message: 'Authentication failed: missing userId'
+            }));
+          }
+          return;
+        }
+        
+        // Require authentication for all other messages
+        if (!ws.isAuthenticated) {
+          console.log("WS message rejected: client not authenticated");
+          ws.send(JSON.stringify({
+            type: 'error',
+            message: 'Authentication required'
+          }));
+          return;
+        }
+        
+        // Handle other message types
+        switch (data.type) {
+          case 'ping':
+            ws.send(JSON.stringify({ type: 'pong' }));
+            break;
+          case 'subscribe':
+            // Handle subscription logic here if needed
+            console.log(`WS client ${ws.userId} subscribed to ${data.channel}`);
+            break;
+          case 'unsubscribe':
+            // Handle unsubscription logic here if needed
+            console.log(`WS client ${ws.userId} unsubscribed from ${data.channel}`);
+            break;
+          default:
+            console.log("WS unknown message type:", data.type);
+            ws.send(JSON.stringify({
+              type: 'error',
+              message: 'Unknown message type'
+            }));
+        }
+      } catch (error) {
+        console.error("WS message processing error:", error);
+        ws.send(JSON.stringify({
+          type: 'error',
+          message: 'Message processing error'
+        }));
+      }
     });
     
     ws.on("close", () => {
-      console.log("WS client disconnected");
+      console.log("WS client disconnected", ws.userId ? `for user ${ws.userId}` : '');
     });
   });
 

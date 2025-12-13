@@ -23,44 +23,57 @@ export const useWebSocket = () => {
 };
 
 export const WebSocketProvider = ({ children }) => {
-  // Get user and loading state from AuthContext
+  // Get user and token from AuthContext
   const authContext = useContext(AuthContext);
   
-  // Extract user and loading state safely
+  // Extract user and token safely
   const user = authContext?.user || null;
+  const token = authContext?.token || null;
   const authLoading = authContext?.loading || false;
 
   const wsRef = useRef(null);
   const [connected, setConnected] = useState(false);
-  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const reconnectAttemptsRef = useRef(0);
+  const maxReconnectAttempts = 5;
+  const reconnectTimeoutRef = useRef(null);
+  const pingIntervalRef = useRef(null);
   const listenersRef = useRef({});
+  const isAuthenticatedRef = useRef(false);
 
   // WebSocket URL - adjust based on environment
   const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-production-9463.up.railway.app/ws";
-  const wsUrl = WS_URL;
 
-  // Connect to WebSocket server
+  // Connect to WebSocket server - useCallback to prevent recreation
   const connect = useCallback(() => {
-    // Don't try to connect if already connected
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    // Don't try to connect if already connected or connecting
+    if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
       return;
     }
 
+    // Clear any existing reconnect timeout
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     try {
-      const websocket = new WebSocket(wsUrl);
+      console.log('Creating new WebSocket connection...');
+      const websocket = new WebSocket(WS_URL);
+      wsRef.current = websocket;
       
       websocket.onopen = () => {
         console.log('WebSocket connected');
         setConnected(true);
-        setReconnectAttempts(0);
-        wsRef.current = websocket;
+        reconnectAttemptsRef.current = 0;
+        isAuthenticatedRef.current = false;
         
-        // Only authenticate if user exists
+        // Authenticate if user exists
         if (user && user.id) {
           websocket.send(JSON.stringify({
             type: 'authenticate',
             userId: user.id
           }));
+          isAuthenticatedRef.current = true;
         }
       };
 
@@ -72,6 +85,7 @@ export const WebSocketProvider = ({ children }) => {
           switch (data.type) {
             case 'authenticated':
               console.log('WebSocket authenticated');
+              isAuthenticatedRef.current = true;
               break;
             case 'notification_created':
               // Notify listeners for notifications only if user exists
@@ -115,55 +129,78 @@ export const WebSocketProvider = ({ children }) => {
       };
 
       websocket.onclose = (event) => {
-        console.log('WebSocket disconnected');
+        console.log('WebSocket disconnected', event.reason);
         setConnected(false);
         wsRef.current = null;
+        isAuthenticatedRef.current = false;
         
-        // Attempt to reconnect with exponential backoff
-        if (reconnectAttempts < 5) {
-          const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
-          setTimeout(() => {
-            setReconnectAttempts(prev => prev + 1);
+        // Clear ping interval
+        if (pingIntervalRef.current) {
+          clearInterval(pingIntervalRef.current);
+          pingIntervalRef.current = null;
+        }
+        
+        // Attempt to reconnect with exponential backoff, but only if we haven't exceeded max attempts
+        if (reconnectAttemptsRef.current < maxReconnectAttempts) {
+          const timeout = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 10000);
+          console.log(`Attempting to reconnect in ${timeout}ms (attempt ${reconnectAttemptsRef.current + 1}/${maxReconnectAttempts})`);
+          reconnectTimeoutRef.current = setTimeout(() => {
+            reconnectAttemptsRef.current += 1;
             connect();
           }, timeout);
+        } else {
+          console.log('Max reconnect attempts reached. Stopping reconnection attempts.');
         }
       };
 
       websocket.onerror = (error) => {
         console.error('WebSocket error:', error);
+        // The onclose handler will be called after this
       };
 
     } catch (error) {
       console.error('Failed to create WebSocket connection:', error);
     }
-  }, [wsUrl, user, reconnectAttempts]);
+  }, [WS_URL, user]);
 
   // Disconnect from WebSocket server
   const disconnect = useCallback(() => {
+    // Clear any pending reconnect timeouts
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    // Clear ping interval
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
+    
+    // Close WebSocket connection if it exists
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
-      setConnected(false);
     }
+    
+    // Reset state
+    setConnected(false);
+    reconnectAttemptsRef.current = 0;
+    isAuthenticatedRef.current = false;
   }, []);
 
   // Send message through WebSocket
   const sendMessage = useCallback((message) => {
-    // Only send messages if user exists and WebSocket is connected
-    if (user && wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+    // Only send messages if WebSocket is connected
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
     } else {
-      console.warn('WebSocket not connected or user not authenticated, message not sent:', message);
+      console.warn('WebSocket not connected, message not sent:', message);
     }
-  }, [user]);
+  }, []);
 
   // Subscribe to events
   const subscribe = useCallback((eventType, callback) => {
-    // Only subscribe if user exists
-    if (!user) {
-      return () => {}; // Return noop unsubscribe function
-    }
-    
     // Update listeners ref
     if (!listenersRef.current[eventType]) {
       listenersRef.current[eventType] = [];
@@ -176,68 +213,74 @@ export const WebSocketProvider = ({ children }) => {
         listenersRef.current[eventType] = listenersRef.current[eventType].filter(cb => cb !== callback);
       }
     };
-  }, [user]);
+  }, []);
 
   // Subscribe to channels
   const subscribeToChannel = useCallback((channel) => {
-    // Only subscribe to channels if user exists
-    if (user) {
-      sendMessage({
-        type: 'subscribe',
-        channel: channel
-      });
-    }
-  }, [user, sendMessage]);
+    sendMessage({
+      type: 'subscribe',
+      channel: channel
+    });
+  }, [sendMessage]);
 
   // Unsubscribe from channels
   const unsubscribeFromChannel = useCallback((channel) => {
-    // Only unsubscribe from channels if user exists
-    if (user) {
-      sendMessage({
-        type: 'unsubscribe',
-        channel: channel
-      });
-    }
-  }, [user, sendMessage]);
+    sendMessage({
+      type: 'unsubscribe',
+      channel: channel
+    });
+  }, [sendMessage]);
 
   // Ping server to keep connection alive
   const ping = useCallback(() => {
-    // Only ping if user exists
-    if (user) {
-      sendMessage({ type: 'ping' });
-    }
-  }, [user, sendMessage]);
+    sendMessage({ type: 'ping' });
+  }, [sendMessage]);
 
-  // Effect to connect when component mounts
+  // Effect to connect when token changes (login/logout)
   useEffect(() => {
     // Only connect after auth loading is complete
     if (authLoading) return;
     
+    // Connect to WebSocket
     connect();
     
     // Ping server every 30 seconds to keep connection alive
-    const pingInterval = setInterval(ping, 30000);
+    pingIntervalRef.current = setInterval(ping, 30000);
     
+    // Cleanup function
     return () => {
-      clearInterval(pingInterval);
+      // Clear ping interval
+      if (pingIntervalRef.current) {
+        clearInterval(pingIntervalRef.current);
+        pingIntervalRef.current = null;
+      }
+      
+      // Clear reconnect timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      
+      // Disconnect WebSocket
       disconnect();
     };
-  }, [connect, disconnect, ping, authLoading]);
+  }, [connect, disconnect, ping, authLoading, token]); // Dependency array includes token to reconnect on login/logout
 
-  // Effect to authenticate when user changes
+  // Effect to authenticate when user changes but only if not already authenticated
   useEffect(() => {
-    // Only authenticate if connected and user exists
-    if (connected && user && user.id) {
+    // Only authenticate if connected, user exists, and not already authenticated
+    if (connected && user && user.id && !isAuthenticatedRef.current) {
       sendMessage({
         type: 'authenticate',
         userId: user.id
       });
+      isAuthenticatedRef.current = true;
     }
   }, [connected, user, sendMessage]);
 
   const value = {
     connected,
-    reconnectAttempts,
+    reconnectAttempts: reconnectAttemptsRef.current,
     sendMessage,
     subscribe,
     subscribeToChannel,
