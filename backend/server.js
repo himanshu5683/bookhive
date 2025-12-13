@@ -70,7 +70,7 @@ function startServer() {
 
   // Session configuration
   app.use(session({
-    secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your_session_secret_key_here',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
@@ -79,9 +79,9 @@ function startServer() {
       ttl: 24 * 60 * 60 // 24 hours
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-      httpOnly: true, // Prevent XSS attacks
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust for production
+      secure: true,
+      httpOnly: true,
+      sameSite: 'none',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));
@@ -90,11 +90,9 @@ function startServer() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // CORS configuration - Support both production and development environments
+  // CORS configuration
   const corsOptions = {
-    origin: [
-      process.env.FRONTEND_URL || "https://himanshu5683.github.io"
-    ],
+    origin: ['https://himanshu5683.github.io'],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
