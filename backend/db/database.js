@@ -2,13 +2,20 @@
 
 import mongoose from 'mongoose';
 
+let isConnected = false; // Track connection status
+
 const connectDB = async () => {
+  // If already connected, return without creating a new connection
+  if (isConnected) {
+    console.log('✅ MongoDB already connected');
+    return;
+  }
+
   try {
     // Use cloud MongoDB for production, local for development
     const mongoURI = process.env.MONGODB_URI;
       
     const conn = await mongoose.connect(mongoURI, {
-      tls: true,
       serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
       connectTimeoutMS: 10000,
@@ -17,6 +24,7 @@ const connectDB = async () => {
       retryWrites: true
     });
     
+    isConnected = true;
     console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
