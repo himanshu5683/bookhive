@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../context/WebSocketContext';
-import apiClient from '../services/api';
+import { userActivityService } from '../services/api';
 
 const useUserActivity = (userId) => {
   const [activities, setActivities] = useState([]);
@@ -18,7 +18,7 @@ const useUserActivity = (userId) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.usersAPI.getById(userId);
+      const response = await userActivityService.getById(userId);
       if (response.user) {
         setStats({
           credits: response.user.credits || 0,

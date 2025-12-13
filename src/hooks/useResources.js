@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '../context/WebSocketContext';
-import apiClient from '../services/api';
+import { resourcesService } from '../services/api';
 
 const useResources = () => {
   const [resources, setResources] = useState([]);
@@ -15,7 +15,7 @@ const useResources = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiClient.resourcesAPI.getAll({ sort: sortBy });
+      const response = await resourcesService.getAll({ sort: sortBy });
       setResources(response.resources || []);
     } catch (err) {
       console.error('Failed to fetch resources:', err);

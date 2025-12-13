@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import apiClient from '../services/api';
+import { leaderboardService } from '../services/api';
 import '../styles/Leaderboard.css';
 
 const Leaderboard = () => {
@@ -14,7 +14,7 @@ const Leaderboard = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await apiClient.usersAPI.getLeaderboard({ sortBy: filterBy, limit: 20 });
+        const response = await leaderboardService.getLeaderboard({ sortBy: filterBy, limit: 20 });
         setUsers(response.leaderboard || response.users || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);

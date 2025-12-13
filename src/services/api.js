@@ -194,5 +194,21 @@ export const feedbackAPI = {
   create: (feedbackData) => apiClient.post('/feedback', feedbackData),
 };
 
+// Export individual service objects for proper importing
+export const userActivityService = {
+  getById: usersAPI.getById,
+  getRecommendations: aiAPI.getRecommendations,
+  getUserActivities: activityAPI.getUserActivities,
+  getUserActivityStats: activityAPI.getUserActivityStats,
+};
+
+export const resourcesService = resourcesAPI;
+
+export const storiesService = storiesAPI;
+
+export const leaderboardService = {
+  getLeaderboard: usersAPI.getLeaderboard,
+};
+
 // Export the axios instance as default
 export default apiClient;

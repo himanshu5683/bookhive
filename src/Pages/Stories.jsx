@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import apiClient from '../services/api';
+import { storiesService, activityAPI } from '../services/api';
 import AuthContext from '../auth/AuthContext';
 import '../styles/Stories.css';
 
@@ -20,7 +20,7 @@ const Stories = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await apiClient.storiesAPI.getAll({ limit: 50 });
+        const response = await storiesService.getAll({ limit: 50 });
         setStories(response.stories || []);
       } catch (err) {
         console.error('Failed to fetch stories:', err);
@@ -48,7 +48,7 @@ const Stories = () => {
       const content = newStory.trim();
       const title = content.split(' ').slice(0, 5).join(' ') + (content.split(' ').length > 5 ? '...' : '');
       
-      const response = await apiClient.storiesAPI.create({ 
+      const response = await storiesService.create({ 
         title: title || 'My Story',
         content: content,
         author: user.name,
@@ -57,7 +57,7 @@ const Stories = () => {
       
       // Log activity for credit award
       try {
-        await apiClient.activityAPI.logActivity({
+        await activityAPI.logActivity({
           userId: user.id,
           activityType: 'story',
           content: newStory,
@@ -89,14 +89,14 @@ const Stories = () => {
     try {
       const newLiked = new Set(likedStories);
       if (newLiked.has(storyId)) {
-        await apiClient.storiesAPI.unlike(storyId);
+        await storiesService.unlike(storyId);
         newLiked.delete(storyId);
         // Update story likes count locally
         setStories(stories.map(s => 
           s._id === storyId ? { ...s, likes: Math.max(0, s.likes - 1) } : s
         ));
       } else {
-        await apiClient.storiesAPI.like(storyId);
+        await storiesService.like(storyId);
         newLiked.add(storyId);
         // Update story likes count locally
         setStories(stories.map(s => 
@@ -135,7 +135,7 @@ const Stories = () => {
     if (!editingStoryContent.trim()) return;
     
     try {
-      const response = await apiClient.storiesAPI.update(storyId, { 
+      const response = await storiesService.update(storyId, { 
         content: editingStoryContent 
       });
       
@@ -159,7 +159,7 @@ const Stories = () => {
     if (!window.confirm('Are you sure you want to delete this story?')) return;
     
     try {
-      await apiClient.storiesAPI.delete(storyId);
+      await storiesService.delete(storyId);
       
       // Remove story from state
       setStories(stories.filter(s => s._id !== storyId));
