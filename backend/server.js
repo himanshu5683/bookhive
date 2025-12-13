@@ -181,16 +181,23 @@ process.on('SIGINT', async () => {
 });
 
 const PORT = process.env.PORT || 5002;
-server.listen(PORT, () => {
-  const baseUrl = `https://bookhive-backend-production.up.railway.app`;
-  console.log(`🚀 BookHive Backend running on ${baseUrl}`);
-  console.log(`📚 API Documentation at ${baseUrl}/api`);
-  console.log(`🔔 Notifications system available at ${baseUrl}/api/notifications`);
-  console.log(`🏆 Achievements system available at ${baseUrl}/api/achievements`);
-  console.log(`📅 Events system available at ${baseUrl}/api/events`);
-  console.log(`🤖 AI Features available at ${baseUrl}/api/ai`);
-  console.log(`🔐 2FA system available at ${baseUrl}/api/twofactor`);
-  console.log(`📡 WebSocket server available at wss://bookhive-backend-production.up.railway.app`);
-  console.log(`🔑 OAuth endpoints available at ${baseUrl}/api/oauth`);
-  console.log(`🔄 Deployment timestamp: ${new Date().toISOString()}`); // Added for redeploy tracking
-});
+
+// Wrap server startup in try-catch for better error handling
+try {
+  server.listen(PORT, () => {
+    const baseUrl = `https://bookhive-backend-production.up.railway.app`;
+    console.log(`🚀 BookHive Backend running on port ${PORT}`);
+    console.log(`📚 API Documentation at ${baseUrl}/api`);
+    console.log(`🔔 Notifications system available at ${baseUrl}/api/notifications`);
+    console.log(`🏆 Achievements system available at ${baseUrl}/api/achievements`);
+    console.log(`📅 Events system available at ${baseUrl}/api/events`);
+    console.log(`🤖 AI Features available at ${baseUrl}/api/ai`);
+    console.log(`🔐 2FA system available at ${baseUrl}/api/twofactor`);
+    console.log(`📡 WebSocket server available at wss://bookhive-backend-production.up.railway.app`);
+    console.log(`🔑 OAuth endpoints available at ${baseUrl}/api/oauth`);
+    console.log(`🔄 Deployment timestamp: ${new Date().toISOString()}`); // Added for redeploy tracking
+  });
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
