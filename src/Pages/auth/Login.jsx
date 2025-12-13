@@ -57,22 +57,36 @@ const Login = () => {
       try {
         // Try to parse detailed error message
         const errorObj = JSON.parse(err.message);
+        console.log('Parsed error object:', errorObj);
         if (errorObj.status) {
-          setError(`Login failed (${errorObj.status}): ${errorObj.message}`);
+          // Server-side errors
+          if (errorObj.status === 401) {
+            setError("Invalid email or password");
+          } else if (errorObj.status === 500) {
+            setError("Server error. Please try again later.");
+          } else {
+            setError(`Login failed (${errorObj.status}): ${errorObj.message}`);
+          }
         } else if (errorObj.message) {
-          setError(errorObj.message);
+          // Check if it's a network error
+          if (errorObj.message.includes("Network error") || errorObj.message.includes("Unable to connect")) {
+            setError("Unable to connect to the server. Please check your network connection.");
+          } else {
+            setError(errorObj.message);
+          }
         } else {
           setError("Failed to log in: " + err.message);
         }
       } catch (parseErr) {
         // If parsing fails, use original message
         const errorMessage = err.message || "Failed to log in";
-        if (errorMessage.includes("Invalid credentials")) {
+        console.log('Error message that could not be parsed:', errorMessage);
+        if (errorMessage.includes("Network")) {
+          setError("Unable to connect to the server. Please check your network connection.");
+        } else if (errorMessage.includes("Invalid credentials")) {
           setError("Invalid email or password");
         } else if (errorMessage.includes("not found")) {
           setError("No account found with this email");
-        } else if (errorMessage.includes("Network")) {
-          setError("Network error. Please check your connection.");
         } else {
           setError(errorMessage);
         }

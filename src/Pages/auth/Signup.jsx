@@ -74,9 +74,29 @@ const Signup = () => {
         // Try to parse detailed error message
         const errorObj = JSON.parse(err.message);
         if (errorObj.status) {
-          setError(`Signup failed (${errorObj.status}): ${errorObj.message}`);
+          // Server-side errors
+          if (errorObj.status === 400) {
+            if (errorObj.message.includes("exists")) {
+              setError("Email is already registered");
+            } else if (errorObj.message.includes("email")) {
+              setError("Please enter a valid email address");
+            } else if (errorObj.message.includes("Password")) {
+              setError("Password must be at least 6 characters");
+            } else {
+              setError("Invalid input. Please check your details.");
+            }
+          } else if (errorObj.status === 500) {
+            setError("Server error. Please try again later.");
+          } else {
+            setError(`Signup failed (${errorObj.status}): ${errorObj.message}`);
+          }
         } else if (errorObj.message) {
-          setError(errorObj.message);
+          // Check if it's a network error
+          if (errorObj.message.includes("Network error") || errorObj.message.includes("Unable to connect")) {
+            setError("Unable to connect to the server. Please check your network connection.");
+          } else {
+            setError(errorObj.message);
+          }
         } else {
           setError("Failed to create account: " + err.message);
         }
@@ -90,7 +110,7 @@ const Signup = () => {
         } else if (errorMessage.includes("Password") || errorMessage.includes("6 characters")) {
           setError("Password must be at least 6 characters");
         } else if (errorMessage.includes("Network")) {
-          setError("Network error. Please check your connection.");
+          setError("Unable to connect to the server. Please check your network connection.");
         } else {
           setError(errorMessage);
         }
@@ -226,7 +246,7 @@ const Signup = () => {
                   Creating Account...
                 </>
               ) : (
-                "Create Account"
+                "Sign Up"
               )}
             </button>
           </form>

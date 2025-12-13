@@ -74,7 +74,16 @@ export const AuthProvider = ({ children }) => {
             console.log('User set after login:', response.user);
             return response.user;
         } catch (error) {
-            console.error('Login failed:', error);
+            console.error('Login failed with detailed error:', error);
+            // Enhanced error handling
+            if (error.message) {
+                try {
+                    const errorDetails = JSON.parse(error.message);
+                    console.log('Detailed error information:', errorDetails);
+                } catch (parseError) {
+                    console.log('Error message:', error.message);
+                }
+            }
             throw error;
         }
     };

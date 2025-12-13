@@ -11,31 +11,37 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
   withCredentials: true, // Enable sending cookies with requests
-  // Ensure proper handling of HTTPS credentials
-  xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and ensure credentials
 apiClient.interceptors.request.use(
   (config) => {
+    // Always ensure credentials are sent
+    config.withCredentials = true;
+    
+    // Add auth token if available
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Ensure credentials are sent with every request
-    config.withCredentials = true;
+    
+    console.log('API Request:', config.method?.toUpperCase(), config.url);
     return config;
   },
   (error) => {
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle errors
 apiClient.interceptors.response.use(
-  (response) => response.data,
+  (response) => {
+    console.log('API Response:', response.status, response.config.url);
+    return response.data;
+  },
   (error) => {
+    console.error('API Error:', error);
     if (error.response) {
       // Server responded with error status
       const errorMessage = error.response.data?.message || `API Error: ${error.response.status}`;
@@ -46,12 +52,24 @@ apiClient.interceptors.response.use(
         url: error.config?.url,
         method: error.config?.method
       };
-      console.error('API Error:', errorDetails);
+      console.error('API Error Details:', errorDetails);
       return Promise.reject(new Error(JSON.stringify(errorDetails)));
     } else if (error.request) {
       // Network error - provide more detailed information
+      // Check if this is actually a network connectivity issue
+      let message = 'Unable to connect to the server. Please check your network connection.';
+      
+      // More specific network error detection
+      if (error.code === 'ECONNABORTED') {
+        message = 'Request timeout. Please check your network connection.';
+      } else if (error.syscall === 'getaddrinfo') {
+        message = 'DNS lookup failed. Please check your network connection.';
+      } else if (!error.request.status && !error.request.responseURL) {
+        message = 'Unable to connect to the server. Please check your network connection.';
+      }
+      
       const networkError = {
-        message: 'Network error. Please check your connection and try again.',
+        message: message,
         request: error.request,
         config: error.config,
         url: error.config?.url,
@@ -59,7 +77,7 @@ apiClient.interceptors.response.use(
         code: error.code,
         syscall: error.syscall
       };
-      console.error('Network Error:', networkError);
+      console.error('Network Error Details:', networkError);
       return Promise.reject(new Error(JSON.stringify(networkError)));
     } else {
       // Other error
@@ -67,7 +85,7 @@ apiClient.interceptors.response.use(
         message: 'An unexpected error occurred: ' + error.message,
         originalError: error
       };
-      console.error('Other Error:', otherError);
+      console.error('Other Error Details:', otherError);
       return Promise.reject(new Error(JSON.stringify(otherError)));
     }
   }
@@ -76,10 +94,10 @@ apiClient.interceptors.response.use(
 // ============ AUTH ENDPOINTS ============
 
 export const authAPI = {
-  signup: (userData) => apiClient.post('/auth/signup', userData),
-  login: (credentials) => apiClient.post('/auth/login', credentials),
-  logout: () => apiClient.post('/auth/logout'),
-  verify: () => apiClient.get('/auth/verify'),
+  signup: (userData) => apiClient.post('/auth/signup', userData, { withCredentials: true }),
+  login: (credentials) => apiClient.post('/auth/login', credentials, { withCredentials: true }),
+  logout: () => apiClient.post('/auth/logout', {}, { withCredentials: true }),
+  verify: () => apiClient.get('/auth/verify', { withCredentials: true }),
 };
 
 // ============ RESOURCES ENDPOINTS ============
