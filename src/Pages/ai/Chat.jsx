@@ -49,7 +49,7 @@ const Chat = () => {
       // Add AI response to chat
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.data.reply,
+        text: response.reply, // Fixed: Removed .data since interceptor already extracts data
         sender: "ai",
         timestamp: new Date()
       };

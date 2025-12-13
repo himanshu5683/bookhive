@@ -14,7 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
-  const { resources: recentUploads, fetchResources } = useResources();
+  const { resources: recentUploads, loading: resourcesLoading, fetchResources } = useResources();
   const { stats, fetchUserStats } = useUserActivity(user?.id);
 
   useEffect(() => {
@@ -29,8 +29,8 @@ const Dashboard = () => {
         // Fetch user stats using our hook
         await fetchUserStats();
 
-        // Fetch recent uploads using our hook
-        fetchResources({ authorId: user.id, sort: 'recent', limit: 5 });
+        // Fetch recent uploads using our hook (sorted by recent by default)
+        fetchResources('recent');
 
         // Fetch AI recommendations
         const recommendationsResponse = await dashboardService.getRecommendations({

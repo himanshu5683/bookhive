@@ -15,7 +15,8 @@ const Leaderboard = () => {
       setError('');
       try {
         const response = await leaderboardService.getLeaderboard({ sortBy: filterBy, limit: 20 });
-        setUsers(response.leaderboard || response.users || []);
+        // Fixed: Use response.leaderboard instead of trying response.users
+        setUsers(response.leaderboard || []);
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
         setError('Failed to load leaderboard. Please try again.');
@@ -81,7 +82,7 @@ const Leaderboard = () => {
             </div>
           ) : (
             rankedUsers.map((user, idx) => (
-              <div key={user._id || user.id} className={`leaderboard-item rank-${idx + 1}`}>
+              <div key={user.userId || user._id || user.id} className={`leaderboard-item rank-${idx + 1}`}>
                 <div className="rank-medal">{getMedalEmoji(idx + 1)}</div>
 
                 <div className="user-info">

@@ -199,8 +199,8 @@ router.delete('/:id', async (req, res) => {
       return res.status(403).json({ error: 'Only the author can delete the story' });
     }
     
-    // Delete story
-    await story.remove();
+    // Delete story using deleteOne() instead of remove() to avoid deprecation warning
+    await Story.deleteOne({ _id: req.params.id });
     
     res.json({ message: 'Story deleted successfully' });
   } catch (error) {

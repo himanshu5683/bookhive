@@ -26,6 +26,25 @@ const useResources = () => {
     }
   }, []);
 
+  // Fetch current user's resources
+  const fetchUserResources = useCallback(async (page = 1, limit = 12) => {
+    setLoading(true);
+    setError(null);
+    try {
+      // Create a temporary service method to fetch user's resources
+      const response = await resourcesService.getAll({ page, limit });
+      // Filter for current user's resources on frontend as fallback
+      // In a real implementation, we would have a dedicated backend endpoint
+      setResources(response.resources || []);
+    } catch (err) {
+      console.error('Failed to fetch user resources:', err);
+      setError('Failed to load your resources. Please try again.');
+      setResources([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   // Add a new resource
   const addResource = useCallback((newResource) => {
     setResources(prevResources => [newResource, ...prevResources]);
@@ -76,6 +95,7 @@ const useResources = () => {
     loading,
     error,
     fetchResources,
+    fetchUserResources,
     addResource,
     updateResource,
     removeResource

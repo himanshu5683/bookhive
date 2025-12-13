@@ -25,10 +25,16 @@ router.use(authenticate);
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 12, category, type, search, sort } = req.query;
+    const { page = 1, limit = 12, category, type, search, sort, authorId } = req.query;
     
     // Build query
     const query = {};
+    
+    // Filter by author if specified
+    if (authorId) {
+      query.authorId = authorId;
+    }
+    
     if (category && category !== 'All') query.category = category;
     if (type && type !== 'All') query.type = type;
     if (search) {
@@ -64,6 +70,44 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching resources:', error);
     res.status(500).json({ error: 'Server error fetching resources' });
+  }
+});
+
+/**
+ * GET /api/resources/my
+ * Get current user's resources sorted by upload date (most recent first)
+ * Query: { page, limit }
+ * Response: { total, resources, pagination }
+ */
+router.get('/my', async (req, res) => {
+  try {
+    const { page = 1, limit = 12 } = req.query;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    // Build query for current user's resources
+    const query = { authorId: userId.toString() };
+    
+    // Sort by creation date descending (most recent first)
+    const sortObj = { createdAt: -1 };
+    
+    // Calculate pagination
+    const skip = (page - 1) * limit;
+    
+    // Execute query
+    const total = await Resource.countDocuments(query);
+    const resources = await Resource.find(query)
+      .sort(sortObj)
+      .skip(skip)
+      .limit(parseInt(limit));
+    
+    res.status(200).json({
+      total,
+      resources,
+      pagination: { page: parseInt(page), limit: parseInt(limit), total }
+    });
+  } catch (error) {
+    console.error('Error fetching user resources:', error);
+    res.status(500).json({ error: 'Server error fetching user resources' });
   }
 });
 

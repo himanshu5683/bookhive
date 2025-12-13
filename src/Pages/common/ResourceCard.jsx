@@ -1,7 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../../auth/AuthContext';
-import apiClient from '../../services/api';
+import { resourcesService } from '../../services/api'; // Fixed: Import resourcesService instead of apiClient
 import Rating from './Rating';
 import '../../styles/ResourceCard.css';
 
@@ -19,8 +19,8 @@ const ResourceCard = ({ resource, showRating = false }) => {
 
     setDownloading(true);
     try {
-      // Record download in backend
-      const response = await apiClient.resourcesAPI.download(resource._id, { userId: user.id });
+      // Record download in backend using the correct service method
+      const response = await resourcesService.download(resource._id, { userId: user.id });
       
       // Update user credits in context
       if (response.newCredits !== undefined) {
