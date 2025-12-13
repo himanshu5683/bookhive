@@ -88,12 +88,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    // Social login handler
+    // Social login handler - Keep original implementation
     const socialLogin = async (provider) => {
         console.log(`Initiating ${provider} login`);
         
         // Redirect to OAuth endpoint
-        window.location.href = `${process.env.REACT_APP_API_URL.replace('/api', '')}/api/oauth/${provider}`;
+        window.location.href = `https://bookhive-production-9463.up.railway.app/api/oauth/${provider}`;
     };
 
     const logout = async () => {

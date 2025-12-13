@@ -90,9 +90,11 @@ function startServer() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // CORS configuration - Only use backend environment variables
+  // CORS configuration - Support both production and development environments
   const corsOptions = {
-    origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
+    origin: [
+      process.env.FRONTEND_URL || "https://himanshu5683.github.io"
+    ],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
@@ -173,8 +175,8 @@ function startServer() {
     process.exit(0);
   });
 
-  // Use Railway's PORT or default to 8080 (Railway's default) then fallback to 5003
-  const PORT = process.env.PORT || 8080 || 5003;
+  // Use Railway's PORT or default to 8080
+  const PORT = process.env.PORT || 8080;
 
   // Start the server
   server.listen(PORT, () => {

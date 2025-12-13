@@ -1,5 +1,5 @@
 // Service worker for PWA functionality
-const CACHE_NAME = 'bookhive-v1';
+const CACHE_NAME = 'bookhive-v2';
 const urlsToCache = [
   '/bookhive/',
   '/bookhive/static/js/bundle.js',

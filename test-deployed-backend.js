@@ -2,7 +2,7 @@
 const axios = require('axios');
 
 // Configuration - Update this to match your actual Railway deployment URL
-const DEPLOYED_BACKEND_URL = 'https://bookhive-backend-production.up.railway.app';
+const DEPLOYED_BACKEND_URL = 'https://bookhive-production-9463.up.railway.app';
 const API_BASE_URL = `${DEPLOYED_BACKEND_URL}/api`;
 
 console.log('Testing Deployed BookHive Backend');
