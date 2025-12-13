@@ -66,15 +66,15 @@ const generateAIResponse = async (message, history = []) => {
     // Provide more specific error messages based on the error type
     if (error.status === 429) {
       if (error.error && error.error.code === 'insufficient_quota') {
-        return "I'm sorry, but the AI service is currently unavailable due to quota limitations. Please contact the site administrator to resolve this issue.";
+        throw new Error("I'm sorry, but the AI service is currently unavailable due to quota limitations. Please contact the site administrator to resolve this issue.");
       } else {
-        return "I'm experiencing high demand right now. Please wait a moment and try again.";
+        throw new Error("I'm experiencing high demand right now. Please wait a moment and try again.");
       }
     } else if (error.status === 401) {
-      return "I'm currently experiencing authentication issues. Please contact the site administrator.";
+      throw new Error("I'm currently experiencing authentication issues. Please contact the site administrator.");
     } else {
       // Safe fallback response
-      return "I'm currently experiencing some technical difficulties. Please try again in a moment, or feel free to ask me about books, resources, or how to use BookHive!";
+      throw new Error("I'm currently experiencing some technical difficulties. Please try again in a moment, or feel free to ask me about books, resources, or how to use BookHive!");
     }
   }
 };

@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import AuthContext from "../auth/AuthContext";
-import apiClient from "../services/api";
+import { aiAPI } from "../services/api";
 import "../styles/AI.css";
 
 const AIChatWidget = () => {
@@ -46,7 +46,7 @@ const AIChatWidget = () => {
     
     try {
       // Get AI response using the correct format
-      const response = await apiClient.post("/ai/chat", { message: inputMessage });
+      const response = await aiAPI.chat({ message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {

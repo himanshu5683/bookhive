@@ -10,9 +10,14 @@ import authenticate from '../middleware/auth.js';
 dotenv.config();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai = null;
+
+// Only initialize if API key is provided
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here') {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 const router = express.Router();
 
@@ -89,27 +94,32 @@ router.post('/', async (req, res) => {
     
     // Generate AI summary
     let summary = '';
-    try {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content: "You are a story summarizer. Create a brief, engaging summary of the story."
-          },
-          {
-            role: "user",
-            content: `Summarize this story in one sentence:\n\n${content.substring(0, 1000)}`
-          }
-        ],
-        max_tokens: 100,
-        temperature: 0.7
-      });
-      
-      summary = completion.choices[0].message.content.trim();
-    } catch (aiError) {
-      console.warn('Failed to generate AI summary:', aiError.message);
-      // Use first sentence as fallback
+    if (openai) {
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are a story summarizer. Create a brief, engaging summary of the story."
+            },
+            {
+              role: "user",
+              content: `Summarize this story in one sentence:\n\n${content.substring(0, 1000)}`
+            }
+          ],
+          max_tokens: 100,
+          temperature: 0.7
+        });
+        
+        summary = completion.choices[0].message.content.trim();
+      } catch (aiError) {
+        console.warn('Failed to generate AI summary:', aiError.message);
+        // Use first sentence as fallback
+        summary = content.split('.')[0] + '.';
+      }
+    } else {
+      // Use first sentence as fallback when OpenAI is not configured
       summary = content.split('.')[0] + '.';
     }
     

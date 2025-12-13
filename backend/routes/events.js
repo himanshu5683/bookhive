@@ -12,9 +12,14 @@ dotenv.config();
 const router = express.Router();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai = null;
+
+// Only initialize if API key is provided
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here') {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 /**
  * GET /api/events
@@ -95,42 +100,49 @@ router.get('/:id', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { title, description, date, duration, category, format, maxAttendees, registrationRequired } = req.body;
-    const userId = req.user?.id; // Assuming user is attached by auth middleware
+    const { title, description, startDate, endDate, category, format, maxParticipants } = req.body;
+    const userId = req.user._id; // User object is attached by auth middleware
+    const userName = req.user.name;
     
     // Validate required fields
-    if (!title || !description || !date || !category || !format) {
-      return res.status(400).json({ error: 'Title, description, date, category, and format are required' });
+    if (!title || !description || !startDate || !endDate || !category || !format) {
+      return res.status(400).json({ error: 'Title, description, startDate, endDate, category, and format are required' });
     }
     
-    // Validate date
-    const eventDate = new Date(date);
-    if (isNaN(eventDate.getTime())) {
+    // Validate dates
+    const startDateTime = new Date(startDate);
+    const endDateTime = new Date(endDate);
+    
+    if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return res.status(400).json({ error: 'Invalid date format' });
     }
     
-    if (eventDate < new Date()) {
-      return res.status(400).json({ error: 'Event date must be in the future' });
+    if (startDateTime < new Date()) {
+      return res.status(400).json({ error: 'Event start date must be in the future' });
+    }
+    
+    if (endDateTime <= startDateTime) {
+      return res.status(400).json({ error: 'Event end date must be after start date' });
     }
     
     // Create new event
     const event = new Event({
       title,
       description,
-      date: eventDate,
-      duration,
+      startDate: startDateTime,
+      endDate: endDateTime,
       category,
       format,
-      maxAttendees: maxAttendees || 100,
-      registrationRequired: registrationRequired || false,
-      host: userId,
-      attendees: [userId]
+      maxParticipants: maxParticipants || 100,
+      host: userName,
+      hostId: userId.toString(),
+      participants: [{
+        userId: userId.toString(),
+        name: userName
+      }]
     });
     
     await event.save();
-    
-    // Populate references
-    await event.populate('host', 'name email');
     
     res.status(201).json({ event });
   } catch (error) {
@@ -145,8 +157,8 @@ router.post('/', async (req, res) => {
  */
 router.put('/:id', async (req, res) => {
   try {
-    const { title, description, date, duration, category, format, maxAttendees, registrationRequired } = req.body;
-    const userId = req.user?.id;
+    const { title, description, startDate, endDate, category, format, maxParticipants } = req.body;
+    const userId = req.user._id;
     
     // Find event and check ownership
     const event = await Event.findById(req.params.id);
@@ -154,24 +166,28 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    if (event.host.toString() !== userId) {
+    if (event.hostId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the host can update the event' });
     }
     
     // Update event fields
     if (title) event.title = title;
     if (description) event.description = description;
-    if (date) {
-      const eventDate = new Date(date);
-      if (!isNaN(eventDate.getTime()) && eventDate > new Date()) {
-        event.date = eventDate;
+    if (startDate) {
+      const startDateTime = new Date(startDate);
+      if (!isNaN(startDateTime.getTime()) && startDateTime > new Date()) {
+        event.startDate = startDateTime;
       }
     }
-    if (duration !== undefined) event.duration = duration;
+    if (endDate) {
+      const endDateTime = new Date(endDate);
+      if (!isNaN(endDateTime.getTime()) && endDateTime > new Date()) {
+        event.endDate = endDateTime;
+      }
+    }
     if (category) event.category = category;
     if (format) event.format = format;
-    if (maxAttendees !== undefined) event.maxAttendees = maxAttendees;
-    if (registrationRequired !== undefined) event.registrationRequired = registrationRequired;
+    if (maxParticipants !== undefined) event.maxParticipants = maxParticipants;
     
     await event.save();
     
@@ -188,7 +204,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user._id;
     
     // Find event and check ownership
     const event = await Event.findById(req.params.id);
@@ -196,7 +212,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    if (event.host.toString() !== userId) {
+    if (event.hostId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the host can delete the event' });
     }
     
@@ -216,7 +232,8 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/register', async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user._id;
+    const userName = req.user.name;
     
     // Find event
     const event = await Event.findById(req.params.id);
@@ -224,23 +241,22 @@ router.post('/:id/register', async (req, res) => {
       return res.status(404).json({ error: 'Event not found' });
     }
     
-    // Check if registration is required
-    if (!event.registrationRequired) {
-      return res.status(400).json({ error: 'Registration not required for this event' });
-    }
-    
     // Check if user is already registered
-    if (event.attendees.includes(userId)) {
+    if (event.participants.some(p => p.userId === userId.toString())) {
       return res.status(400).json({ error: 'Already registered for this event' });
     }
     
     // Check capacity
-    if (event.attendees.length >= event.maxAttendees) {
+    if (event.currentParticipants >= event.maxParticipants) {
       return res.status(400).json({ error: 'Event is at full capacity' });
     }
     
-    // Add user to attendees
-    event.attendees.push(userId);
+    // Add user to participants
+    event.participants.push({
+      userId: userId.toString(),
+      name: userName
+    });
+    event.currentParticipants = event.participants.length;
     await event.save();
     
     // Create notification

@@ -14,9 +14,14 @@ dotenv.config();
 const router = express.Router();
 
 // Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
-});
+let openai = null;
+
+// Only initialize if API key is provided
+if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_api_key_here') {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+}
 
 /**
  * POST /api/activity/log
@@ -153,44 +158,68 @@ router.post('/analyze', async (req, res) => {
       resource: activity.resourceId ? 'with resource' : 'without resource'
     }));
     
-    // Generate AI analysis
-    const prompt = `
-      Analyze the following user activity pattern and provide insights:
-      
-      Activities:
-      ${JSON.stringify(activitySummary, null, 2)}
-      
-      Please provide:
-      1. Overall engagement level
-      2. Most active periods
-      3. Preferred activities
-      4. Suggestions for improvement
-      5. Personalized recommendations
-      
-      Format your response as JSON with these keys: engagementLevel, activePeriods, preferredActivities, suggestions, recommendations
-    `;
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an educational platform activity analyzer. Provide concise, actionable insights."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 500,
-      temperature: 0.7
-    });
-    
-    // Try to parse AI response
     let analysis;
-    try {
-      analysis = JSON.parse(completion.choices[0].message.content);
-    } catch (parseError) {
+    
+    if (openai) {
+      // Generate AI analysis
+      const prompt = `
+        Analyze the following user activity pattern and provide insights:
+        
+        Activities:
+        ${JSON.stringify(activitySummary, null, 2)}
+        
+        Please provide:
+        1. Overall engagement level
+        2. Most active periods
+        3. Preferred activities
+        4. Suggestions for improvement
+        5. Personalized recommendations
+        
+        Format your response as JSON with these keys: engagementLevel, activePeriods, preferredActivities, suggestions, recommendations
+      `;
+      
+      try {
+        const completion = await openai.chat.completions.create({
+          model: "gpt-3.5-turbo",
+          messages: [
+            {
+              role: "system",
+              content: "You are an educational platform activity analyzer. Provide concise, actionable insights."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        });
+        
+        // Try to parse AI response
+        try {
+          analysis = JSON.parse(completion.choices[0].message.content);
+        } catch (parseError) {
+          analysis = {
+            engagementLevel: "Moderate",
+            activePeriods: ["Various times"],
+            preferredActivities: ["Mixed activities"],
+            suggestions: ["Continue engaging with the platform regularly"],
+            recommendations: ["Explore new features and resources"]
+          };
+        }
+      } catch (aiError) {
+        console.warn('Failed to generate AI analysis:', aiError.message);
+        // Use default analysis as fallback
+        analysis = {
+          engagementLevel: "Moderate",
+          activePeriods: ["Various times"],
+          preferredActivities: ["Mixed activities"],
+          suggestions: ["Continue engaging with the platform regularly"],
+          recommendations: ["Explore new features and resources"]
+        };
+      }
+    } else {
+      // Use default analysis when OpenAI is not configured
       analysis = {
         engagementLevel: "Moderate",
         activePeriods: ["Various times"],

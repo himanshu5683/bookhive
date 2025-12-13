@@ -151,15 +151,15 @@ export const usersAPI = {
 // ============ AI ENDPOINTS ============
 
 export const aiAPI = {
-  getRecommendations: (params) => apiClient.post('/ai/recommendations', params),
-  chat: (messageData) => apiClient.post('/ai/chat', messageData),
-  summarize: (textData) => apiClient.post('/ai/summarize', textData),
-  search: (searchData) => apiClient.post('/ai/search', searchData),
-  generateTags: (contentData) => apiClient.post('/ai/generate-tags', contentData),
-  autoTag: (contentData) => apiClient.post('/ai/auto-tag', contentData),
-  trendDetection: (params) => apiClient.post('/ai/trend-detection', params),
-  sentimentAnalysis: (textData) => apiClient.post('/ai/sentiment-analysis', textData),
-  eventSuggestions: (params) => apiClient.post('/ai/event-suggestions', params),
+  getRecommendations: (params) => apiClient.post('/ai/recommendations', params, { withCredentials: true }),
+  chat: (messageData) => apiClient.post('/ai/chat', messageData, { withCredentials: true }),
+  summarize: (textData) => apiClient.post('/ai/summarize', textData, { withCredentials: true }),
+  search: (searchData) => apiClient.post('/ai/search', searchData, { withCredentials: true }),
+  generateTags: (contentData) => apiClient.post('/ai/generate-tags', contentData, { withCredentials: true }),
+  autoTag: (contentData) => apiClient.post('/ai/auto-tag', contentData, { withCredentials: true }),
+  trendDetection: (params) => apiClient.post('/ai/trend-detection', params, { withCredentials: true }),
+  sentimentAnalysis: (textData) => apiClient.post('/ai/sentiment-analysis', textData, { withCredentials: true }),
+  eventSuggestions: (params) => apiClient.post('/ai/event-suggestions', params, { withCredentials: true }),
 };
 // ============ ACTIVITY ENDPOINTS ============
 
