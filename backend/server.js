@@ -42,7 +42,9 @@ dotenv.config();
     startServer();
   } catch (error) {
     console.error('❌ Failed to connect to database:', error);
-    process.exit(1);
+    // Don't exit the process, start the server anyway to allow health checks
+    console.log('⚠️ Starting server without database connection for health checks');
+    startServer();
   }
 })();
 
@@ -66,33 +68,7 @@ function startServer() {
 
   app.use(limiter);
 
-  // CORS configuration - Enhanced for GitHub Pages
-  const corsOptions = {
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:3001",
-      "https://himanshu5683.github.io",
-      "https://himanshu5683.github.io/bookhive"
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true,
-    optionsSuccessStatus: 200 // Some legacy browsers choke on 204
-  };
-
-  // Apply CORS middleware BEFORE any routes
-  app.use(cors(corsOptions));
-
-  // Handle preflight requests explicitly
-  app.options('*', (req, res) => {
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.sendStatus(200);
-  });
-
-  // Session configuration - Fixed for cross-domain usage
+  // Session configuration
   app.use(session({
     secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your_session_secret_key_here',
     resave: false,
@@ -103,9 +79,9 @@ function startServer() {
       ttl: 24 * 60 * 60 // 24 hours
     }),
     cookie: {
-      secure: true, // Always use secure cookies for cross-domain
+      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
       httpOnly: true, // Prevent XSS attacks
-      sameSite: 'none', // Required for cross-domain cookies
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust for production
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));
@@ -113,6 +89,20 @@ function startServer() {
   // Passport middleware
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // CORS configuration - Only use backend environment variables
+  const corsOptions = {
+    origin: [process.env.FRONTEND_URL || "http://localhost:3000"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
+  };
+
+  // Apply CORS middleware BEFORE any routes
+  app.use(cors(corsOptions));
+
+  // Handle preflight requests
+  app.options("*", cors());
 
   // Middleware
   app.use(express.json());
@@ -135,7 +125,7 @@ function startServer() {
   app.use('/api/events', eventsRoutes);
   app.use('/api/twofactor', twoFactorRoutes);
 
-  // Health check endpoint
+  // Health check endpoint - Works even without database connection
   app.get('/api/health', (req, res) => {
     const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
     
@@ -174,11 +164,16 @@ function startServer() {
   // Graceful shutdown
   process.on('SIGINT', async () => {
     console.log('\nGracefully shutting down...');
-    await mongoose.connection.close();
-    console.log('MongoDB connection closed.');
+    try {
+      await mongoose.connection.close();
+      console.log('MongoDB connection closed.');
+    } catch (error) {
+      console.error('Error closing MongoDB connection:', error);
+    }
     process.exit(0);
   });
 
+  // Use Railway's PORT or default to 5003
   const PORT = process.env.PORT || 5003;
 
   // Start the server

@@ -28,7 +28,9 @@ const connectDB = async () => {
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
-    process.exit(1); // Exit in production if DB connection fails - DO NOT retry
+    isConnected = false;
+    // Don't exit the process, let the application handle the error gracefully
+    throw error;
   }
 };
 

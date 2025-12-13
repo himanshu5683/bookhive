@@ -6,7 +6,7 @@ import { getToken } from '../utils/auth';
 // Create axios instance with base configuration
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
-  timeout: 15000, // Increased timeout for better reliability
+  timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -57,15 +57,15 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       // Network error - provide more detailed information
       // Check if this is actually a network connectivity issue
-      let message = 'Unable to connect to the server. Please check your network connection and try again.';
+      let message = 'Unable to connect to the server. Please check your network connection.';
       
       // More specific network error detection
       if (error.code === 'ECONNABORTED') {
-        message = 'Request timeout. Please check your network connection and try again.';
+        message = 'Request timeout. Please check your network connection.';
       } else if (error.syscall === 'getaddrinfo') {
-        message = 'DNS lookup failed. Please check your network connection and try again.';
+        message = 'DNS lookup failed. Please check your network connection.';
       } else if (!error.request.status && !error.request.responseURL) {
-        message = 'Unable to connect to the server. Please check your network connection and try again.';
+        message = 'Unable to connect to the server. Please check your network connection.';
       }
       
       const networkError = {
