@@ -3,21 +3,20 @@
 import express from 'express';
 import User from '../models/User.js';
 import qrcode from 'qrcode';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 /**
  * POST /api/twofactor/setup
  * Generate 2FA setup QR code
- * Body: { userId }
  */
 router.post('/setup', async (req, res) => {
   try {
-    const { userId } = req.body;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required' });
-    }
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find user
     const user = await User.findById(userId);
@@ -49,14 +48,15 @@ router.post('/setup', async (req, res) => {
 /**
  * POST /api/twofactor/verify
  * Verify 2FA setup
- * Body: { userId, token }
+ * Body: { token }
  */
 router.post('/verify', async (req, res) => {
   try {
-    const { userId, token } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const { token } = req.body;
     
-    if (!userId || !token) {
-      return res.status(400).json({ error: 'userId and token required' });
+    if (!token) {
+      return res.status(400).json({ error: 'token required' });
     }
     
     // Find user
@@ -92,15 +92,10 @@ router.post('/verify', async (req, res) => {
 /**
  * POST /api/twofactor/disable
  * Disable 2FA
- * Body: { userId }
  */
 router.post('/disable', async (req, res) => {
   try {
-    const { userId } = req.body;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId required' });
-    }
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find user
     const user = await User.findById(userId);
@@ -126,14 +121,15 @@ router.post('/disable', async (req, res) => {
 /**
  * POST /api/twofactor/recovery
  * Use recovery code for 2FA
- * Body: { userId, code }
+ * Body: { code }
  */
 router.post('/recovery', async (req, res) => {
   try {
-    const { userId, code } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const { code } = req.body;
     
-    if (!userId || !code) {
-      return res.status(400).json({ error: 'userId and code required' });
+    if (!code) {
+      return res.status(400).json({ error: 'code required' });
     }
     
     // Find user
@@ -160,12 +156,12 @@ router.post('/recovery', async (req, res) => {
 });
 
 /**
- * GET /api/twofactor/status/:userId
- * Get 2FA status for user
+ * GET /api/twofactor/status
+ * Get 2FA status for current user
  */
-router.get('/status/:userId', async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
-    const { userId } = req.params;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find user
     const user = await User.findById(userId);

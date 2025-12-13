@@ -2,8 +2,12 @@
 
 import express from 'express';
 import ResourceRequest from '../models/ResourceRequest.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 /**
  * GET /api/requests
@@ -42,14 +46,16 @@ router.get('/', async (req, res) => {
 /**
  * POST /api/requests
  * Submit a new resource request
- * Body: { title, description, category, requesterId, requesterName }
+ * Body: { title, description, category }
  */
 router.post('/', async (req, res) => {
   try {
-    const { title, description, category, requesterId, requesterName } = req.body;
+    const { title, description, category } = req.body;
+    const requesterId = req.user.id; // Using id from authenticated user (as requested)
+    const requesterName = req.user.name;
 
-    if (!title || !description || !requesterId || !requesterName) {
-      return res.status(400).json({ error: 'Title, description, requesterId, and requesterName required' });
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
     }
 
     // Create request
@@ -76,21 +82,24 @@ router.post('/', async (req, res) => {
 
 /**
  * PUT /api/requests/:id/status
- * Update request status
+ * Update request status (admin/moderator only)
  * Body: { status, resolverId, resolverName }
  */
 router.put('/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
     const { status, resolverId, resolverName } = req.body;
+    const resolverIdFromAuth = req.user.id; // Using id from authenticated user (as requested)
+    const resolverNameFromAuth = req.user.name;
 
     if (!status || !['pending', 'approved', 'rejected', 'fulfilled'].includes(status)) {
       return res.status(400).json({ error: 'Valid status required' });
     }
 
     const updateFields = { status };
-    if (resolverId) updateFields.resolverId = resolverId;
-    if (resolverName) updateFields.resolverName = resolverName;
+    // Use authenticated user info instead of request body
+    updateFields.resolverId = resolverIdFromAuth;
+    updateFields.resolverName = resolverNameFromAuth;
     if (status === 'fulfilled') updateFields.fulfilledAt = new Date();
 
     const request = await ResourceRequest.findByIdAndUpdate(id, updateFields, { new: true });

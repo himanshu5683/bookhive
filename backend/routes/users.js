@@ -2,8 +2,12 @@
 
 import express from 'express';
 import User from '../models/User.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes except public ones
+router.use(authenticate);
 
 /**
  * GET /api/users
@@ -101,6 +105,26 @@ router.get('/leaderboard', async (req, res) => {
 });
 
 /**
+ * GET /api/users/profile
+ * Fetch current user's profile details
+ */
+router.get('/profile', async (req, res) => {
+  try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ error: 'Server error fetching user profile' });
+  }
+});
+
+/**
  * GET /api/users/:id
  * Fetch user profile details
  */
@@ -121,8 +145,42 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * PUT /api/users/profile
+ * Update current user's profile
+ * Body: { name, bio, avatar, tags }
+ */
+router.put('/profile', async (req, res) => {
+  try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const { name, bio, avatar, tags } = req.body;
+    
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (avatar) updateFields.avatar = avatar;
+    if (tags && Array.isArray(tags)) updateFields.tags = tags;
+    
+    const user = await User.findByIdAndUpdate(userId, updateFields, { 
+      new: true,
+      select: '-password'
+    });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user
+    });
+  } catch (error) {
+    console.error('Error updating user:', error);
+    res.status(500).json({ error: 'Server error updating user' });
+  }
+});
+
+/**
  * PUT /api/users/:id
- * Update user profile
+ * Update user profile (admin only in production)
  * Body: { name, bio, avatar, tags }
  */
 router.put('/:id', async (req, res) => {
@@ -195,158 +253,6 @@ router.put('/:id/credits', async (req, res) => {
   } catch (error) {
     console.error('Error updating credits:', error);
     res.status(500).json({ error: 'Server error updating credits' });
-  }
-});
-
-/**
- * GET /api/users/:id/achievements
- * Fetch user badges and achievements
- */
-router.get('/:id/achievements', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const user = await User.findById(id).select('badges');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Sample badges (in a real app, these would be dynamically determined)
-    const badges = [
-      {
-        name: 'Top Contributor',
-        description: 'Uploaded 10+ quality resources',
-        icon: '🏆',
-        unlocked: user.badges.includes('Top Contributor'),
-        unlockedDate: new Date('2023-06-15')
-      },
-      {
-        name: 'Rapid Riser',
-        description: 'Gained 500+ credits in 30 days',
-        icon: '📈',
-        unlocked: user.badges.includes('Rapid Riser'),
-        unlockedDate: new Date('2023-08-20')
-      },
-      {
-        name: '7-Day Streak',
-        description: 'Logged in 7 days consecutively',
-        icon: '🔥',
-        unlocked: user.badges.includes('7-Day Streak'),
-        progress: 5
-      }
-    ];
-    
-    res.status(200).json({ badges });
-  } catch (error) {
-    console.error('Error fetching achievements:', error);
-    res.status(500).json({ error: 'Server error fetching achievements' });
-  }
-});
-
-/**
- * POST /api/users/:id/follow
- * Follow a user
- * Body: { followerId }
- */
-router.post('/:id/follow', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { followerId } = req.body;
-    
-    if (!followerId) {
-      return res.status(400).json({ error: 'followerId required' });
-    }
-    
-    // Update followed user's followers count
-    const followedUser = await User.findByIdAndUpdate(id, {
-      $inc: { followers: 1 }
-    }, { new: true });
-    
-    if (!followedUser) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    // Update follower's following count
-    await User.findByIdAndUpdate(followerId, {
-      $inc: { following: 1 }
-    });
-    
-    res.status(200).json({
-      message: 'User followed successfully',
-      userId: id,
-      followerCount: followedUser.followers
-    });
-  } catch (error) {
-    console.error('Error following user:', error);
-    res.status(500).json({ error: 'Server error following user' });
-  }
-});
-
-/**
- * PUT /api/users/:id/tags
- * Update user tags based on activity
- * Body: { tags }
- */
-router.put('/:id/tags', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { tags } = req.body;
-
-    if (!tags || !Array.isArray(tags)) {
-      return res.status(400).json({ error: 'Tags array required' });
-    }
-
-    // Find user
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Update tags
-    await user.updateTags(tags);
-
-    res.status(200).json({
-      message: 'Tags updated successfully',
-      userId: id,
-      tags: user.tags
-    });
-  } catch (error) {
-    console.error('Error updating user tags:', error);
-    res.status(500).json({ error: 'Server error updating user tags' });
-  }
-});
-
-/**
- * PUT /api/users/:id/tags
- * Update user tags based on activity
- * Body: { tags }
- */
-router.put('/:id/tags', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { tags } = req.body;
-
-    if (!tags || !Array.isArray(tags)) {
-      return res.status(400).json({ error: 'Tags array required' });
-    }
-
-    // Find user
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Update tags
-    await user.updateTags(tags);
-
-    res.status(200).json({
-      message: 'Tags updated successfully',
-      userId: id,
-      tags: user.tags
-    });
-  } catch (error) {
-    console.error('Error updating user tags:', error);
-    res.status(500).json({ error: 'Server error updating user tags' });
   }
 });
 

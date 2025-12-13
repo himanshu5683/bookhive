@@ -2,8 +2,12 @@
 
 import express from 'express';
 import StudyCircle from '../models/StudyCircle.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 /**
  * GET /api/circles
@@ -41,14 +45,16 @@ router.get('/', async (req, res) => {
 /**
  * POST /api/circles
  * Create a new study circle
- * Body: { name, topic, description, creatorId }
+ * Body: { name, topic, description }
  */
 router.post('/', async (req, res) => {
   try {
-    const { name, topic, description, creatorId } = req.body;
+    const { name, topic, description } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
 
-    if (!name || !topic || !creatorId) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (!name || !topic) {
+      return res.status(400).json({ error: 'Name and topic are required' });
     }
 
     // Create circle
@@ -56,8 +62,9 @@ router.post('/', async (req, res) => {
       name,
       topic,
       description,
-      createdBy: creatorId,
-      members: [{ userId: creatorId, joinedAt: new Date() }],
+      createdBy: userId.toString(), // Store user ID as string
+      creatorName: userName, // Store creator name
+      members: [{ userId: userId.toString(), name: userName, joinedAt: new Date() }],
       threads: [],
       memberCount: 1,
       threadCount: 0
@@ -98,12 +105,12 @@ router.get('/:id', async (req, res) => {
 /**
  * POST /api/circles/:id/join
  * Join a study circle
- * Body: { userId }
  */
 router.post('/:id/join', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
     
     // Find circle
     const circle = await StudyCircle.findById(id);
@@ -112,13 +119,13 @@ router.post('/:id/join', async (req, res) => {
     }
     
     // Check if already member
-    const isMember = circle.members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId.toString());
     if (isMember) {
       return res.status(400).json({ error: 'Already a member' });
     }
     
     // Add user to circle members
-    circle.members.push({ userId, joinedAt: new Date() });
+    circle.members.push({ userId: userId.toString(), name: userName, joinedAt: new Date() });
     circle.memberCount = circle.members.length;
     
     await circle.save();
@@ -136,12 +143,14 @@ router.post('/:id/join', async (req, res) => {
 /**
  * POST /api/circles/:id/thread
  * Create a discussion thread
- * Body: { userId, title, content }
+ * Body: { title, content }
  */
 router.post('/:id/thread', async (req, res) => {
   try {
     const { id } = req.params;
-    const { userId, title, content } = req.body;
+    const { title, content } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
 
     if (!title || !content) {
       return res.status(400).json({ error: 'Title and content required' });
@@ -154,7 +163,7 @@ router.post('/:id/thread', async (req, res) => {
     }
     
     // Check if user is member
-    const isMember = circle.members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId.toString());
     if (!isMember) {
       return res.status(403).json({ error: 'Must be a member to post' });
     }
@@ -163,7 +172,8 @@ router.post('/:id/thread', async (req, res) => {
     const thread = {
       title,
       content,
-      authorId: userId,
+      authorId: userId.toString(),
+      authorName: userName,
       createdAt: new Date()
     };
     
@@ -185,12 +195,14 @@ router.post('/:id/thread', async (req, res) => {
 /**
  * POST /api/circles/:circleId/thread/:threadId/reply
  * Reply to a discussion thread
- * Body: { userId, content }
+ * Body: { content }
  */
 router.post('/:circleId/thread/:threadId/reply', async (req, res) => {
   try {
-    const { circleId } = req.params;
-    const { userId, content } = req.body;
+    const { circleId, threadId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
 
     if (!content) {
       return res.status(400).json({ error: 'Content required' });
@@ -201,27 +213,39 @@ router.post('/:circleId/thread/:threadId/reply', async (req, res) => {
     if (!circle) {
       return res.status(404).json({ error: 'Circle not found' });
     }
-    
+
+    // Find thread
+    const threadIndex = circle.threads.findIndex(t => t._id.toString() === threadId);
+    if (threadIndex === -1) {
+      return res.status(404).json({ error: 'Thread not found' });
+    }
+
     // Check if user is member
-    const isMember = circle.members.some(member => member.userId === userId);
+    const isMember = circle.members.some(member => member.userId === userId.toString());
     if (!isMember) {
       return res.status(403).json({ error: 'Must be a member to reply' });
     }
-    
-    // In a real app, you would store replies in a separate collection
-    // For now, we'll just return a success response
+
+    // Add reply to thread
+    const reply = {
+      content,
+      authorId: userId.toString(),
+      authorName: userName,
+      createdAt: new Date()
+    };
+
+    circle.threads[threadIndex].replies = circle.threads[threadIndex].replies || [];
+    circle.threads[threadIndex].replies.push(reply);
+
+    await circle.save();
+
     res.status(201).json({
-      message: 'Reply posted successfully',
-      reply: {
-        id: 'reply_' + Date.now(),
-        userId,
-        content,
-        timestamp: new Date()
-      }
+      message: 'Reply added successfully',
+      reply
     });
   } catch (error) {
-    console.error('Error posting reply:', error);
-    res.status(500).json({ error: 'Server error posting reply' });
+    console.error('Error adding reply:', error);
+    res.status(500).json({ error: 'Server error adding reply' });
   }
 });
 

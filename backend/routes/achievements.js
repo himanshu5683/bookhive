@@ -3,21 +3,20 @@
 import express from 'express';
 import Achievement from '../models/Achievement.js';
 import User from '../models/User.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
 /**
  * GET /api/achievements
- * Fetch user achievements
- * Query params: ?userId=
+ * Fetch current user's achievements
  */
 router.get('/', async (req, res) => {
   try {
-    const { userId } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     const achievements = await Achievement.find({ userId })
       .sort({ createdAt: -1 });
@@ -33,15 +32,16 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/achievements
- * Create a new achievement
- * Body: { userId, type, title, description, icon, points, level, criteria }
+ * Create a new achievement (admin only)
+ * Body: { type, title, description, icon, points, level, criteria }
  */
 router.post('/', async (req, res) => {
   try {
-    const { userId, type, title, description, icon, points, level, criteria } = req.body;
+    const { type, title, description, icon, points, level, criteria } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    if (!userId || !type || !title || !description) {
-      return res.status(400).json({ error: 'userId, type, title, and description are required' });
+    if (!type || !title || !description) {
+      return res.status(400).json({ error: 'type, title, and description are required' });
     }
     
     const achievement = new Achievement({

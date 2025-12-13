@@ -6,10 +6,14 @@ import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import authenticate from '../middleware/auth.js';
 
 dotenv.config();
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 // Initialize OpenAI client
 let openai = null;
@@ -101,7 +105,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, description, startDate, endDate, category, format, maxParticipants } = req.body;
-    const userId = req.user._id; // User object is attached by auth middleware
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     const userName = req.user.name;
     
     // Validate required fields
@@ -158,7 +162,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { title, description, startDate, endDate, category, format, maxParticipants } = req.body;
-    const userId = req.user._id;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find event and check ownership
     const event = await Event.findById(req.params.id);
@@ -204,7 +208,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Find event and check ownership
     const event = await Event.findById(req.params.id);
@@ -223,118 +227,6 @@ router.delete('/:id', async (req, res) => {
   } catch (error) {
     console.error('Error deleting event:', error);
     res.status(500).json({ error: 'Failed to delete event' });
-  }
-});
-
-/**
- * POST /api/events/:id/register
- * Register for event
- */
-router.post('/:id/register', async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const userName = req.user.name;
-    
-    // Find event
-    const event = await Event.findById(req.params.id);
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    
-    // Check if user is already registered
-    if (event.participants.some(p => p.userId === userId.toString())) {
-      return res.status(400).json({ error: 'Already registered for this event' });
-    }
-    
-    // Check capacity
-    if (event.currentParticipants >= event.maxParticipants) {
-      return res.status(400).json({ error: 'Event is at full capacity' });
-    }
-    
-    // Add user to participants
-    event.participants.push({
-      userId: userId.toString(),
-      name: userName
-    });
-    event.currentParticipants = event.participants.length;
-    await event.save();
-    
-    // Create notification
-    await Notification.create({
-      userId: userId,
-      type: 'event_registration',
-      message: `You've successfully registered for "${event.title}"`,
-      data: { eventId: event._id }
-    });
-    
-    res.json({ message: 'Successfully registered for the event', event });
-  } catch (error) {
-    console.error('Error registering for event:', error);
-    res.status(500).json({ error: 'Failed to register for event' });
-  }
-});
-
-/**
- * POST /api/events/:id/suggest
- * Get AI-powered event suggestions
- */
-router.post('/:id/suggest', async (req, res) => {
-  try {
-    const event = await Event.findById(req.params.id);
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
-    }
-    
-    // Generate AI suggestions based on event details
-    const prompt = `
-      Based on this event:
-      Title: ${event.title}
-      Description: ${event.description}
-      Category: ${event.category}
-      Format: ${event.format}
-      
-      Suggest 3 related events that users might be interested in. Return as JSON array with:
-      - title
-      - briefDescription
-      - suggestedCategory
-      - format
-    `;
-    
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: "You are an event suggestion engine. Return only valid JSON array."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      max_tokens: 500,
-      temperature: 0.7
-    });
-    
-    // Try to parse AI response
-    let suggestions;
-    try {
-      suggestions = JSON.parse(completion.choices[0].message.content);
-    } catch (parseError) {
-      suggestions = [
-        {
-          title: "Related Educational Event",
-          briefDescription: "An event related to your interests",
-          suggestedCategory: event.category,
-          format: event.format
-        }
-      ];
-    }
-    
-    res.json({ suggestions });
-  } catch (error) {
-    console.error('Error generating event suggestions:', error);
-    res.status(500).json({ error: 'Failed to generate event suggestions' });
   }
 });
 

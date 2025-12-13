@@ -2,21 +2,22 @@
 
 import express from 'express';
 import Notification from '../models/Notification.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
 /**
  * GET /api/notifications
- * Fetch user notifications
- * Query params: ?userId=&limit=&skip=
+ * Fetch current user's notifications
+ * Query params: ?limit=&skip=
  */
 router.get('/', async (req, res) => {
   try {
-    const { userId, limit = 20, skip = 0 } = req.query;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const { limit = 20, skip = 0 } = req.query;
     
     const notifications = await Notification.find({ userId })
       .sort({ createdAt: -1 })
@@ -37,15 +38,16 @@ router.get('/', async (req, res) => {
 
 /**
  * POST /api/notifications
- * Create a new notification
- * Body: { userId, type, title, message, relatedId, relatedType, priority }
+ * Create a new notification (admin/system only)
+ * Body: { type, title, message, relatedId, relatedType, priority }
  */
 router.post('/', async (req, res) => {
   try {
-    const { userId, type, title, message, relatedId, relatedType, priority } = req.body;
+    const { type, title, message, relatedId, relatedType, priority } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    if (!userId || !type || !title || !message) {
-      return res.status(400).json({ error: 'userId, type, title, and message are required' });
+    if (!type || !title || !message) {
+      return res.status(400).json({ error: 'type, title, and message are required' });
     }
     
     const notification = new Notification({
@@ -83,9 +85,10 @@ router.post('/', async (req, res) => {
 router.put('/:id/read', async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    const notification = await Notification.findByIdAndUpdate(
-      id, 
+    const notification = await Notification.findOneAndUpdate(
+      { _id: id, userId: userId }, 
       { read: true }, 
       { new: true }
     );
@@ -106,19 +109,14 @@ router.put('/:id/read', async (req, res) => {
 
 /**
  * PUT /api/notifications/read-all
- * Mark all user notifications as read
- * Body: { userId }
+ * Mark all current user's notifications as read
  */
 router.put('/read-all', async (req, res) => {
   try {
-    const { userId } = req.body;
-    
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required' });
-    }
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     await Notification.updateMany(
-      { userId, read: false },
+      { userId: userId, read: false },
       { read: true }
     );
     
@@ -138,8 +136,9 @@ router.put('/read-all', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    const notification = await Notification.findByIdAndDelete(id);
+    const notification = await Notification.findOneAndDelete({ _id: id, userId: userId });
     
     if (!notification) {
       return res.status(404).json({ error: 'Notification not found' });

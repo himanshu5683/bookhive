@@ -9,20 +9,22 @@ import User from '../models/User.js';
  */
 const authenticate = async (req, res, next) => {
   try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
+    let token = null;
     
-    // Check if authorization header exists
-    if (!authHeader) {
-      return res.status(401).json({ error: 'Access denied. No token provided.' });
+    // Get token from Authorization header (Bearer token)
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
     }
     
-    // Extract token (format: "Bearer token")
-    const token = authHeader.split(' ')[1];
+    // If no token in header, check cookies
+    if (!token && req.cookies) {
+      token = req.cookies.token || req.cookies.jwt;
+    }
     
     // Check if token exists
     if (!token) {
-      return res.status(401).json({ error: 'Access denied. Token malformed.' });
+      return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
     
     // Verify token
@@ -38,6 +40,9 @@ const authenticate = async (req, res, next) => {
     
     // Attach user to request object
     req.user = user;
+    
+    // Log authenticated user for debugging
+    console.log(`User authenticated: ${user._id} (${user.name})`);
     
     // Proceed to next middleware/route handler
     next();

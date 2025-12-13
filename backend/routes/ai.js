@@ -3,17 +3,21 @@ import inbuiltAIService from '../services/inbuiltAI.js';
 const { generateInbuiltAIResponse } = inbuiltAIService;
 import openaiService from '../services/openaiService.js';
 const { generateAIResponse } = openaiService;
+import authenticate from '../middleware/auth.js';
 
 // Store conversation history in memory (in production, you might want to use a database)
 const conversationHistories = new Map();
 
 const router = express.Router();
 
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
 router.post("/chat", async (req, res) => {
   try {
     const userMessage = req.body.message;
-    const userId = req.body.userId || "anonymous"; // Use userId if provided, otherwise anonymous
-    const user = req.body.user || null; // User object if provided
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const user = req.user; // User object from authentication
 
     if (!userMessage) {
       return res.status(400).json({ reply: "Please type a message." });
@@ -58,6 +62,7 @@ router.post("/chat", async (req, res) => {
 
   } catch (err) {
     console.error("AI Chat Error:", err);
+    // Always return a safe fallback response instead of throwing errors
     return res.json({ reply: "Something went wrong, try again!" });
   }
 });

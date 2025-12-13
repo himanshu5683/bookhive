@@ -2,12 +2,16 @@
 
 import express from 'express';
 import Feedback from '../models/Feedback.js';
+import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
 
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
 /**
  * GET /api/feedback
- * Fetch all feedback
+ * Fetch all feedback (admin only)
  * Query: ?type=bug&page=1&limit=20
  */
 router.get('/', async (req, res) => {
@@ -42,14 +46,16 @@ router.get('/', async (req, res) => {
 /**
  * POST /api/feedback
  * Submit new feedback
- * Body: { type, title, description, userId, userName }
+ * Body: { type, title, description }
  */
 router.post('/', async (req, res) => {
   try {
-    const { type, title, description, userId, userName } = req.body;
+    const { type, title, description } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
 
-    if (!type || !title || !description || !userId || !userName) {
-      return res.status(400).json({ error: 'Type, title, description, userId, and userName required' });
+    if (!type || !title || !description) {
+      return res.status(400).json({ error: 'Type, title, and description are required' });
     }
 
     // Create feedback

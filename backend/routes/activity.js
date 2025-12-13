@@ -8,10 +8,14 @@ import Achievement from '../models/Achievement.js';
 import Activity from '../models/Activity.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import authenticate from '../middleware/auth.js';
 
 dotenv.config();
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 // Initialize OpenAI client
 let openai = null;
@@ -29,11 +33,12 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_ap
  */
 router.post('/log', async (req, res) => {
   try {
-    const { userId, action, resourceId, metadata } = req.body;
+    const { action, resourceId, metadata } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Validate required fields
-    if (!userId || !action) {
-      return res.status(400).json({ error: 'userId and action are required' });
+    if (!action) {
+      return res.status(400).json({ error: 'action is required' });
     }
     
     // Create activity record
@@ -65,19 +70,20 @@ router.post('/log', async (req, res) => {
 });
 
 /**
- * GET /api/activity/user/:userId
- * Get user activity history
+ * GET /api/activity/user
+ * Get current user's activity history
  */
-router.get('/user/:userId', async (req, res) => {
+router.get('/user', async (req, res) => {
   try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     const { limit = 50, offset = 0 } = req.query;
     
-    const activities = await Activity.find({ userId: req.params.userId })
+    const activities = await Activity.find({ userId: userId })
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip(parseInt(offset));
     
-    const total = await Activity.countDocuments({ userId: req.params.userId });
+    const total = await Activity.countDocuments({ userId: userId });
     
     res.json({ activities, total });
   } catch (error) {
@@ -87,15 +93,15 @@ router.get('/user/:userId', async (req, res) => {
 });
 
 /**
- * GET /api/activity/stats/:userId
- * Get user activity statistics
+ * GET /api/activity/stats
+ * Get current user's activity statistics
  */
-router.get('/stats/:userId', async (req, res) => {
+router.get('/stats', async (req, res) => {
   try {
-    const userId = req.params.userId;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
     
     // Get total activities
-    const totalActivities = await Activity.countDocuments({ userId });
+    const totalActivities = await Activity.countDocuments({ userId: userId });
     
     // Get activity breakdown by type
     const activityTypes = await Activity.aggregate([
@@ -130,7 +136,8 @@ router.get('/stats/:userId', async (req, res) => {
  */
 router.post('/analyze', async (req, res) => {
   try {
-    const { userId, timeframe = 'month' } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const { timeframe = 'month' } = req.body;
     
     // Get user activities for the specified timeframe
     const startDate = new Date();
@@ -232,7 +239,8 @@ router.post('/analyze', async (req, res) => {
     res.json({ analysis });
   } catch (error) {
     console.error('Error analyzing activity:', error);
-    res.status(500).json({ error: 'Failed to analyze activity' });
+    // Always return a safe fallback response instead of throwing errors
+    res.json({ analysis: "Unable to analyze activity at this time. Please try again later." });
   }
 });
 
