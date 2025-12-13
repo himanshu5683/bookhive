@@ -48,9 +48,9 @@ app.use(session({
     ttl: 24 * 60 * 60 // 24 hours
   }),
   cookie: {
-    secure: true, // Always use secure cookies (HTTPS)
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevent XSS attacks
-    sameSite: 'none', // Allow cross-site requests
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust for production
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
