@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useCallback, useContext } from "react";
+import React, { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { aiService } from "../../services/api";
 import "../../styles/AI.css";
 
 const Recommendations = () => {
@@ -24,7 +25,7 @@ const Recommendations = () => {
         userId: user ? user.id : undefined
       };
       
-      const response = await apiClient.aiAPI.getRecommendations(requestData);
+      const response = await aiService.getRecommendations(requestData);
       
       setRecommendations(response.recommendations || []);
     } catch (err) {

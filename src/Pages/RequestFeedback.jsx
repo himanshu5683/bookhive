@@ -1,6 +1,7 @@
-import React, { useState, useContext, useEffect } from 'react';
-import apiClient from '../services/api';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../auth/AuthContext';
+import { requestsService, feedbackService } from '../services/api'; // Fixed: Import proper services instead of apiClient
 import '../styles/RequestFeedback.css';
 
 const RequestFeedback = () => {

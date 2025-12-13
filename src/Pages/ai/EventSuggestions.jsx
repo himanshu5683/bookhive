@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useContext, useCallback, useEffect } from "react"; // Fixed: Add missing imports
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { aiService } from "../../services/api"; // Fixed: Import aiService instead of apiClient
 import "../../styles/AI.css";
 
 const EventSuggestions = () => {
@@ -22,7 +22,7 @@ const EventSuggestions = () => {
     setError("");
     
     try {
-      const response = await apiClient.aiAPI.eventSuggestions({
+      const response = await aiService.eventSuggestions({ // Fixed: Use aiService instead of apiClient
         ...preferences,
         userId: user?.id
       });
@@ -47,143 +47,117 @@ const EventSuggestions = () => {
     }));
   };
 
-  const handleFormatToggle = (format) => {
-    setPreferences(prev => {
-      const formats = prev.preferredFormats.includes(format)
-        ? prev.preferredFormats.filter(f => f !== format)
-        : [...prev.preferredFormats, format];
-      
-      return {
-        ...prev,
-        preferredFormats: formats
-      };
-    });
-  };
-
   const handleRefresh = () => {
     fetchEventSuggestions();
   };
 
   const formatDate = (dateString) => {
-    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    return new Date(dateString).toLocaleDateString(undefined, options);
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
   };
 
   const formatTime = (timeString) => {
-    return new Date(timeString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const [hours, minutes] = timeString.split(':');
+    const hour = parseInt(hours);
+    return hour > 12 ? `${hour - 12}:${minutes} PM` : `${hour}:${minutes} AM`;
   };
 
   const getEventTypeClass = (type) => {
     switch (type) {
-      case "book_club": return "event-book-club";
-      case "author_meet": return "event-author-meet";
-      case "workshop": return "event-workshop";
-      case "discussion": return "event-discussion";
-      default: return "";
+      case 'workshop': return 'workshop-event';
+      case 'webinar': return 'webinar-event';
+      case 'study_group': return 'study-group-event';
+      default: return 'general-event';
     }
   };
 
   return (
     <div className="ai-container">
       <div className="ai-header">
-        <h1>🎉 AI Event Suggestions</h1>
-        <p>Discover book-related events tailored to your interests</p>
+        <h1>🎯 Personalized Event Suggestions</h1>
+        <p>Discover events tailored to your interests and schedule</p>
       </div>
 
-      <div className="event-tabs">
+      {/* Tabs */}
+      <div className="ai-tabs">
         <button 
-          className={`tab-btn ${activeTab === "suggestions" ? "active" : ""}`}
+          className={`ai-tab ${activeTab === "suggestions" ? "active" : ""}`}
           onClick={() => setActiveTab("suggestions")}
         >
-          Suggestions
+          🎯 Suggestions
         </button>
         <button 
-          className={`tab-btn ${activeTab === "preferences" ? "active" : ""}`}
+          className={`ai-tab ${activeTab === "preferences" ? "active" : ""}`}
           onClick={() => setActiveTab("preferences")}
         >
-          My Preferences
+          ⚙️ Preferences
         </button>
       </div>
 
+      {error && <div className="alert alert-error">{error}</div>}
+
       {activeTab === "preferences" ? (
-        <div className="preferences-section card">
-          <h2>Your Event Preferences</h2>
-          <form className="ai-form">
+        <div className="preferences-panel card">
+          <h2>Customize Your Preferences</h2>
+          <div className="preferences-form">
             <div className="form-group">
-              <label htmlFor="interests">Your Interests</label>
-              <input
-                id="interests"
-                type="text"
+              <label>Interests & Topics</label>
+              <textarea
                 value={preferences.interests}
                 onChange={(e) => handlePreferenceChange("interests", e.target.value)}
-                placeholder="e.g., Science Fiction, Mystery, Biography"
+                placeholder="e.g., JavaScript, Machine Learning, Book Clubs..."
+                rows={3}
               />
             </div>
-            
+
             <div className="form-group">
               <label>Preferred Event Formats</label>
               <div className="checkbox-group">
-                <label className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={preferences.preferredFormats.includes("virtual")}
-                    onChange={() => handleFormatToggle("virtual")}
-                  />
-                  <span className="checkmark"></span>
-                  Virtual Events
-                </label>
-                
-                <label className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={preferences.preferredFormats.includes("in_person")}
-                    onChange={() => handleFormatToggle("in_person")}
-                  />
-                  <span className="checkmark"></span>
-                  In-Person Events
-                </label>
-                
-                <label className="checkbox-item">
-                  <input
-                    type="checkbox"
-                    checked={preferences.preferredFormats.includes("hybrid")}
-                    onChange={() => handleFormatToggle("hybrid")}
-                  />
-                  <span className="checkmark"></span>
-                  Hybrid Events
-                </label>
+                {["Online", "In-person", "Hybrid"].map(format => (
+                  <label key={format} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={preferences.preferredFormats.includes(format)}
+                      onChange={(e) => {
+                        const newFormats = e.target.checked
+                          ? [...preferences.preferredFormats, format]
+                          : preferences.preferredFormats.filter(f => f !== format);
+                        handlePreferenceChange("preferredFormats", newFormats);
+                      }}
+                    />
+                    {format}
+                  </label>
+                ))}
               </div>
             </div>
-            
+
             <div className="form-group">
-              <label htmlFor="availability">Availability</label>
+              <label>Availability</label>
               <select
-                id="availability"
                 value={preferences.availability}
                 onChange={(e) => handlePreferenceChange("availability", e.target.value)}
               >
-                <option value="all">Any Time</option>
-                <option value="weekdays">Weekdays</option>
-                <option value="weekends">Weekends</option>
-                <option value="evenings">Evenings</option>
+                <option value="all">All Times</option>
+                <option value="weekday">Weekdays Only</option>
+                <option value="weekend">Weekends Only</option>
+                <option value="evening">Evenings Only</option>
               </select>
             </div>
-            
-            <div className="form-actions">
-              <button 
-                type="button" 
-                className="btn btn-primary"
-                onClick={handleRefresh}
-              >
-                Save & Refresh
-              </button>
-            </div>
-          </form>
+
+            <button 
+              className="btn btn-primary"
+              onClick={handleRefresh}
+            >
+              Save Preferences & Refresh
+            </button>
+          </div>
         </div>
       ) : (
         <div className="events-section">
-          {error && <div className="alert alert-error">{error}</div>}
-
           {loading ? (
             <div className="loading-spinner">
               <div className="spinner"></div>
@@ -247,10 +221,10 @@ const EventSuggestions = () => {
                   ))}
                 </div>
               ) : (
-                <div className="no-results">
-                  <div className="no-results-icon">📅</div>
-                  <h3>No events found</h3>
-                  <p>We couldn't find any events matching your preferences. Try adjusting your settings.</p>
+                <div className="no-events">
+                  <div className="empty-icon">📅</div>
+                  <h3>No Events Found</h3>
+                  <p>We couldn't find any events matching your current preferences.</p>
                   <button 
                     className="btn btn-primary"
                     onClick={() => setActiveTab("preferences")}
@@ -263,16 +237,6 @@ const EventSuggestions = () => {
           )}
         </div>
       )}
-
-      {/* Back to AI Dashboard */}
-      <div className="back-to-dashboard">
-        <button 
-          className="btn btn-outline"
-          onClick={() => navigate("/ai")}
-        >
-          ← Back to AI Dashboard
-        </button>
-      </div>
     </div>
   );
 };

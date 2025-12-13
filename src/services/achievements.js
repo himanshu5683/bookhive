@@ -1,19 +1,29 @@
-// src/services/achievements.js - Achievements Service
+import { usersService } from './api';
 
-import apiClient from './api';
-
-export const achievementsAPI = {
-  // Fetch user achievements
-  getAchievements: (userId) => 
-    apiClient.get('/achievements', { params: { userId } }),
-  
-  // Create a new achievement
-  createAchievement: (achievementData) => 
-    apiClient.post('/achievements', achievementData),
-  
-  // Get predefined achievement types
-  getAchievementTypes: () => 
-    apiClient.get('/achievements/types')
+// Service to fetch user achievements
+export const getUserAchievements = async (userId) => {
+  try {
+    const response = await usersService.getAchievements(userId);
+    return response;
+  } catch (error) {
+    console.error('Error fetching user achievements:', error);
+    throw error;
+  }
 };
 
-export default achievementsAPI;
+// Service to get all achievements
+export const getAllAchievements = async () => {
+  try {
+    // This would typically call a dedicated achievements endpoint
+    // For now, we'll return an empty array as a placeholder
+    return [];
+  } catch (error) {
+    console.error('Error fetching achievements:', error);
+    throw error;
+  }
+};
+
+export default {
+  getUserAchievements,
+  getAllAchievements
+};

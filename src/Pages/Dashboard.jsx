@@ -14,7 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
-  const { resources: recentUploads, loading: resourcesLoading, fetchResources } = useResources();
+  const { resources: recentUploads, loading: resourcesLoading, fetchUserResources } = useResources();
   const { stats, fetchUserStats } = useUserActivity(user?.id);
 
   useEffect(() => {
@@ -30,7 +30,7 @@ const Dashboard = () => {
         await fetchUserStats();
 
         // Fetch recent uploads using our hook (sorted by recent by default)
-        fetchResources('recent');
+        fetchUserResources(); // Use fetchUserResources instead of fetchResources
 
         // Fetch AI recommendations
         const recommendationsResponse = await dashboardService.getRecommendations({
@@ -40,8 +40,8 @@ const Dashboard = () => {
 
         // Fetch leaderboard position
         const leaderboardResponse = await dashboardService.getLeaderboard();
-        if (leaderboardResponse.users) {
-          const position = leaderboardResponse.users.findIndex(u => u._id === user.id);
+        if (leaderboardResponse.leaderboard) { // Fixed: Use leaderboard instead of users
+          const position = leaderboardResponse.leaderboard.findIndex(u => u.userId === user.id);
           setLeaderboardPosition(position >= 0 ? position + 1 : null);
         }
       } catch (err) {
@@ -53,7 +53,7 @@ const Dashboard = () => {
     };
 
     fetchData();
-  }, [user, navigate, fetchResources, fetchUserStats]);
+  }, [user, navigate, fetchUserResources, fetchUserStats]);
 
   const handleLogout = async () => {
     setSigningOut(true);

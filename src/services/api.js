@@ -104,6 +104,7 @@ export const authAPI = {
 
 export const resourcesAPI = {
   getAll: (filters = {}) => apiClient.get('/resources', { params: filters }),
+  getMyFiles: (params = {}) => apiClient.get('/resources/my', { params }), // Add the getMyFiles endpoint
   getById: (id) => apiClient.get(`/resources/${id}`),
   create: (resourceData) => apiClient.post('/resources', resourceData),
   update: (id, updateData) => apiClient.put(`/resources/${id}`, updateData),
@@ -133,6 +134,16 @@ export const circlesAPI = {
   join: (circleId) => apiClient.post(`/circles/${circleId}/join`),
   createThread: (circleId, threadData) => apiClient.post(`/circles/${circleId}/thread`, threadData),
   replyToThread: (circleId, threadId, replyData) => apiClient.post(`/circles/${circleId}/thread/${threadId}/reply`, replyData),
+};
+
+// ============ EVENTS ENDPOINTS ============
+
+export const eventsAPI = {
+  getAll: (params = {}) => apiClient.get('/events', { params }),
+  getById: (id) => apiClient.get(`/events/${id}`),
+  create: (eventData) => apiClient.post('/events', eventData),
+  update: (id, updateData) => apiClient.put(`/events/${id}`, updateData),
+  delete: (id) => apiClient.delete(`/events/${id}`),
 };
 
 // ============ USERS ENDPOINTS ============
@@ -167,6 +178,7 @@ export const activityAPI = {
   logActivity: (activityData) => apiClient.post('/activity/log', activityData),
   getUserActivities: (userId, params = {}) => apiClient.get(`/activity/user/${userId}`, { params }),
   getUserActivityStats: (userId) => apiClient.get(`/activity/stats/${userId}`),
+  getUserAchievements: (userId) => apiClient.get(`/users/${userId}/achievements`), // Add getUserAchievements
 };
 
 // ============ TWO-FACTOR AUTHENTICATION ENDPOINTS ============
@@ -198,24 +210,50 @@ export const feedbackAPI = {
 export const dashboardService = {
   getRecommendations: aiAPI.getRecommendations,
   getById: usersAPI.getById,
+  getLeaderboard: usersAPI.getLeaderboard, // Add getLeaderboard to dashboardService
 };
 
 export const resourcesService = resourcesAPI;
 
 export const storiesService = storiesAPI;
 
+export const circlesService = circlesAPI;
+
+export const eventsService = eventsAPI; // Add eventsService
+
+export const requestsService = requestsAPI; // Add requestsService
+
+export const feedbackService = feedbackAPI; // Add feedbackService
+
+export const twoFactorService = twoFactorAPI; // Add twoFactorService
+
+export const usersService = usersAPI; // Add usersService
+
 export const activityService = {
   log: activityAPI.logActivity,
+  getUserAchievements: activityAPI.getUserAchievements, // Add getUserAchievements to activityService
 };
 
-export const studyCirclesService = circlesAPI;
-
-export const leaderboardService = {
-  getLeaderboard: usersAPI.getLeaderboard,
-};
+// Remove the separate leaderboardService since it's now part of dashboardService
+// export const leaderboardService = {
+//   getLeaderboard: usersAPI.getLeaderboard,
+// };
 
 export const aiService = {
   reply: aiAPI.chat,
+  getRecommendations: aiAPI.getRecommendations,
+  summarize: aiAPI.summarize,
+  search: aiAPI.search,
+  generateTags: aiAPI.generateTags,
+  autoTag: aiAPI.autoTag,
+  trendDetection: aiAPI.trendDetection,
+  sentimentAnalysis: aiAPI.sentimentAnalysis,
+  eventSuggestions: aiAPI.eventSuggestions,
+};
+
+// Add searchService for SmartSearchBar
+export const searchService = {
+  search: aiAPI.search,
 };
 
 // Export the axios instance as default

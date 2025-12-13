@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { aiService } from "../../services/api"; // Fixed: Import aiService instead of apiClient
 import "../../styles/AI.css";
 
 const Summarize = () => {
@@ -31,7 +31,7 @@ const Summarize = () => {
     setSummary("");
     
     try {
-      const response = await apiClient.aiAPI.summarize({
+      const response = await aiService.summarize({
         text: inputText,
         maxLength
       });

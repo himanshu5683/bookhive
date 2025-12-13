@@ -1,7 +1,7 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { dashboardService, aiService } from "../../services/api"; // Fixed: Import proper services instead of apiClient
 import "../../styles/AI.css";
 
 const AIDashboard = () => {

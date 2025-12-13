@@ -1,7 +1,7 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../auth/AuthContext';
-import apiClient from '../services/api';
+import { twoFactorService } from '../services/api'; // Fixed: Import twoFactorService instead of apiClient
 import '../styles/TwoFactorSetup.css';
 
 const TwoFactorSetup = () => {

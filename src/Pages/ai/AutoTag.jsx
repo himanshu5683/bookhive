@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { aiService } from "../../services/api"; // Fixed: Import aiService instead of apiClient
 import "../../styles/AI.css";
 
 const AutoTag = () => {
@@ -30,7 +30,7 @@ const AutoTag = () => {
     setSuggestedTags([]);
     
     try {
-      const response = await apiClient.aiAPI.autoTag({
+      const response = await aiService.autoTag({
         title: resourceTitle,
         description: resourceDescription,
         userId: user?.id

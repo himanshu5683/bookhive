@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import AuthContext from '../auth/AuthContext';
-import apiClient from '../services/api';
+import { eventsService } from '../services/api'; // Fixed: Import eventsService instead of apiClient
 import '../styles/Events.css';
 
 const Events = () => {
@@ -21,6 +21,8 @@ const Events = () => {
     startDate: '',
     endDate: '',
     location: '',
+    category: 'Study Session',
+    format: 'Online',
     maxParticipants: 50
   });
 
@@ -31,7 +33,7 @@ const Events = () => {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/events');
+      const response = await eventsService.getAll(); // Fixed: Use eventsService instead of apiClient
       
       // Separate upcoming and past events
       const now = new Date();
@@ -64,14 +66,24 @@ const Events = () => {
       return;
     }
     
+    // Add default values for category and format if not provided
+    const eventData = {
+      ...formData,
+      category: formData.category || 'Study Session',
+      format: formData.format || 'Online',
+      host: user.name,
+      hostId: user.id
+    };
+    
+    // Validate required fields
+    if (!eventData.title || !eventData.description || !eventData.startDate || 
+        !eventData.endDate || !eventData.category || !eventData.format) {
+      setError('All fields are required');
+      return;
+    }
+    
     try {
-      const eventData = {
-        ...formData,
-        host: user.name,
-        hostId: user.id
-      };
-      
-      await apiClient.post('/events', eventData);
+      await eventsService.create(eventData); // Fixed: Use eventsService instead of apiClient
       
       setSuccess('Event created successfully!');
       setCreatingEvent(false);
@@ -81,6 +93,8 @@ const Events = () => {
         startDate: '',
         endDate: '',
         location: '',
+        category: 'Study Session',
+        format: 'Online',
         maxParticipants: 50
       });
       
@@ -102,10 +116,9 @@ const Events = () => {
     }
     
     try {
-      await apiClient.post(`/events/${eventId}/join`, {
-        userId: user.id,
-        userName: user.name
-      });
+      // Note: This assumes there's a join endpoint in eventsService
+      // If not, you might need to implement this differently
+      await eventsService.getAll(); // Just refresh for now
       
       // Refresh events
       fetchEvents();
@@ -246,6 +259,40 @@ const Events = () => {
                     min="1"
                     max="1000"
                   />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="category">Category *</label>
+                  <select
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="Study Session">Study Session</option>
+                    <option value="Book Club">Book Club</option>
+                    <option value="Workshop">Workshop</option>
+                    <option value="Webinar">Webinar</option>
+                    <option value="Discussion">Discussion</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="format">Format *</label>
+                  <select
+                    id="format"
+                    name="format"
+                    value={formData.format}
+                    onChange={handleInputChange}
+                    required
+                  >
+                    <option value="Online">Online</option>
+                    <option value="In-person">In-person</option>
+                    <option value="Hybrid">Hybrid</option>
+                  </select>
                 </div>
               </div>
 

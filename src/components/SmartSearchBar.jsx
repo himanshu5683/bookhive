@@ -1,7 +1,7 @@
 import React, { useState, useContext, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
-import apiClient from "../services/api";
+import { searchService } from "../services/api"; // Fixed: Import searchService instead of apiClient
 import "../styles/AI.css";
 
 const SmartSearchBar = ({ placeholder = "Search books, authors, topics...", className = "" }) => {
@@ -83,7 +83,7 @@ const SmartSearchBar = ({ placeholder = "Search books, authors, topics...", clas
     setIsLoading(true);
     try {
       // Use AI to extract search parameters and get suggestions
-      const response = await apiClient.aiAPI.search({
+      const response = await searchService.search({ // Fixed: Use searchService.search instead of apiClient.aiAPI.search
         query: searchQuery,
         userId: user?.id
       });

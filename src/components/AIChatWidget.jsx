@@ -1,6 +1,6 @@
 import React, { useState, useContext, useRef, useEffect } from "react";
 import AuthContext from "../auth/AuthContext";
-import { aiAPI } from "../services/api";
+import { aiService } from "../services/api"; // Fixed: Import aiService instead of aiAPI
 import "../styles/AI.css";
 
 const AIChatWidget = () => {
@@ -46,12 +46,12 @@ const AIChatWidget = () => {
     
     try {
       // Get AI response using the correct format
-      const response = await aiAPI.chat({ message: inputMessage });
+      const response = await aiService.reply({ message: inputMessage }); // Fixed: Use aiService.reply instead of aiAPI.chat
       
       // Add AI response to chat
       const aiMessage = {
         id: Date.now() + 1,
-        text: response.data.reply,
+        text: response.reply, // Fixed: Removed .data since interceptor already extracts data
         sender: "ai",
         timestamp: new Date()
       };

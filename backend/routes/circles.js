@@ -121,7 +121,8 @@ router.post('/:id/join', async (req, res) => {
     // Check if already member
     const isMember = circle.members.some(member => member.userId === userId.toString());
     if (isMember) {
-      return res.status(400).json({ error: 'Already a member' });
+      // Return 200 with success message instead of 400 error to prevent error spam
+      return res.status(200).json({ message: 'Already a member', memberCount: circle.memberCount });
     }
     
     // Add user to circle members

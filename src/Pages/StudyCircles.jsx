@@ -1,21 +1,20 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { studyCirclesService } from '../services/api';
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../auth/AuthContext';
+import { circlesService } from '../services/api'; // Fixed: Import circlesService instead of studyCirclesService
 import '../styles/StudyCircles.css';
 
 const StudyCircles = () => {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [circles, setCircles] = useState([]);
-  const [joined, setJoined] = useState(new Set());
   const [selectedCircle, setSelectedCircle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [newThread, setNewThread] = useState({ title: '', content: '' });
-  const [showThreadForm, setShowThreadForm] = useState(false);
   const [showCreateCircleForm, setShowCreateCircleForm] = useState(false);
   const [newCircle, setNewCircle] = useState({ name: '', topic: '', description: '' });
-  const [replyingToThread, setReplyingToThread] = useState(null);
   const [replyContent, setReplyContent] = useState('');
+  const [replyingToThread, setReplyingToThread] = useState(null); // Add this state
 
   // Fetch circles from backend API
   useEffect(() => {
@@ -23,7 +22,7 @@ const StudyCircles = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await studyCirclesService.getAll();
+        const response = await circlesService.getAll(); // Fixed: Use circlesService instead of studyCirclesService
         setCircles(response.circles || []);
       } catch (err) {
         console.error('Failed to fetch circles:', err);
@@ -37,325 +36,330 @@ const StudyCircles = () => {
     fetchCircles();
   }, []);
 
-  const toggleJoin = async (circleId) => {
-    if (!user) {
-      setError('Please log in to join circles');
-      return;
-    }
-
+  const handleSelectCircle = async (circle) => {
+    setSelectedCircle(circle);
     try {
-      const newJoined = new Set(joined);
-      if (newJoined.has(circleId)) {
-        // Leave circle (if API supports it)
-        newJoined.delete(circleId);
-        // Update member count locally
-        setCircles(circles.map(c => 
-          c._id === circleId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c
-        ));
-      } else {
-        // Join circle via API
-        await studyCirclesService.join(circleId);
-        newJoined.add(circleId);
-        // Update member count locally
-        setCircles(circles.map(c => 
-          c._id === circleId ? { ...c, memberCount: c.memberCount + 1 } : c
-        ));
-      }
-      setJoined(newJoined);
+      const response = await circlesService.getById(circle._id); // Fixed: Use circlesService instead of studyCirclesService
+      setSelectedCircle(response);
+    } catch (err) {
+      console.error('Failed to fetch circle details:', err);
+      setError('Failed to load circle details. Please try again.');
+    }
+  };
+
+  const handleJoinCircle = async (circleId) => {
+    try {
+      await circlesService.join(circleId); // Fixed: Use circlesService instead of studyCirclesService
+      // Refresh the circle data
+      const response = await circlesService.getById(circleId); // Fixed: Use circlesService instead of studyCirclesService
+      setSelectedCircle(response);
+      // Also refresh the circles list
+      const circlesResponse = await circlesService.getAll(); // Fixed: Use circlesService instead of studyCirclesService
+      setCircles(circlesResponse.circles || []);
     } catch (err) {
       console.error('Failed to join circle:', err);
       setError('Failed to join circle. Please try again.');
     }
   };
 
-  const handleCreateThread = async () => {
-    if (!newThread.title.trim() || !newThread.content.trim()) {
-      setError('Please fill in both title and content');
+  const handleCreateThread = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const title = formData.get('title');
+    const content = formData.get('content');
+
+    if (!title || !content) {
+      setError('Title and content are required');
       return;
     }
 
     try {
-      await studyCirclesService.createThread(selectedCircle._id, {
-        ...newThread,
-        userId: user.id
-      });
-      setNewThread({ title: '', content: '' });
-      setShowThreadForm(false);
-      // Refresh circle details
-      const response = await studyCirclesService.getById(selectedCircle._id);
-      setSelectedCircle(response.circle);
+      await circlesService.createThread(selectedCircle._id, { title, content }); // Fixed: Use circlesService instead of studyCirclesService
+      // Refresh the circle data
+      const response = await circlesService.getById(selectedCircle._id); // Fixed: Use circlesService instead of studyCirclesService
+      setSelectedCircle(response);
+      // Reset form
+      e.target.reset();
     } catch (err) {
       console.error('Failed to create thread:', err);
       setError('Failed to create thread. Please try again.');
     }
   };
 
-  const handleCreateCircle = async () => {
-    if (!newCircle.name.trim() || !newCircle.topic.trim() || !newCircle.description.trim()) {
-      setError('Please fill in all fields');
+  const handleCreateCircle = async (e) => {
+    e.preventDefault();
+    if (!newCircle.name || !newCircle.topic) {
+      setError('Name and topic are required');
       return;
     }
 
     try {
-      const response = await studyCirclesService.create({
-        ...newCircle,
-        creatorId: user.id
+      const response = await circlesService.create({ // Fixed: Use circlesService instead of studyCirclesService
+        ...newCircle
       });
-      
-      // Add new circle to list
-      setCircles([response.circle, ...circles]);
-      
-      // Reset form
+      // Add the new circle to the list
+      setCircles([...circles, response.circle]);
+      // Reset form and hide it
       setNewCircle({ name: '', topic: '', description: '' });
       setShowCreateCircleForm(false);
-      
-      setError('');
     } catch (err) {
       console.error('Failed to create circle:', err);
       setError('Failed to create circle. Please try again.');
     }
   };
 
-  const handleReply = async (threadId) => {
+  const handleReplyToThread = async (threadId) => {
     if (!replyContent.trim()) {
-      setError('Please enter a reply');
+      setError('Reply content is required');
       return;
     }
 
     try {
-      await studyCirclesService.replyToThread(selectedCircle._id, threadId, {
-        userId: user.id,
+      await circlesService.replyToThread(selectedCircle._id, threadId, { // Fixed: Use circlesService instead of studyCirclesService
         content: replyContent
       });
-      
-      // Reset reply form
-      setReplyingToThread(null);
+      // Refresh the circle data
+      const response = await circlesService.getById(selectedCircle._id); // Fixed: Use circlesService instead of studyCirclesService
+      setSelectedCircle(response);
+      // Reset reply content
       setReplyContent('');
-      
-      setError('');
+      setReplyingToThread(null);
     } catch (err) {
-      console.error('Failed to post reply:', err);
-      setError('Failed to post reply. Please try again.');
+      console.error('Failed to reply to thread:', err);
+      setError('Failed to reply to thread. Please try again.');
     }
   };
 
-  const formatDate = (date) => {
-    const now = new Date();
-    const diff = now - date;
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (hours < 1) return 'just now';
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
+  if (loading) {
+    return <div className="study-circles-loading">Loading study circles...</div>;
+  }
 
   return (
-    <div className="study-circles-page">
-      {/* Hero */}
-      <div className="circles-hero">
-        <h1>👥 Study Circles</h1>
-        <p>Join subject-based groups to learn, discuss, and share resources with like-minded people</p>
+    <div className="study-circles-container">
+      <div className="study-circles-header">
+        <h1>📚 Study Circles</h1>
+        <p>Join communities of learners with similar interests</p>
       </div>
 
-      {/* Error Message */}
-      {error && <div className="error-message">{error}</div>}
+      {error && <div className="study-circles-error">{error}</div>}
 
-      {/* Create Circle Button */}
-      {user && (
-        <div className="create-circle-section">
-          {showCreateCircleForm ? (
-            <div className="create-circle-form">
-              <h3>Create New Study Circle</h3>
-              <input
-                type="text"
-                placeholder="Circle name..."
-                value={newCircle.name}
-                onChange={(e) => setNewCircle({ ...newCircle, name: e.target.value })}
-              />
-              <input
-                type="text"
-                placeholder="Topic (e.g., Programming, Mathematics)..."
-                value={newCircle.topic}
-                onChange={(e) => setNewCircle({ ...newCircle, topic: e.target.value })}
-              />
-              <textarea
-                placeholder="Description..."
-                value={newCircle.description}
-                onChange={(e) => setNewCircle({ ...newCircle, description: e.target.value })}
-                rows={3}
-              />
-              <div className="form-actions">
-                <button className="btn btn-create" onClick={handleCreateCircle}>Create Circle</button>
-                <button className="btn btn-cancel" onClick={() => {
-                  setShowCreateCircleForm(false);
-                  setNewCircle({ name: '', topic: '', description: '' });
-                }}>
-                  Cancel
-                </button>
-              </div>
-            </div>
-          ) : (
+      <div className="study-circles-layout">
+        {/* Circles List */}
+        <div className="circles-list">
+          <div className="circles-list-header">
+            <h2>All Circles</h2>
             <button 
-              className="btn btn-create-circle"
-              onClick={() => setShowCreateCircleForm(true)}
+              className="btn btn-primary"
+              onClick={() => setShowCreateCircleForm(!showCreateCircleForm)}
             >
-              + Create New Circle
-            </button>
-          )}
-        </div>
-      )}
-
-      {/* Loading State */}
-      {loading && (
-        <div className="loading-state">
-          <p>Loading study circles...</p>
-        </div>
-      )}
-
-      {!loading && selectedCircle ? (
-        <div className="circle-detail">
-          <button className="btn-back" onClick={() => setSelectedCircle(null)}>← Back</button>
-          <div className="detail-header">
-            <h2>{selectedCircle.name}</h2>
-            <p>{selectedCircle.description}</p>
-            <div className="detail-stats">
-              <span>👥 {selectedCircle.memberCount || selectedCircle.members?.length || 0} members</span>
-              <span>💬 {selectedCircle.threads?.length || 0} discussions</span>
-              <span>🔄 Active {formatDate(new Date(selectedCircle.updatedAt || selectedCircle.createdAt))}</span>
-            </div>
-            <button
-              className={`btn ${joined.has(selectedCircle._id) ? 'btn-joined' : 'btn-join'}`}
-              onClick={() => toggleJoin(selectedCircle._id)}
-            >
-              {joined.has(selectedCircle._id) ? '✓ Joined' : 'Join Circle'}
+              {showCreateCircleForm ? 'Cancel' : 'Create Circle'}
             </button>
           </div>
 
-          {/* Create Thread Form */}
-          {user && joined.has(selectedCircle._id) && (
-            <div className="create-thread-section">
-              {showThreadForm ? (
-                <div className="thread-form">
-                  <input
-                    type="text"
-                    placeholder="Thread title..."
-                    value={newThread.title}
-                    onChange={(e) => setNewThread({ ...newThread, title: e.target.value })}
-                  />
-                  <textarea
-                    placeholder="Thread content..."
-                    value={newThread.content}
-                    onChange={(e) => setNewThread({ ...newThread, content: e.target.value })}
-                    rows={4}
-                  />
-                  <div className="thread-form-actions">
-                    <button className="btn btn-create" onClick={handleCreateThread}>Create Thread</button>
-                    <button className="btn btn-cancel" onClick={() => setShowThreadForm(false)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <button className="btn btn-new-thread" onClick={() => setShowThreadForm(true)}>
-                  + Start New Discussion
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Discussion Threads */}
-          <div className="threads-section">
-            <h3>Recent Discussions</h3>
-            <div className="thread-list">
-              {selectedCircle.threads?.length > 0 ? (
-                selectedCircle.threads.map(thread => (
-                  <div key={thread._id || thread.id} className="thread-item">
-                    <p className="thread-title">{thread.title}</p>
-                    <p className="thread-content">{thread.content}</p>
-                    <p className="thread-meta">📝 Started by {thread.author || 'User'} • {formatDate(new Date(thread.createdAt))}</p>
-                                    
-                    {/* Reply form */}
-                    {user && joined.has(selectedCircle._id) && (
-                      <div className="reply-section">
-                        {replyingToThread === (thread._id || thread.id) ? (
-                          <div className="reply-form">
-                            <textarea
-                              placeholder="Write your reply..."
-                              value={replyContent}
-                              onChange={(e) => setReplyContent(e.target.value)}
-                              rows={3}
-                            />
-                            <div className="reply-form-actions">
-                              <button 
-                                className="btn btn-reply"
-                                onClick={() => handleReply(thread._id || thread.id)}
-                              >
-                                Post Reply
-                              </button>
-                              <button 
-                                className="btn btn-cancel"
-                                onClick={() => {
-                                  setReplyingToThread(null);
-                                  setReplyContent('');
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button 
-                            className="btn btn-reply-toggle"
-                            onClick={() => setReplyingToThread(thread._id || thread.id)}
-                          >
-                            Reply
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <p className="no-threads">No discussions yet. Start one!</p>
-              )}
-            </div>
-          </div>
-        </div>
-      ) : !loading && (
-        <div className="circles-grid">
-          {circles.length === 0 ? (
-            <div className="no-circles">
-              <p>No study circles available yet.</p>
-            </div>
-          ) : (
-            circles.map(circle => (
-              <div
-                key={circle._id || circle.id}
-                className="circle-card"
-                onClick={() => setSelectedCircle(circle)}
-              >
-                <h3>{circle.name}</h3>
-                <p className="circle-topic">{circle.topic}</p>
-                <p className="circle-description">{circle.description}</p>
-
-                <div className="circle-stats">
-                  <span>👥 {circle.memberCount || circle.members?.length || 0}</span>
-                  <span>💬 {circle.threads?.length || 0}</span>
-                </div>
-
-                <button
-                  className={`btn ${joined.has(circle._id) ? 'btn-joined' : 'btn-join'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleJoin(circle._id);
-                  }}
-                >
-                  {joined.has(circle._id) ? '✓ Joined' : 'Join'}
-                </button>
+          {showCreateCircleForm && (
+            <form onSubmit={handleCreateCircle} className="create-circle-form">
+              <h3>Create New Circle</h3>
+              <div className="form-group">
+                <label htmlFor="circleName">Circle Name</label>
+                <input
+                  type="text"
+                  id="circleName"
+                  value={newCircle.name}
+                  onChange={(e) => setNewCircle({...newCircle, name: e.target.value})}
+                  placeholder="Enter circle name"
+                  required
+                />
               </div>
-            ))
+              <div className="form-group">
+                <label htmlFor="circleTopic">Topic</label>
+                <input
+                  type="text"
+                  id="circleTopic"
+                  value={newCircle.topic}
+                  onChange={(e) => setNewCircle({...newCircle, topic: e.target.value})}
+                  placeholder="Enter topic (e.g., Mathematics, Programming)"
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label htmlFor="circleDescription">Description</label>
+                <textarea
+                  id="circleDescription"
+                  value={newCircle.description}
+                  onChange={(e) => setNewCircle({...newCircle, description: e.target.value})}
+                  placeholder="Describe your circle..."
+                  rows="3"
+                />
+              </div>
+              <button type="submit" className="btn btn-primary">Create Circle</button>
+            </form>
+          )}
+
+          {circles.length === 0 ? (
+            <p>No study circles available yet.</p>
+          ) : (
+            <div className="circles-grid">
+              {circles.map((circle) => (
+                <div 
+                  key={circle._id} 
+                  className={`circle-card ${selectedCircle?._id === circle._id ? 'selected' : ''}`}
+                  onClick={() => handleSelectCircle(circle)}
+                >
+                  <h3>{circle.name}</h3>
+                  <p className="circle-topic">{circle.topic}</p>
+                  <p className="circle-description">{circle.description || 'No description provided'}</p>
+                  <div className="circle-meta">
+                    <span>👥 {circle.memberCount || 0} members</span>
+                    <span>💬 {circle.threadCount || 0} discussions</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-      )}
+
+        {/* Circle Details */}
+        <div className="circle-details">
+          {selectedCircle ? (
+            <>
+              <div className="circle-header">
+                <h2>{selectedCircle.name}</h2>
+                <p className="circle-topic">{selectedCircle.topic}</p>
+                <p className="circle-description">{selectedCircle.description || 'No description provided'}</p>
+                
+                {!selectedCircle.members?.some(member => member.userId === user?.id) ? (
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => handleJoinCircle(selectedCircle._id)}
+                  >
+                    Join Circle
+                  </button>
+                ) : (
+                  <span className="member-status">✅ You're a member</span>
+                )}
+                
+                <div className="circle-stats">
+                  <span>👥 {selectedCircle.memberCount || 0} members</span>
+                  <span>💬 {selectedCircle.threadCount || 0} discussions</span>
+                </div>
+              </div>
+
+              {/* Members List */}
+              <div className="members-section">
+                <h3>Members</h3>
+                <div className="members-list">
+                  {selectedCircle.members?.map((member) => (
+                    <div key={member.userId} className="member-item">
+                      <span className="member-avatar">👤</span>
+                      <span className="member-name">{member.name}</span>
+                      <span className="member-joined">
+                        Joined {new Date(member.joinedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Threads Section */}
+              <div className="threads-section">
+                <div className="threads-header">
+                  <h3>Discussions</h3>
+                  <form onSubmit={handleCreateThread} className="create-thread-form">
+                    <h4>Create New Discussion</h4>
+                    <div className="form-group">
+                      <input
+                        type="text"
+                        name="title"
+                        placeholder="Discussion title"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <textarea
+                        name="content"
+                        placeholder="What would you like to discuss?"
+                        rows="3"
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn btn-secondary">Post Discussion</button>
+                  </form>
+                </div>
+
+                <div className="threads-list">
+                  {selectedCircle.threads?.length > 0 ? (
+                    selectedCircle.threads.map((thread) => (
+                      <div key={thread._id} className="thread-item">
+                        <div className="thread-header">
+                          <h4>{thread.title}</h4>
+                          <span className="thread-author">
+                            by {thread.authorName} on {new Date(thread.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <p className="thread-content">{thread.content}</p>
+                        
+                        {/* Replies */}
+                        <div className="thread-replies">
+                          {thread.replies?.map((reply, index) => (
+                            <div key={index} className="reply-item">
+                              <div className="reply-header">
+                                <span className="reply-author">{reply.authorName}</span>
+                                <span className="reply-date">
+                                  {new Date(reply.createdAt).toLocaleDateString()}
+                                </span>
+                              </div>
+                              <p className="reply-content">{reply.content}</p>
+                            </div>
+                          ))}
+                          
+                          {/* Reply Form */}
+                          {replyingToThread === thread._id ? (
+                            <div className="reply-form">
+                              <textarea
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="Write your reply..."
+                                rows="3"
+                              />
+                              <div className="reply-form-actions">
+                                <button 
+                                  className="btn btn-primary"
+                                  onClick={() => handleReplyToThread(thread._id)}
+                                >
+                                  Post Reply
+                                </button>
+                                <button 
+                                  className="btn btn-secondary"
+                                  onClick={() => setReplyingToThread(null)}
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button 
+                              className="btn btn-secondary reply-button"
+                              onClick={() => setReplyingToThread(thread._id)}
+                            >
+                              Reply
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p>No discussions yet. Be the first to start one!</p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="no-circle-selected">
+              <p>Select a study circle to view details and discussions</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

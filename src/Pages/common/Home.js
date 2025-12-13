@@ -1,10 +1,10 @@
 /* bookhive/src/components/Home.js */
-import React, { useContext, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState, useContext } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthContext from "../../auth/AuthContext";
+import { resourcesService, storiesService } from "../../services/api"; // Fixed: Import proper services instead of apiClient
 import "../../styles/Home.css";
 import ResourceCard from "./ResourceCard";
-import AuthContext from "../../auth/AuthContext";
-import apiClient, { resourcesAPI, storiesAPI } from "../../services/api";
 
 const Home = () => {
     const { user } = useContext(AuthContext);
@@ -25,11 +25,11 @@ const Home = () => {
             setLoading(true);
             try {
                 // Fetch trending resources
-                const resourcesRes = await resourcesAPI.getAll({ limit: 6, sort: 'rating' });
+                const resourcesRes = await resourcesService.getAll({ limit: 6, sort: 'rating' });
                 setTrendingResources(resourcesRes.resources || []);
                 
                 // Fetch latest stories
-                const storiesRes = await storiesAPI.getAll({ limit: 4 });
+                const storiesRes = await storiesService.getAll({ limit: 4 });
                 setLatestStories(storiesRes.stories || []);
                 
                 // Fetch popular circles

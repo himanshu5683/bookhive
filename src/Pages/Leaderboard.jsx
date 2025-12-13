@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { leaderboardService } from '../services/api';
+import { dashboardService } from '../services/api'; // Fixed: Import dashboardService instead of leaderboardService
 import '../styles/Leaderboard.css';
 
 const Leaderboard = () => {
@@ -14,7 +14,7 @@ const Leaderboard = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await leaderboardService.getLeaderboard({ sortBy: filterBy, limit: 20 });
+        const response = await dashboardService.getLeaderboard({ sortBy: filterBy, limit: 20 }); // Fixed: Use dashboardService instead of leaderboardService
         // Fixed: Use response.leaderboard instead of trying response.users
         setUsers(response.leaderboard || []);
       } catch (err) {

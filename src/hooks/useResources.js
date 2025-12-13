@@ -31,10 +31,8 @@ const useResources = () => {
     setLoading(true);
     setError(null);
     try {
-      // Create a temporary service method to fetch user's resources
-      const response = await resourcesService.getAll({ page, limit });
-      // Filter for current user's resources on frontend as fallback
-      // In a real implementation, we would have a dedicated backend endpoint
+      // Use the dedicated /my endpoint to fetch user's resources
+      const response = await resourcesService.getMyFiles({ page, limit });
       setResources(response.resources || []);
     } catch (err) {
       console.error('Failed to fetch user resources:', err);

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
-import apiClient from "../services/api";
-import useResources from "../hooks/useResources";
+import { usersService, activityService } from "../services/api";
 import "../styles/UserProfile.css";
 
 const UserProfile = () => {
@@ -18,7 +17,6 @@ const UserProfile = () => {
     avatar: ""
   });
   const [error, setError] = useState("");
-  const { resources: userResources, fetchResources } = useResources();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -34,7 +32,7 @@ const UserProfile = () => {
         }
         
         // Fetch user data
-        const userResponse = await apiClient.usersAPI.getById(targetUserId);
+        const userResponse = await usersService.getById(targetUserId);
         const userData = userResponse.user || userResponse;
         
         setSelectedUser(userData);
@@ -44,11 +42,8 @@ const UserProfile = () => {
           avatar: userData.avatar || ""
         });
         
-        // Fetch user's resources using our hook
-        fetchResources({ authorId: targetUserId });
-        
         // Fetch user's achievements
-        const achievementsResponse = await apiClient.achievementsAPI.getUserAchievements(targetUserId);
+        const achievementsResponse = await activityService.getUserAchievements(targetUserId);
         setUserAchievements(achievementsResponse.achievements || []);
       } catch (err) {
         console.error('Failed to fetch user data:', err);
@@ -59,7 +54,7 @@ const UserProfile = () => {
     };
 
     fetchUserData();
-  }, [userId, currentUser, fetchResources]);
+  }, [userId, currentUser]);
 
   const handleEdit = () => {
     setEditing(true);
@@ -93,7 +88,7 @@ const UserProfile = () => {
       if (formData.bio !== selectedUser.bio) updateData.bio = formData.bio;
       if (formData.avatar !== selectedUser.avatar) updateData.avatar = formData.avatar;
       
-      const response = await apiClient.usersAPI.update(selectedUser._id || selectedUser.id, updateData);
+      const response = await usersService.update(selectedUser._id || selectedUser.id, updateData);
       
       setSelectedUser(response.user);
       setEditing(false);

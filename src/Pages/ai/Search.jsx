@@ -1,7 +1,7 @@
 import React, { useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../../auth/AuthContext";
-import apiClient from "../../services/api";
+import { searchService } from "../../services/api";
 import "../../styles/AI.css";
 
 const Search = () => {
@@ -33,7 +33,7 @@ const Search = () => {
     
     try {
       // First, use AI to extract search parameters
-      const aiResponse = await apiClient.aiAPI.search({
+      const aiResponse = await searchService.search({
         query,
         userId: user?.id
       });

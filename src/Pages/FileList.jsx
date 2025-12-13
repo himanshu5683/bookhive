@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
+import { resourcesService } from "../services/api";
 import "../styles/FileList.css";
 
 const FileList = () => {
@@ -8,7 +9,7 @@ const FileList = () => {
   const { user } = useContext(AuthContext);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     // Check if user is logged in
@@ -17,38 +18,46 @@ const FileList = () => {
       return;
     }
 
-    // Simulate loading files
-    // In a real app, this would fetch from your backend API
-    setTimeout(() => {
-      // Mock data
-      const mockFiles = [
-        {
-          id: '1',
-          fileName: 'Sample PDF Document.pdf',
-          fileType: 'application/pdf',
-          fileSize: 2457600,
-          uploadedAt: new Date(),
-          email: 'user@example.com',
-          isPublic: true,
-          views: 42,
-          downloads: 18
-        },
-        {
-          id: '2',
-          fileName: 'Research Paper.jpg',
-          fileType: 'image/jpeg',
-          fileSize: 1024000,
-          uploadedAt: new Date(Date.now() - 86400000), // 1 day ago
-          email: 'user@example.com',
-          isPublic: false,
-          views: 27,
-          downloads: 9
-        }
-      ];
-      setFiles(mockFiles);
-      setLoading(false);
-    }, 1000);
+    // Fetch user's files
+    const fetchUserFiles = async () => {
+      try {
+        setLoading(true);
+        const response = await resourcesService.getMyFiles();
+        setFiles(response.resources || []);
+      } catch (err) {
+        console.error("Failed to fetch user files:", err);
+        setError("Failed to load your files. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserFiles();
   }, [user, navigate]);
+
+  const handleDelete = async (fileId) => {
+    if (window.confirm("Are you sure you want to delete this file?")) {
+      try {
+        await resourcesService.delete(fileId);
+        // Remove the file from the list
+        setFiles(files.filter(file => file._id !== fileId));
+      } catch (err) {
+        console.error("Failed to delete file:", err);
+        alert("Failed to delete file. Please try again.");
+      }
+    }
+  };
+
+  const handleDownload = async (fileId) => {
+    try {
+      const response = await resourcesService.download(fileId, {});
+      // In a real app, this would trigger the actual download
+      alert("File download initiated!");
+    } catch (err) {
+      console.error("Failed to download file:", err);
+      alert("Failed to download file. Please try again.");
+    }
+  };
 
   if (loading) {
     return <div className="file-list-loading">Loading files...</div>;
@@ -66,9 +75,15 @@ const FileList = () => {
       ) : (
         <div className="file-grid">
           {files.map((file) => (
-            <div key={file.id} className="file-item">
-              <h3>{file.fileName}</h3>
-              <p>Uploaded: {file.uploadedAt?.toLocaleString()}</p>
+            <div key={file._id} className="file-item">
+              <h3>{file.title}</h3>
+              <p>Category: {file.category}</p>
+              <p>Type: {file.type}</p>
+              <p>Uploaded: {new Date(file.createdAt).toLocaleString()}</p>
+              <div className="file-actions">
+                <button onClick={() => handleDownload(file._id)}>Download</button>
+                <button onClick={() => handleDelete(file._id)}>Delete</button>
+              </div>
             </div>
           ))}
         </div>
