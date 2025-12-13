@@ -194,20 +194,28 @@ export const feedbackAPI = {
   create: (feedbackData) => apiClient.post('/feedback', feedbackData),
 };
 
-// Export individual service objects for proper importing
-export const userActivityService = {
-  getById: usersAPI.getById,
+// Export individual service objects for proper importing as requested
+export const dashboardService = {
   getRecommendations: aiAPI.getRecommendations,
-  getUserActivities: activityAPI.getUserActivities,
-  getUserActivityStats: activityAPI.getUserActivityStats,
+  getById: usersAPI.getById,
 };
 
 export const resourcesService = resourcesAPI;
 
 export const storiesService = storiesAPI;
 
+export const activityService = {
+  log: activityAPI.logActivity,
+};
+
+export const studyCirclesService = circlesAPI;
+
 export const leaderboardService = {
   getLeaderboard: usersAPI.getLeaderboard,
+};
+
+export const aiService = {
+  reply: aiAPI.chat,
 };
 
 // Export the axios instance as default

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
-import apiClient from "../services/api";
+import { dashboardService } from "../services/api";
 import useResources from "../hooks/useResources";
 import useUserActivity from "../hooks/useUserActivity";
 import "../styles/Dashboard.css";
@@ -33,13 +33,13 @@ const Dashboard = () => {
         fetchResources({ authorId: user.id, sort: 'recent', limit: 5 });
 
         // Fetch AI recommendations
-        const recommendationsResponse = await apiClient.aiAPI.getRecommendations({
+        const recommendationsResponse = await dashboardService.getRecommendations({
           userId: user.id
         });
         setRecommendedResources(recommendationsResponse.recommendations || []);
 
         // Fetch leaderboard position
-        const leaderboardResponse = await apiClient.usersAPI.getLeaderboard();
+        const leaderboardResponse = await dashboardService.getLeaderboard();
         if (leaderboardResponse.users) {
           const position = leaderboardResponse.users.findIndex(u => u._id === user.id);
           setLeaderboardPosition(position >= 0 ? position + 1 : null);

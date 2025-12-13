@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import apiClient from '../services/api';
+import { studyCirclesService } from '../services/api';
 import AuthContext from '../auth/AuthContext';
 import '../styles/StudyCircles.css';
 
@@ -23,7 +23,7 @@ const StudyCircles = () => {
       setLoading(true);
       setError('');
       try {
-        const response = await apiClient.circlesAPI.getAll();
+        const response = await studyCirclesService.getAll();
         setCircles(response.circles || []);
       } catch (err) {
         console.error('Failed to fetch circles:', err);
@@ -54,7 +54,7 @@ const StudyCircles = () => {
         ));
       } else {
         // Join circle via API
-        await apiClient.circlesAPI.join(circleId);
+        await studyCirclesService.join(circleId);
         newJoined.add(circleId);
         // Update member count locally
         setCircles(circles.map(c => 
@@ -75,14 +75,14 @@ const StudyCircles = () => {
     }
 
     try {
-      await apiClient.circlesAPI.createThread(selectedCircle._id, {
+      await studyCirclesService.createThread(selectedCircle._id, {
         ...newThread,
         userId: user.id
       });
       setNewThread({ title: '', content: '' });
       setShowThreadForm(false);
       // Refresh circle details
-      const response = await apiClient.circlesAPI.getById(selectedCircle._id);
+      const response = await studyCirclesService.getById(selectedCircle._id);
       setSelectedCircle(response.circle);
     } catch (err) {
       console.error('Failed to create thread:', err);
@@ -97,7 +97,7 @@ const StudyCircles = () => {
     }
 
     try {
-      const response = await apiClient.circlesAPI.create({
+      const response = await studyCirclesService.create({
         ...newCircle,
         creatorId: user.id
       });
@@ -123,7 +123,7 @@ const StudyCircles = () => {
     }
 
     try {
-      await apiClient.circlesAPI.replyToThread(selectedCircle._id, threadId, {
+      await studyCirclesService.replyToThread(selectedCircle._id, threadId, {
         userId: user.id,
         content: replyContent
       });

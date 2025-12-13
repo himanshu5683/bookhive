@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { aiAPI } from "../../services/api";
+import { aiService } from "../../services/api";
 import "../../styles/AI.css";
 
 const Chat = () => {
@@ -44,7 +44,7 @@ const Chat = () => {
     
     try {
       // Call backend AI API using the correct format
-      const response = await aiAPI.chat({ message: inputMessage });
+      const response = await aiService.reply({ message: inputMessage });
       
       // Add AI response to chat
       const aiMessage = {

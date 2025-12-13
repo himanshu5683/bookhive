@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { storiesService, activityAPI } from '../services/api';
+import { storiesService, activityService } from '../services/api';
 import AuthContext from '../auth/AuthContext';
 import '../styles/Stories.css';
 
@@ -57,7 +57,7 @@ const Stories = () => {
       
       // Log activity for credit award
       try {
-        await activityAPI.logActivity({
+        await activityService.log({
           userId: user.id,
           activityType: 'story',
           content: newStory,
