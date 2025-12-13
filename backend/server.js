@@ -88,53 +88,19 @@ function startServer() {
   app.use(passport.initialize());
   app.use(passport.session());
 
-  // Dynamic CORS configuration
-  const allowedOrigins = [
-    "http://localhost:3000",
-    "https://himanshu5683.github.io",
-    "https://himanshu5683.github.io/bookhive"
-  ];
-
+  // CORS configuration
   const corsOptions = {
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      
-      // Check if the origin is in our allowed list
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      // Also allow origins that start with our allowed origins (to handle subpaths)
-      for (const allowedOrigin of allowedOrigins) {
-        if (origin.startsWith(allowedOrigin)) {
-          return callback(null, true);
-        }
-      }
-      
-      // For production, be more permissive with subdomains
-      if (process.env.NODE_ENV === 'production' && origin && origin.includes('github.io')) {
-        return callback(null, true);
-      }
-      
-      // Log the blocked origin for debugging
-      console.log("Blocked by CORS: " + origin);
-      console.log("Allowed origins: ", allowedOrigins);
-      return callback(new Error("Blocked by CORS: " + origin), false);
-    },
-    credentials: true,
+    origin: ["https://himanshu5683.github.io", "https://himanshu5683.github.io/bookhive"],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
-    exposedHeaders: ['Authorization'],
-    optionsSuccessStatus: 200,
-    preflightContinue: false // Important: set to false to let express handle preflight
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true
   };
 
   // Apply CORS middleware BEFORE any routes
   app.use(cors(corsOptions));
 
-  // Handle preflight requests explicitly
-  app.options('*', cors(corsOptions));
+  // Handle preflight requests
+  app.options("*", cors());
 
   // Middleware
   app.use(express.json());

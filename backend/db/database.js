@@ -16,10 +16,11 @@ const connectDB = async () => {
     const mongoURI = process.env.MONGODB_URI;
       
     const conn = await mongoose.connect(mongoURI, {
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,
       socketTimeoutMS: 45000,
-      retryWrites: true,
-      tls: true // Explicitly enable TLS for MongoDB Atlas
+      connectTimeoutMS: 30000,
+      maxPoolSize: 5,
+      retryWrites: true
     });
     
     isConnected = true;
