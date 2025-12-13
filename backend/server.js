@@ -89,7 +89,7 @@ const corsOptions = {
       return callback(null, true);
     }
     
-    // Block the request if the origin is not allowed
+    // Log the blocked origin for debugging
     console.log("Blocked by CORS: " + origin);
     console.log("Allowed origins: ", allowedOrigins);
     return callback(new Error("Blocked by CORS: " + origin), false);
