@@ -28,7 +28,8 @@ import achievementsRoutes from './routes/achievements.js';
 import eventsRoutes from './routes/events.js';
 import twoFactorRoutes from './routes/twoFactor.js';
 // Import WebSocket service at the top level
-import WebSocketService from './services/websocket.js';
+// import WebSocketService from './services/websocket.js';
+import { WebSocketServer } from 'ws';
 // Passport configuration
 import './config/passport.js';
 
@@ -163,9 +164,20 @@ function startServer() {
     }
   });
 
-  // Make WebSocket service available to routes
-  const wsService = new WebSocketService(server);
-  app.set('wsService', wsService);
+  // Attach WebSocket server
+  const wss = new WebSocketServer({ server, path: "/ws" });
+  
+  wss.on("connection", (ws, req) => {
+    console.log("WS client connected");
+    
+    ws.on("message", (msg) => {
+      console.log("WS message:", msg.toString());
+    });
+    
+    ws.on("close", () => {
+      console.log("WS client disconnected");
+    });
+  });
 
   // Graceful shutdown
   process.on('SIGINT', async () => {

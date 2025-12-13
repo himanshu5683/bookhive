@@ -36,7 +36,7 @@ export const WebSocketProvider = ({ children }) => {
   const listenersRef = useRef({});
 
   // WebSocket URL - adjust based on environment
-  const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-production-9463.up.railway.app";
+  const WS_URL = process.env.REACT_APP_WS_URL || "wss://bookhive-production-9463.up.railway.app/ws";
   const wsUrl = WS_URL;
 
   // Connect to WebSocket server
