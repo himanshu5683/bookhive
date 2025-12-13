@@ -66,7 +66,33 @@ function startServer() {
 
   app.use(limiter);
 
-  // Session configuration
+  // CORS configuration - Enhanced for GitHub Pages
+  const corsOptions = {
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:3001",
+      "https://himanshu5683.github.io",
+      "https://himanshu5683.github.io/bookhive"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    optionsSuccessStatus: 200 // Some legacy browsers choke on 204
+  };
+
+  // Apply CORS middleware BEFORE any routes
+  app.use(cors(corsOptions));
+
+  // Handle preflight requests explicitly
+  app.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.sendStatus(200);
+  });
+
+  // Session configuration - Fixed for cross-domain usage
   app.use(session({
     secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'your_session_secret_key_here',
     resave: false,
@@ -77,9 +103,9 @@ function startServer() {
       ttl: 24 * 60 * 60 // 24 hours
     }),
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+      secure: true, // Always use secure cookies for cross-domain
       httpOnly: true, // Prevent XSS attacks
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Adjust for production
+      sameSite: 'none', // Required for cross-domain cookies
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));
@@ -87,20 +113,6 @@ function startServer() {
   // Passport middleware
   app.use(passport.initialize());
   app.use(passport.session());
-
-  // CORS configuration
-  const corsOptions = {
-    origin: ["https://himanshu5683.github.io", "https://himanshu5683.github.io/bookhive"],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
-  };
-
-  // Apply CORS middleware BEFORE any routes
-  app.use(cors(corsOptions));
-
-  // Handle preflight requests
-  app.options("*", cors());
 
   // Middleware
   app.use(express.json());
