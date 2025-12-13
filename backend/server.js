@@ -12,10 +12,31 @@ import connectDB from './db/database.js';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+
+// Load environment variables
 dotenv.config();
 
-// Database connection
-connectDB();
+// Log environment for debugging
+console.log('=== ENVIRONMENT DEBUG INFO ===');
+console.log('NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('PORT:', process.env.PORT || 'not set');
+console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI);
+console.log('==============================');
+
+// Database connection with better error handling
+let dbConnected = false;
+connectDB().then(() => {
+  dbConnected = true;
+  console.log('✅ Database connection established');
+}).catch((error) => {
+  console.error('❌ Failed to connect to database:', error.message);
+  console.error('Error stack:', error.stack);
+  // In production, we might want to exit, but let's try to continue for debugging
+  if (process.env.NODE_ENV === 'production') {
+    console.log('Exiting due to database connection failure in production');
+    process.exit(1);
+  }
+});
 
 // Passport configuration
 import './config/passport.js';
@@ -156,6 +177,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Root endpoint for basic health check
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    message: 'BookHive Backend is running',
+    timestamp: new Date().toISOString(),
+    dbConnected: dbConnected
+  });
+});
+
 // Error logging middleware
 app.use((err, req, res, next) => {
   console.error("SERVER ERROR:", err);
@@ -185,17 +216,9 @@ const PORT = process.env.PORT || 5002;
 // Wrap server startup in try-catch for better error handling
 try {
   server.listen(PORT, () => {
-    const baseUrl = `https://bookhive-backend-production.up.railway.app`;
     console.log(`🚀 BookHive Backend running on port ${PORT}`);
-    console.log(`📚 API Documentation at ${baseUrl}/api`);
-    console.log(`🔔 Notifications system available at ${baseUrl}/api/notifications`);
-    console.log(`🏆 Achievements system available at ${baseUrl}/api/achievements`);
-    console.log(`📅 Events system available at ${baseUrl}/api/events`);
-    console.log(`🤖 AI Features available at ${baseUrl}/api/ai`);
-    console.log(`🔐 2FA system available at ${baseUrl}/api/twofactor`);
-    console.log(`📡 WebSocket server available at wss://bookhive-backend-production.up.railway.app`);
-    console.log(`🔑 OAuth endpoints available at ${baseUrl}/api/oauth`);
-    console.log(`🔄 Deployment timestamp: ${new Date().toISOString()}`); // Added for redeploy tracking
+    console.log(`📚 API available at /api`);
+    console.log(`🔄 Deployment timestamp: ${new Date().toISOString()}`);
   });
 } catch (error) {
   console.error('Failed to start server:', error);
