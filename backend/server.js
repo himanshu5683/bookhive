@@ -181,13 +181,15 @@ process.on('SIGINT', async () => {
 
 const PORT = process.env.PORT || 5002;
 server.listen(PORT, () => {
-  console.log(`🚀 BookHive Backend running on http://localhost:${PORT}`);
-  console.log(`📚 API Documentation at http://localhost:${PORT}/api`);
-  console.log(`🔔 Notifications system available at http://localhost:${PORT}/api/notifications`);
-  console.log(`🏆 Achievements system available at http://localhost:${PORT}/api/achievements`);
-  console.log(`📅 Events system available at http://localhost:${PORT}/api/events`);
-  console.log(`🤖 AI Features available at http://localhost:${PORT}/api/ai`);
-  console.log(`🔐 2FA system available at http://localhost:${PORT}/api/twofactor`);
-  console.log(`📡 WebSocket server available at ws://localhost:${PORT}`);
-  console.log(`🔑 OAuth endpoints available at http://localhost:${PORT}/api/oauth`);
+  const baseUrl = `https://bookhive-backend-production.up.railway.app`;
+  console.log(`🚀 BookHive Backend running on ${baseUrl}`);
+  console.log(`📚 API Documentation at ${baseUrl}/api`);
+  console.log(`🔔 Notifications system available at ${baseUrl}/api/notifications`);
+  console.log(`🏆 Achievements system available at ${baseUrl}/api/achievements`);
+  console.log(`📅 Events system available at ${baseUrl}/api/events`);
+  console.log(`🤖 AI Features available at ${baseUrl}/api/ai`);
+  console.log(`🔐 2FA system available at ${baseUrl}/api/twofactor`);
+  console.log(`📡 WebSocket server available at wss://bookhive-backend-production.up.railway.app`);
+  console.log(`🔑 OAuth endpoints available at ${baseUrl}/api/oauth`);
+  console.log(`🔄 Deployment timestamp: ${new Date().toISOString()}`); // Added for redeploy tracking
 });
