@@ -173,8 +173,8 @@ function startServer() {
     process.exit(0);
   });
 
-  // Use Railway's PORT or default to 5003
-  const PORT = process.env.PORT || 5003;
+  // Use Railway's PORT or default to 8080 (Railway's default) then fallback to 5003
+  const PORT = process.env.PORT || 8080 || 5003;
 
   // Start the server
   server.listen(PORT, () => {
