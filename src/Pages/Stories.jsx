@@ -44,10 +44,15 @@ const Stories = () => {
     setPosting(true);
     setError('');
     try {
+      // Generate a title from the first few words of the content
+      const content = newStory.trim();
+      const title = content.split(' ').slice(0, 5).join(' ') + (content.split(' ').length > 5 ? '...' : '');
+      
       const response = await apiClient.storiesAPI.create({ 
-        content: newStory,
-        userId: user.id,
-        author: user.name
+        title: title || 'My Story',
+        content: content,
+        author: user.name,
+        authorId: user.id
       });
       
       // Log activity for credit award

@@ -5,6 +5,7 @@ import Story from '../models/Story.js';
 import User from '../models/User.js';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import authenticate from '../middleware/auth.js';
 
 dotenv.config();
 
@@ -14,6 +15,9 @@ const openai = new OpenAI({
 });
 
 const router = express.Router();
+
+// Apply authentication middleware to all routes
+router.use(authenticate);
 
 /**
  * GET /api/stories
@@ -76,7 +80,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user?.id; // Assuming user is attached by auth middleware
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Validate required fields
     if (!title || !content) {
@@ -116,7 +120,8 @@ router.post('/', async (req, res) => {
       category: category || 'general',
       mood: mood || 'neutral',
       summary,
-      author: userId
+      author: req.user.name, // Using name from authenticated user
+      authorId: userId.toString() // Store user ID as string
     });
     
     await story.save();
@@ -138,7 +143,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Find story and check ownership
     const story = await Story.findById(req.params.id);
@@ -146,7 +151,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
     
-    if (story.author.toString() !== userId) {
+    if (story.authorId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the author can update the story' });
     }
     
@@ -171,7 +176,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Find story and check ownership
     const story = await Story.findById(req.params.id);
@@ -179,7 +184,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
     
-    if (story.author.toString() !== userId) {
+    if (story.authorId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the author can delete the story' });
     }
     
@@ -199,7 +204,7 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/like', async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Find story
     const story = await Story.findById(req.params.id);
@@ -229,7 +234,7 @@ router.post('/:id/like', async (req, res) => {
  */
 router.delete('/:id/like', async (req, res) => {
   try {
-    const userId = req.user?.id;
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Find story
     const story = await Story.findById(req.params.id);
@@ -243,7 +248,7 @@ router.delete('/:id/like', async (req, res) => {
     }
     
     // Remove like
-    story.likes = story.likes.filter(id => id.toString() !== userId);
+    story.likes = story.likes.filter(id => id.toString() !== userId.toString());
     await story.save();
     
     res.json({ story });
@@ -260,7 +265,7 @@ router.delete('/:id/like', async (req, res) => {
 router.post('/:id/comment', async (req, res) => {
   try {
     const { content } = req.body;
-    const userId = req.user?.id;
+    const userId = req.user._id; // Using _id from authenticated user
     
     // Validate content
     if (!content) {

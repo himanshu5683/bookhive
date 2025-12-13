@@ -14,10 +14,6 @@ const connectDB = async () => {
   try {
     // Use cloud MongoDB for production, local for development
     const mongoURI = process.env.MONGODB_URI;
-    
-    if (!mongoURI) {
-      throw new Error('MONGODB_URI is not defined in environment variables');
-    }
       
     const conn = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 10000,
@@ -31,13 +27,7 @@ const connectDB = async () => {
     console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
   } catch (error) {
     console.error('❌ MongoDB connection failed:', error.message);
-    console.error('Error stack:', error.stack);
-    // Don't exit in development, only in production
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1); // Exit in production if DB connection fails - DO NOT retry
-    } else {
-      throw error; // Re-throw in development for debugging
-    }
+    process.exit(1); // Exit in production if DB connection fails - DO NOT retry
   }
 };
 
