@@ -2,6 +2,8 @@
 import express from 'express';
 import axios from 'axios';
 
+const BASE_URL = process.env.TEST_BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
+
 async function testChatEndpoint() {
   console.log('Testing new AI chat endpoint...\n');
   
@@ -16,7 +18,7 @@ async function testChatEndpoint() {
     try {
       console.log(`Testing: ${testCase.description} ("${testCase.message}")`);
       
-      const response = await axios.post('http://localhost:5002/api/ai/chat', {
+      const response = await axios.post(`${BASE_URL}/api/ai/chat`, {
         message: testCase.message
       }, {
         headers: {

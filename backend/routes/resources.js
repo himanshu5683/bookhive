@@ -283,7 +283,8 @@ router.post('/:id/download', async (req, res) => {
     
     // In a real app, this would return a signed URL to the actual file
     // For now, we'll just return a mock URL
-    const downloadUrl = `${process.env.BACKEND_URL || 'http://localhost:5002'}/uploads/${resource.fileName}`;
+    const backendUrl = process.env.BACKEND_URL || process.env.BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
+    const downloadUrl = `${backendUrl}/uploads/${resource.fileName}`;
     
     res.status(200).json({ downloadUrl });
   } catch (error) {

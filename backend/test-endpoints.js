@@ -1,7 +1,7 @@
 // test-endpoints.js
 import axios from 'axios';
 
-const baseURL = 'http://localhost:5002/api';
+const baseURL = process.env.TEST_BASE_URL || `http://localhost:${process.env.PORT || 8080}/api`;
 
 async function testEndpoint(method, url, data = null) {
   try {

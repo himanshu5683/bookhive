@@ -1,13 +1,15 @@
 // Test script for AI endpoint
 import axios from 'axios';
 
+const BASE_URL = process.env.TEST_BASE_URL || `http://localhost:${process.env.PORT || 8080}`;
+
 async function testAIEndpoint() {
   console.log('Testing AI endpoint...\n');
   
   try {
     console.log('Sending test message: "hi"');
     
-    const response = await axios.post('http://localhost:5002/api/ai/chat', {
+    const response = await axios.post(`${BASE_URL}/api/ai/chat`, {
       message: "hi"
     }, {
       headers: {
@@ -44,7 +46,7 @@ async function testAIEndpoint() {
   try {
     console.log('\nSending test message: "recommend a book"');
     
-    const response = await axios.post('http://localhost:5002/api/ai/chat', {
+    const response = await axios.post(`${BASE_URL}/api/ai/chat`, {
       message: "recommend a book"
     }, {
       headers: {
