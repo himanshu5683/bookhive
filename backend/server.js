@@ -48,9 +48,9 @@ app.use(session({
     ttl: 24 * 60 * 60 // 24 hours
   }),
   cookie: {
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    secure: true, // Always use secure cookies (HTTPS)
     httpOnly: true, // Prevent XSS attacks
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site requests in production
+    sameSite: 'none', // Allow cross-site requests
     maxAge: 24 * 60 * 60 * 1000 // 24 hours
   }
 }));
@@ -62,7 +62,8 @@ app.use(passport.session());
 // Dynamic CORS configuration
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://himanshu5683.github.io"
+  "https://himanshu5683.github.io",
+  "https://himanshu5683.github.io/bookhive"
 ];
 
 const corsOptions = {
