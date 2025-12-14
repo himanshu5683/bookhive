@@ -53,7 +53,7 @@ import Footer from './Pages/common/Footer';
 const Layout = ({ children }) => (
   <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
     <Navbar />
-    <main style={{ flex: 1 }}>
+    <main style={{ flex: 1, paddingTop: '80px' }}>
       <div className="container">
         {children}
       </div>

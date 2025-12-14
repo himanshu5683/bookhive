@@ -147,7 +147,7 @@ body {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: var(--bh-space-6) var(--bh-space-4);
+  padding: var(--bh-space-4);
 }
 
 /* Typography */
@@ -768,7 +768,7 @@ a:hover {
 
 /* Responsive Breakpoints */
 @media (min-width: 640px) {
-  .container { padding: var(--bh-space-6) var(--bh-space-5); }
+  .container { padding: var(--bh-space-5); }
   
   .sm\:block { display: block; }
   .sm\:inline { display: inline; }
@@ -789,7 +789,7 @@ a:hover {
 }
 
 @media (min-width: 768px) {
-  .container { padding: var(--bh-space-6) var(--bh-space-6); }
+  .container { padding: var(--bh-space-5); }
   
   .md\:block { display: block; }
   .md\:inline { display: inline; }
@@ -816,7 +816,7 @@ a:hover {
 }
 
 @media (min-width: 1024px) {
-  .container { padding: var(--bh-space-8) var(--bh-space-6); }
+  .container { padding: var(--bh-space-6); }
   
   .lg\:block { display: block; }
   .lg\:inline { display: inline; }
@@ -843,7 +843,7 @@ a:hover {
 }
 
 @media (min-width: 1280px) {
-  .container { padding: var(--bh-space-8) var(--bh-space-6); }
+  .container { padding: var(--bh-space-6); }
   
   .xl\:block { display: block; }
   .xl\:inline { display: inline; }

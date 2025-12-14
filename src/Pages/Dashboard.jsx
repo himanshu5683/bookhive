@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import AuthContext from "../auth/AuthContext";
-import apiClient from "../services/api";
+import apiClient, { aiAPI } from "../services/api";
 import useResources from "../hooks/useResources";
 import useUserActivity from "../hooks/useUserActivity";
 import "../styles/Dashboard.css";
@@ -33,7 +33,7 @@ const Dashboard = () => {
         fetchResources({ authorId: user.id, sort: 'recent', limit: 5 });
 
         // Fetch AI recommendations
-        const recommendationsResponse = await apiClient.aiAPI.getRecommendations({
+        const recommendationsResponse = await aiAPI.getRecommendations({
           userId: user.id
         });
         setRecommendedResources(recommendationsResponse.recommendations || []);

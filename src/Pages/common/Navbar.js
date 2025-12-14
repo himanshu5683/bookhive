@@ -20,11 +20,22 @@ const Navbar = () => {
   const [isResourcesDropdownOpen, setIsResourcesDropdownOpen] = useState(false);
   const [isCommunityDropdownOpen, setIsCommunityDropdownOpen] = useState(false);
   const [isAIDropdownOpen, setIsAIDropdownOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   
   const userDropdownRef = useRef(null);
   const resourcesDropdownRef = useRef(null);
   const communityDropdownRef = useRef(null);
   const aiDropdownRef = useRef(null);
+
+  // Handle scroll event to add scrolled class
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -104,7 +115,7 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`navbar-container ${theme}`}>
+    <nav className={`navbar-container ${theme} ${isScrolled ? 'scrolled' : ''}`}>
       <div className="navbar-wrapper">
         {/* Logo */}
         <div className="navbar-left">
@@ -123,10 +134,14 @@ const Navbar = () => {
             </button>
             
             {/* Resources Dropdown */}
-            <div className="nav-dropdown" ref={resourcesDropdownRef}>
+            <div 
+              className="nav-dropdown" 
+              ref={resourcesDropdownRef}
+              onMouseEnter={() => setIsResourcesDropdownOpen(true)}
+              onMouseLeave={() => setIsResourcesDropdownOpen(false)}
+            >
               <button 
                 className={`navbar-link ${isActive("/resources") || isActive("/upload") || isActive("/files") ? "active" : ""}`}
-                onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)}
               >
                 Resources
               </button>
@@ -157,18 +172,29 @@ const Navbar = () => {
               Stories
             </button>
             
+            <button 
+              className={`navbar-link ${isActive("/leaderboard") ? "active" : ""}`}
+              onClick={() => navigate("/leaderboard")}
+            >
+              Leaderboard
+            </button>
+            
             {/* Community Dropdown */}
-            <div className="nav-dropdown" ref={communityDropdownRef}>
+            <div 
+              className="nav-dropdown" 
+              ref={communityDropdownRef}
+              onMouseEnter={() => setIsCommunityDropdownOpen(true)}
+              onMouseLeave={() => setIsCommunityDropdownOpen(false)}
+            >
               <button 
-                className={`navbar-link ${isActive("/circles") || isActive("/events") || isActive("/leaderboard") ? "active" : ""}`}
-                onClick={() => setIsCommunityDropdownOpen(!isCommunityDropdownOpen)}
+                className={`navbar-link ${isActive("/circles") || isActive("/events") ? "active" : ""}`}
               >
                 Community
               </button>
               
               {isCommunityDropdownOpen && (
                 <div className="dropdown-menu animate-fadeIn">
-                  {communitySubItems.map((item) => (
+                  {communitySubItems.filter(item => item.path !== "/leaderboard").map((item) => (
                     <button 
                       key={item.path}
                       className={`dropdown-item ${isActive(item.path) ? "active" : ""}`}
@@ -202,10 +228,15 @@ const Navbar = () => {
               <NotificationBell />
               
               {/* AI Features Dropdown */}
-              <div className="nav-dropdown" ref={aiDropdownRef}>
+              <div 
+                className="nav-dropdown" 
+                ref={aiDropdownRef}
+                onMouseEnter={() => setIsAIDropdownOpen(true)}
+                onMouseLeave={() => setIsAIDropdownOpen(false)}
+                onClick={() => setIsAIDropdownOpen(!isAIDropdownOpen)}
+              >
                 <button 
                   className="btn btn-icon btn-ghost ai-button"
-                  onClick={() => setIsAIDropdownOpen(!isAIDropdownOpen)}
                   aria-label="AI Features"
                 >
                   <span className="icon">🤖</span>
@@ -236,10 +267,15 @@ const Navbar = () => {
               </div>
               
               {/* User Dropdown */}
-              <div className="nav-dropdown" ref={userDropdownRef}>
+              <div 
+                className="nav-dropdown" 
+                ref={userDropdownRef}
+                onMouseEnter={() => setIsUserDropdownOpen(true)}
+                onMouseLeave={() => setIsUserDropdownOpen(false)}
+                onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
+              >
                 <button 
                   className="user-avatar"
-                  onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                   aria-label="User menu"
                 >
                   {user.name ? user.name.charAt(0).toUpperCase() : "U"}

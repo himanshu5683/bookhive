@@ -273,17 +273,18 @@
     align-items: center;
     gap: var(--bh-space-2);
     padding: var(--bh-space-2) var(--bh-space-3);
-    background: var(--bh-bg-input);
+    background: var(--bh-bg-card);
     border: 1px solid var(--bh-border);
     border-radius: var(--bh-radius-md);
     cursor: pointer;
     transition: all 0.2s ease;
     font-size: var(--bh-font-sm);
+    color: var(--bh-text-primary);
   }
   
   .language-dropdown-btn:hover {
-    background: var(--bh-bg-hover);
-    border-color: var(--bh-border-focus);
+    background: var(--bh-bg-secondary);
+    border-color: var(--bh-border-strong);
   }
   
   .language-flag {
@@ -332,7 +333,7 @@
   
   .language-option:hover,
   .language-option.active {
-    background: var(--bh-bg-hover);
+    background: var(--bh-bg-secondary);
   }
   
   .language-option.active {
