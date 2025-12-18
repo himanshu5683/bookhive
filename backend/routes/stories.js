@@ -1,6 +1,7 @@
 // backend/routes/stories.js - Story Sharing Routes
 
 import express from 'express';
+import mongoose from 'mongoose';
 import Story from '../models/Story.js';
 import User from '../models/User.js';
 import OpenAI from 'openai';
@@ -239,27 +240,32 @@ router.post('/:id/like', async (req, res) => {
     const userId = req.user._id; // Get user ID from authenticated user
     console.log('User ID extracted:', userId);
     
+    // Validate story ID
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid story ID' });
+    }
+    
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
-    // Check if user has already liked the story
-    const likeIndex = story.likes.findIndex(like => like.toString() === userId.toString());
+    // Check if user has already liked the story using MongoDB's includes method
+    const hasLiked = story.likes.some(like => like.toString() === userId.toString());
     
-    if (likeIndex === -1) {
-      // Add like - ensure we're pushing the ObjectId, not a string
-      story.likes.push(userId);
+    if (hasLiked) {
+      // Remove like using pull operation for better performance
+      story.likes.pull(userId);
     } else {
-      // Remove like
-      story.likes.splice(likeIndex, 1);
+      // Add like using push operation
+      story.likes.push(userId);
     }
     
     await story.save();
     
-    // Check if currently liked
-    const isLiked = likeIndex === -1;
+    // Check if currently liked (after toggle)
+    const isLiked = !hasLiked;
     
     res.status(200).json({ 
       success: true,
@@ -269,7 +275,8 @@ router.post('/:id/like', async (req, res) => {
     });
   } catch (error) {
     console.error('Error liking story:', error);
-    res.status(500).json({ success: false, error: 'Failed to like story' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ success: false, error: 'Failed to like story', details: error.message });
   }
 });
 
@@ -296,6 +303,11 @@ router.post('/:id/comment', async (req, res) => {
       return res.status(400).json({ success: false, error: 'Comment content is required' });
     }
     
+    // Validate story ID
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid story ID' });
+    }
+    
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
@@ -319,9 +331,9 @@ router.post('/:id/comment', async (req, res) => {
     await story.save();
     
     // Populate user reference for response
-    await story.populate('comments.user', 'name');
+    await story.populate({ path: 'comments.user', select: 'name' });
     
-    // Get the newly added comment
+    // Get the newly added comment (should be the last one)
     const newComment = story.comments[story.comments.length - 1];
     
     res.status(201).json({ 
@@ -331,7 +343,8 @@ router.post('/:id/comment', async (req, res) => {
     });
   } catch (error) {
     console.error('Error adding comment:', error);
-    res.status(500).json({ success: false, error: 'Failed to add comment' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ success: false, error: 'Failed to add comment', details: error.message });
   }
 });
 
@@ -351,14 +364,24 @@ router.post('/:id/share', async (req, res) => {
     const userId = req.user._id; // Get user ID from authenticated user
     console.log('User ID extracted:', userId);
     
+    // Validate story ID
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({ success: false, error: 'Invalid story ID' });
+    }
+    
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
+    // Ensure shareCount is initialized
+    if (typeof story.shareCount !== 'number') {
+      story.shareCount = 0;
+    }
+    
     // Increment share count
-    story.shareCount = (story.shareCount || 0) + 1;
+    story.shareCount = story.shareCount + 1;
     
     await story.save();
     
@@ -373,7 +396,8 @@ router.post('/:id/share', async (req, res) => {
     });
   } catch (error) {
     console.error('Error sharing story:', error);
-    res.status(500).json({ success: false, error: 'Failed to share story' });
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ success: false, error: 'Failed to share story', details: error.message });
   }
 });
 
