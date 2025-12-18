@@ -13,6 +13,48 @@ const router = express.Router();
 // Apply authentication middleware to all routes
 router.use(authenticate);
 
+// POST /api/ai/event-suggestions
+// Generate event suggestions based on user preferences
+router.post("/event-suggestions", async (req, res) => {
+  try {
+    const { interests, preferredFormats, availability, userId } = req.body;
+    
+    // Validate required fields
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
+    }
+    
+    // In a real implementation, you would generate personalized event suggestions
+    // For now, we'll return sample suggestions
+    const suggestions = [
+      {
+        title: "Online Coding Workshop",
+        category: "Programming",
+        format: "Online",
+        date: "Next Weekend"
+      },
+      {
+        title: "Book Club Meeting",
+        category: "Literature",
+        format: "In-person",
+        date: "This Friday"
+      },
+      {
+        title: "Tech Talk Series",
+        category: "Technology",
+        format: "Online",
+        date: "Next Tuesday"
+      }
+    ];
+    
+    return res.status(200).json({ success: true, suggestions });
+  } catch (err) {
+    console.error("AI Event Suggestions Error:", err);
+    // Always return a safe fallback response instead of throwing errors
+    return res.status(200).json({ success: true, suggestions: [] });
+  }
+});
+
 // POST /api/ai/recommendations
 // Generate personalized recommendations for the user
 router.post("/recommendations", async (req, res) => {
