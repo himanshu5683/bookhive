@@ -37,6 +37,9 @@ const resourceSchema = new mongoose.Schema({
   filePath: {
     type: String
   },
+  fileUrl: {
+    type: String
+  },
   fileSize: {
     type: Number
   },

@@ -381,7 +381,10 @@ router.post('/:id/download', async (req, res) => {
     });
     
     // In a real app, you would generate a signed URL or redirect to the file
-    // For now, we'll just return a success message
+    // For now, we'll just return a success message with proper headers for download
+    res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${resource.fileName || resource.title}"`);
+    
     res.status(200).json({ 
       message: 'Download initiated successfully',
       downloadUrl: `/download/${resource._id}` // Placeholder URL

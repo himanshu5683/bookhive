@@ -152,6 +152,30 @@ const Stories = () => {
         s._id === storyId ? { ...s, shares: response.shareCount } : s
       ));
       
+      // Try to use navigator.share if available
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: 'Check out this story on BookHive',
+            text: 'I found this interesting story on BookHive!',
+            url: response.shareableUrl
+          });
+          return;
+        } catch (shareErr) {
+          console.log('Navigator share failed:', shareErr);
+        }
+      }
+      
+      // Fallback: copy to clipboard
+      try {
+        await navigator.clipboard.writeText(response.shareableUrl);
+        alert('Link copied to clipboard!');
+      } catch (clipboardErr) {
+        console.error('Clipboard copy failed:', clipboardErr);
+        // Last resort: show URL in alert
+        alert(`Share this link: ${response.shareableUrl}`);
+      }
+      
       setError('');
     } catch (err) {
       console.error('Failed to share story:', err);

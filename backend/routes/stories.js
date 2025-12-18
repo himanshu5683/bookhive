@@ -228,23 +228,21 @@ router.post('/:id/like', async (req, res) => {
     }
     
     // Check if user has already liked the story
-    const likeIndex = story.likes.findIndex(like => like.userId.toString() === userId.toString());
+    const likeIndex = story.likes.findIndex(like => like.toString() === userId.toString());
     
     if (likeIndex === -1) {
       // Add like
-      story.likes.push({ userId: userId.toString() });
-      story.likeCount = story.likes.length;
+      story.likes.push(userId);
     } else {
       // Remove like
       story.likes.splice(likeIndex, 1);
-      story.likeCount = story.likes.length;
     }
     
     await story.save();
     
     res.status(200).json({ 
       message: likeIndex === -1 ? 'Story liked successfully' : 'Story unliked successfully',
-      likeCount: story.likeCount
+      likeCount: story.likes.length
     });
   } catch (error) {
     console.error('Error liking story:', error);
@@ -260,7 +258,6 @@ router.post('/:id/comment', async (req, res) => {
   try {
     const { content } = req.body;
     const userId = req.user.id; // Using id from authenticated user (as requested)
-    const userName = req.user.name;
     
     // Validate content
     if (!content || content.trim() === '') {
@@ -275,20 +272,21 @@ router.post('/:id/comment', async (req, res) => {
     
     // Add comment
     const comment = {
-      content: content.trim(),
-      author: userName,
-      authorId: userId.toString(),
+      user: userId,
+      text: content.trim(),
       createdAt: new Date()
     };
     
     story.comments.push(comment);
-    story.commentCount = story.comments.length;
     
     await story.save();
     
+    // Populate user reference for response
+    await story.populate('comments.user', 'name');
+    
     res.status(201).json({ 
       message: 'Comment added successfully',
-      comment
+      comment: story.comments[story.comments.length - 1]
     });
   } catch (error) {
     console.error('Error adding comment:', error);
@@ -315,9 +313,13 @@ router.post('/:id/share', async (req, res) => {
     
     await story.save();
     
+    // Generate shareable URL
+    const shareableUrl = `${process.env.FRONTEND_URL || 'https://himanshu5683.github.io/bookhive'}/stories/${story._id}`;
+    
     res.status(200).json({ 
       message: 'Story shared successfully',
-      shareCount: story.shareCount
+      shareCount: story.shareCount,
+      shareableUrl: shareableUrl
     });
   } catch (error) {
     console.error('Error sharing story:', error);
