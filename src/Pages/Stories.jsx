@@ -157,6 +157,11 @@ const Stories = () => {
     try {
       const response = await storiesService.share(storyId);
       
+      // Check if the response has the success property
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to share story');
+      }
+      
       // Update story shares count locally
       setStories(stories.map(s => 
         s._id === storyId ? { ...s, shares: response.shareCount } : s

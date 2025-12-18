@@ -327,10 +327,15 @@ router.post('/:id/share', async (req, res) => {
   try {
     const userId = req.user.id; // Using id from authenticated user (as requested)
     
+    // Validate user
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
+      return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
     // Increment share count
@@ -342,13 +347,14 @@ router.post('/:id/share', async (req, res) => {
     const shareableUrl = `${process.env.FRONTEND_URL || 'https://himanshu5683.github.io/bookhive'}/stories/${story._id}`;
     
     res.status(200).json({ 
+      success: true,
       message: 'Story shared successfully',
       shareCount: story.shareCount,
       shareableUrl: shareableUrl
     });
   } catch (error) {
     console.error('Error sharing story:', error);
-    res.status(500).json({ error: 'Failed to share story' });
+    res.status(500).json({ success: false, error: 'Failed to share story' });
   }
 });
 
