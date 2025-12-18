@@ -82,6 +82,25 @@ const Events = () => {
       return;
     }
     
+    // Validate dates
+    const startDate = new Date(eventData.startDate);
+    const endDate = new Date(eventData.endDate);
+    
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      setError('Invalid date format');
+      return;
+    }
+    
+    if (startDate.getTime() <= Date.now()) {
+      setError('Event start date must be in the future');
+      return;
+    }
+    
+    if (endDate.getTime() <= startDate.getTime()) {
+      setError('End date must be after start date');
+      return;
+    }
+    
     try {
       await eventsService.create(eventData); // Fixed: Use eventsService instead of apiClient
       

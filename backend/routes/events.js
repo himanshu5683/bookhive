@@ -124,16 +124,20 @@ router.post('/', async (req, res) => {
     const startDateTime = new Date(startDate);
     const endDateTime = new Date(endDate);
     
+    // Ensure both dates are valid
     if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
       return res.status(400).json({ error: 'Invalid date format' });
     }
     
-    if (startDateTime < new Date()) {
+    // Ensure start date is in the future (with timezone safety)
+    const now = new Date();
+    if (startDateTime.getTime() <= now.getTime()) {
       return res.status(400).json({ error: 'Event start date must be in the future' });
     }
     
-    if (endDateTime <= startDateTime) {
-      return res.status(400).json({ error: 'Event end date must be after start date' });
+    // Ensure end date is after start date (with timezone safety)
+    if (endDateTime.getTime() <= startDateTime.getTime()) {
+      return res.status(400).json({ error: 'End date must be after start date' });
     }
     
     // Create new event
