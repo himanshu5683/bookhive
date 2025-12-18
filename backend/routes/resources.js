@@ -22,8 +22,21 @@ dotenv.config();
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(authenticate);
+// Apply authentication middleware only to routes that need it
+// Public routes (no authentication needed)
+// Private routes (authentication required)
+router.use((req, res, next) => {
+  // Only apply authentication to routes that modify data
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+    return authenticate(req, res, next);
+  }
+  // For GET requests, proceed without authentication
+  // Special case: /my requires authentication
+  if (req.path === '/my' && req.method === 'GET') {
+    return authenticate(req, res, next);
+  }
+  next();
+});
 
 /**
  * GET /api/resources

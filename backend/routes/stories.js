@@ -21,8 +21,17 @@ if (process.env.OPENAI_API_KEY && process.env.OPENAI_API_KEY !== 'your_openai_ap
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(authenticate);
+// Apply authentication middleware only to routes that need it
+// Public routes (no authentication needed)
+// Private routes (authentication required)
+router.use((req, res, next) => {
+  // Only apply authentication to routes that modify data
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+    return authenticate(req, res, next);
+  }
+  // For GET requests, proceed without authentication
+  next();
+});
 
 /**
  * GET /api/stories

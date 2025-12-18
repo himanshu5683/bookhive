@@ -3,7 +3,7 @@ import React, { useEffect, useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AuthContext from "../../auth/AuthContext";
-import { resourcesService, storiesService } from "../../services/api"; // Fixed: Import proper services instead of apiClient
+import { resourcesService, storiesService, circlesService, usersService } from "../../services/api"; // Fixed: Import proper services instead of apiClient
 import "../../styles/Home.css";
 import ResourceCard from "./ResourceCard";
 
@@ -33,13 +33,36 @@ const Home = () => {
                 const storiesRes = await storiesService.getAll({ limit: 4 });
                 setLatestStories(storiesRes.stories || []);
                 
-                // Fetch popular circles
-                // const circlesRes = await apiClient.get('/circles/popular?limit=4');
-                // setPopularCircles(circlesRes.data.circles || []);
+                // Fetch popular circles (sort by memberCount)
+                const circlesRes = await circlesService.getAll({ limit: 4, sort: '-memberCount' });
+                setPopularCircles(circlesRes.circles || []);
                 
-                // Fetch stats
-                // const statsRes = await apiClient.get('/stats/home');
-                // setStats(statsRes.data);
+                // Fetch stats from resources endpoint
+                const resourcesResCount = await resourcesService.getAll({ limit: 100 }); // Get more resources to calculate total downloads accurately
+                
+                // Calculate total downloads more efficiently
+                let totalDownloads = 0;
+                if (resourcesResCount.resources) {
+                    for (const resource of resourcesResCount.resources) {
+                        totalDownloads += resource.downloads || 0;
+                    }
+                }
+                
+                // For total users, we'll estimate based on unique authors in resources
+                const uniqueAuthors = new Set();
+                if (resourcesResCount.resources) {
+                    resourcesResCount.resources.forEach(resource => {
+                        if (resource.authorId) {
+                            uniqueAuthors.add(resource.authorId);
+                        }
+                    });
+                }
+                
+                setStats({
+                    totalResources: resourcesResCount.total || 0,
+                    totalUsers: uniqueAuthors.size || 0,
+                    totalDownloads: totalDownloads
+                });
             } catch (err) {
                 console.error('Error fetching home data:', err);
             }

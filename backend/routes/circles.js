@@ -6,8 +6,17 @@ import authenticate from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(authenticate);
+// Apply authentication middleware only to routes that need it
+// Public routes (no authentication needed)
+// Private routes (authentication required)
+router.use((req, res, next) => {
+  // Only apply authentication to routes that modify data
+  if (req.method === 'POST' || req.method === 'PUT' || req.method === 'DELETE') {
+    return authenticate(req, res, next);
+  }
+  // For GET requests, proceed without authentication
+  next();
+});
 
 /**
  * GET /api/circles
@@ -16,11 +25,17 @@ router.use(authenticate);
  */
 router.get('/', async (req, res) => {
   try {
-    const { topic, page = 1, limit = 10 } = req.query;
+    const { topic, page = 1, limit = 10, sort } = req.query;
     
     // Build query
     const query = {};
     if (topic) query.topic = topic;
+    
+    // Build sort
+    const sortObj = {};
+    if (sort === '-memberCount') sortObj.memberCount = -1;
+    else if (sort === 'memberCount') sortObj.memberCount = 1;
+    else sortObj.memberCount = -1; // Default sort by memberCount descending
     
     // Calculate pagination
     const skip = (page - 1) * limit;
@@ -28,6 +43,7 @@ router.get('/', async (req, res) => {
     // Execute query
     const total = await StudyCircle.countDocuments(query);
     const circles = await StudyCircle.find(query)
+      .sort(sortObj)
       .skip(skip)
       .limit(parseInt(limit));
     
