@@ -132,6 +132,31 @@ const Events = () => {
     }
   };
 
+  const handleDeleteEvent = async (eventId) => {
+    if (!user) {
+      setError('You must be logged in to delete events');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this event?')) {
+      return;
+    }
+
+    try {
+      await eventsService.delete(eventId);
+      setSuccess('Event deleted successfully!');
+      
+      // Refresh events
+      fetchEvents();
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err) {
+      console.error('Failed to delete event:', err);
+      setError('Failed to delete event: ' + (err.message || 'Please try again'));
+    }
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString() + ' at ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -346,19 +371,31 @@ const Events = () => {
                   
                   <div className="event-actions">
                     {user ? (
-                      event.participants.some(p => p.userId === user.id) ? (
-                        <button className="joined-btn" disabled>
-                          Joined
-                        </button>
-                      ) : (
-                        <button 
-                          className="join-btn"
-                          onClick={() => handleJoinEvent(event._id)}
-                          disabled={event.currentParticipants >= event.maxParticipants}
-                        >
-                          {event.currentParticipants >= event.maxParticipants ? 'Event Full' : 'Join Event'}
-                        </button>
-                      )
+                      <>
+                        {event.participants.some(p => p.userId === user.id) ? (
+                          <button className="joined-btn" disabled>
+                            Joined
+                          </button>
+                        ) : (
+                          <button 
+                            className="join-btn"
+                            onClick={() => handleJoinEvent(event._id)}
+                            disabled={event.currentParticipants >= event.maxParticipants}
+                          >
+                            {event.currentParticipants >= event.maxParticipants ? 'Event Full' : 'Join Event'}
+                          </button>
+                        )}
+                        
+                        {/* Show delete button only to event creator */}
+                        {user.id === event.hostId && (
+                          <button 
+                            className="delete-btn"
+                            onClick={() => handleDeleteEvent(event._id)}
+                          >
+                            Delete Event
+                          </button>
+                        )}
+                      </>
                     ) : (
                       <button 
                         className="join-btn"
@@ -411,6 +448,18 @@ const Events = () => {
                       <span className="detail-value">{event.location}</span>
                     </div>
                   </div>
+                  
+                  {/* Show delete button only to event creator for past events too */}
+                  {user && user.id === event.hostId && (
+                    <div className="event-actions">
+                      <button 
+                        className="delete-btn"
+                        onClick={() => handleDeleteEvent(event._id)}
+                      >
+                        Delete Event
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

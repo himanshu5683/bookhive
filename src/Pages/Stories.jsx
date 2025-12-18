@@ -87,26 +87,75 @@ const Stories = () => {
     }
 
     try {
+      const response = await storiesService.like(storyId);
+      
+      // Update story likes count locally
+      setStories(stories.map(s => 
+        s._id === storyId ? { ...s, likes: response.likeCount } : s
+      ));
+      
+      // Update liked stories state
       const newLiked = new Set(likedStories);
       if (newLiked.has(storyId)) {
-        await storiesService.unlike(storyId);
         newLiked.delete(storyId);
-        // Update story likes count locally
-        setStories(stories.map(s => 
-          s._id === storyId ? { ...s, likes: Math.max(0, s.likes - 1) } : s
-        ));
       } else {
-        await storiesService.like(storyId);
         newLiked.add(storyId);
-        // Update story likes count locally
-        setStories(stories.map(s => 
-          s._id === storyId ? { ...s, likes: s.likes + 1 } : s
-        ));
       }
       setLikedStories(newLiked);
     } catch (err) {
       console.error('Failed to update like:', err);
       setError('Failed to update like. Please try again.');
+    }
+  };
+
+  const handleComment = async (storyId, commentContent) => {
+    if (!user) {
+      setError('Please log in to comment on stories');
+      return;
+    }
+
+    if (!commentContent.trim()) {
+      setError('Comment cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await storiesService.comment(storyId, commentContent);
+      
+      // Update story comments count locally
+      setStories(stories.map(s => 
+        s._id === storyId ? { 
+          ...s, 
+          comments: [...(s.comments || []), response.comment],
+          commentCount: (s.commentCount || 0) + 1
+        } : s
+      ));
+      
+      setError('');
+    } catch (err) {
+      console.error('Failed to add comment:', err);
+      setError('Failed to add comment. Please try again.');
+    }
+  };
+
+  const handleShareStory = async (storyId) => {
+    if (!user) {
+      setError('Please log in to share stories');
+      return;
+    }
+
+    try {
+      const response = await storiesService.share(storyId);
+      
+      // Update story shares count locally
+      setStories(stories.map(s => 
+        s._id === storyId ? { ...s, shares: response.shareCount } : s
+      ));
+      
+      setError('');
+    } catch (err) {
+      console.error('Failed to share story:', err);
+      setError('Failed to share story. Please try again.');
     }
   };
 
@@ -259,8 +308,23 @@ const Stories = () => {
                   >
                     ❤️ {story.likes || 0}
                   </button>
-                  <button className="action-btn">💬 {story.comments?.length || 0}</button>
-                  <button className="action-btn">↗️ {story.shares || 0}</button>
+                  <button 
+                    className="action-btn"
+                    onClick={() => {
+                      const comment = prompt('Enter your comment:');
+                      if (comment !== null) {
+                        handleComment(story._id || story.id, comment);
+                      }
+                    }}
+                  >
+                    💬 {story.comments?.length || 0}
+                  </button>
+                  <button 
+                    className="action-btn"
+                    onClick={() => handleShareStory(story._id || story.id)}
+                  >
+                    ↗️ {story.shares || 0}
+                  </button>
                   
                   {/* Edit/Delete buttons for story owner */}
                   {user && user.id === story.authorId && (

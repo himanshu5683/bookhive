@@ -123,6 +123,7 @@ export const storiesAPI = {
   like: (storyId) => apiClient.post(`/stories/${storyId}/like`),
   unlike: (storyId) => apiClient.delete(`/stories/${storyId}/like`),
   comment: (storyId, comment) => apiClient.post(`/stories/${storyId}/comment`, { content: comment }),
+  share: (storyId) => apiClient.post(`/stories/${storyId}/share`),
   delete: (storyId) => apiClient.delete(`/stories/${storyId}`),
 };
 
@@ -135,6 +136,7 @@ export const circlesAPI = {
   join: (circleId) => apiClient.post(`/circles/${circleId}/join`),
   createThread: (circleId, threadData) => apiClient.post(`/circles/${circleId}/thread`, threadData),
   replyToThread: (circleId, threadId, replyData) => apiClient.post(`/circles/${circleId}/thread/${threadId}/reply`, replyData),
+  delete: (circleId) => apiClient.delete(`/circles/${circleId}`),
 };
 
 // ============ EVENTS ENDPOINTS ============

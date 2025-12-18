@@ -130,6 +130,37 @@ const StudyCircles = () => {
     }
   };
 
+  const handleDeleteCircle = async (circleId) => {
+    if (!user) {
+      setError('You must be logged in to delete circles');
+      return;
+    }
+
+    if (!window.confirm('Are you sure you want to delete this circle? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await circlesService.delete(circleId);
+      setSuccess('Circle deleted successfully!');
+      
+      // Remove the circle from the list
+      setCircles(circles.filter(circle => circle._id !== circleId));
+      
+      // If the deleted circle was selected, clear the selection
+      if (selectedCircle && selectedCircle._id === circleId) {
+        setSelectedCircle(null);
+      }
+      
+      setSuccess('Circle deleted successfully!');
+    } catch (err) {
+      console.error('Failed to delete circle:', err);
+      setError('Failed to delete circle: ' + (err.message || 'Please try again.'));
+    }
+  };
+
+  const [success, setSuccess] = useState('');
+
   if (loading) {
     return <div className="study-circles-loading">Loading study circles...</div>;
   }
@@ -141,6 +172,7 @@ const StudyCircles = () => {
         <p>Join communities of learners with similar interests</p>
       </div>
 
+      {success && <div className="study-circles-success">{success}</div>}
       {error && <div className="study-circles-error">{error}</div>}
 
       <div className="study-circles-layout">
@@ -212,6 +244,19 @@ const StudyCircles = () => {
                     <span>👥 {circle.memberCount || 0} members</span>
                     <span>💬 {circle.threadCount || 0} discussions</span>
                   </div>
+                  
+                  {/* Show delete button only to circle creator */}
+                  {user && user.id === circle.createdBy && (
+                    <button 
+                      className="btn btn-danger delete-circle-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteCircle(circle._id);
+                      }}
+                    >
+                      Delete Circle
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -242,6 +287,16 @@ const StudyCircles = () => {
                   <span>👥 {selectedCircle.memberCount || 0} members</span>
                   <span>💬 {selectedCircle.threadCount || 0} discussions</span>
                 </div>
+                
+                {/* Show delete button only to circle creator in details view */}
+                {user && user.id === selectedCircle.createdBy && (
+                  <button 
+                    className="btn btn-danger delete-circle-btn"
+                    onClick={() => handleDeleteCircle(selectedCircle._id)}
+                  >
+                    Delete Circle
+                  </button>
+                )}
               </div>
 
               {/* Members List */}

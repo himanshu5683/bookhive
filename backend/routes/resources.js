@@ -10,6 +10,12 @@ const { generateResourceTags } = inbuiltAIService;
 import dotenv from 'dotenv';
 import authenticate from '../middleware/auth.js';
 import jwt from 'jsonwebtoken';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 

@@ -213,4 +213,116 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/stories/:id/like
+ * Like/unlike a story
+ */
+router.post('/:id/like', async (req, res) => {
+  try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Check if user has already liked the story
+    const likeIndex = story.likes.findIndex(like => like.userId.toString() === userId.toString());
+    
+    if (likeIndex === -1) {
+      // Add like
+      story.likes.push({ userId: userId.toString() });
+      story.likeCount = story.likes.length;
+    } else {
+      // Remove like
+      story.likes.splice(likeIndex, 1);
+      story.likeCount = story.likes.length;
+    }
+    
+    await story.save();
+    
+    res.status(200).json({ 
+      message: likeIndex === -1 ? 'Story liked successfully' : 'Story unliked successfully',
+      likeCount: story.likeCount
+    });
+  } catch (error) {
+    console.error('Error liking story:', error);
+    res.status(500).json({ error: 'Failed to like story' });
+  }
+});
+
+/**
+ * POST /api/stories/:id/comment
+ * Add a comment to a story
+ */
+router.post('/:id/comment', async (req, res) => {
+  try {
+    const { content } = req.body;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userName = req.user.name;
+    
+    // Validate content
+    if (!content || content.trim() === '') {
+      return res.status(400).json({ error: 'Comment content is required' });
+    }
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Add comment
+    const comment = {
+      content: content.trim(),
+      author: userName,
+      authorId: userId.toString(),
+      createdAt: new Date()
+    };
+    
+    story.comments.push(comment);
+    story.commentCount = story.comments.length;
+    
+    await story.save();
+    
+    res.status(201).json({ 
+      message: 'Comment added successfully',
+      comment
+    });
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ error: 'Failed to add comment' });
+  }
+});
+
+/**
+ * POST /api/stories/:id/share
+ * Share a story (increment share count)
+ */
+router.post('/:id/share', async (req, res) => {
+  try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    // Find story
+    const story = await Story.findById(req.params.id);
+    if (!story) {
+      return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Increment share count
+    story.shareCount = (story.shareCount || 0) + 1;
+    
+    await story.save();
+    
+    res.status(200).json({ 
+      message: 'Story shared successfully',
+      shareCount: story.shareCount
+    });
+  } catch (error) {
+    console.error('Error sharing story:', error);
+    res.status(500).json({ error: 'Failed to share story' });
+  }
+});
+
 export default router;

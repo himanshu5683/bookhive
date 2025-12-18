@@ -250,4 +250,34 @@ router.post('/:circleId/thread/:threadId/reply', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /api/circles/:id
+ * Delete a study circle (only creator can delete)
+ */
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    // Find circle
+    const circle = await StudyCircle.findById(id);
+    if (!circle) {
+      return res.status(404).json({ error: 'Circle not found' });
+    }
+    
+    // Check if user is the creator
+    if (circle.createdBy !== userId.toString()) {
+      return res.status(403).json({ error: 'Only the creator can delete the circle' });
+    }
+    
+    // Delete circle
+    await StudyCircle.findByIdAndDelete(id);
+    
+    res.status(200).json({ message: 'Circle deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting circle:', error);
+    res.status(500).json({ error: 'Server error deleting circle' });
+  }
+});
+
 export default router;
