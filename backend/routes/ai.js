@@ -391,6 +391,36 @@ router.post("/recommendations", async (req, res) => {
   }
 });
 
+// POST /api/ai/search
+// Search for resources or content
+router.post("/search", async (req, res) => {
+  try {
+    const { query } = req.body;
+    
+    // Validate required fields
+    if (!query) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Query is required' 
+      });
+    }
+    
+    // For now, return a simple JSON response
+    return res.status(200).json({ 
+      success: true, 
+      results: []
+    });
+  } catch (err) {
+    console.error("AI Search Error:", err);
+    // Always return a safe fallback response instead of throwing errors
+    return res.status(200).json({ 
+      success: false, 
+      results: [],
+      message: "AI service unavailable, please try later" 
+    });
+  }
+});
+
 // POST /api/ai/chat
 // Chat with the AI assistant
 router.post("/chat", async (req, res) => {

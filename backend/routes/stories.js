@@ -224,13 +224,13 @@ router.post('/:id/like', async (req, res) => {
     
     // Validate user
     if (!userId) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
+      return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
     // Check if user has already liked the story
