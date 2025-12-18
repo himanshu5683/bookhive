@@ -2,6 +2,7 @@
 
 import React, { useState, useContext, useRef, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import AuthContext from "../../auth/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import ThemeToggle from "./ThemeToggle";
@@ -104,7 +105,12 @@ const Navbar = () => {
   ];
 
   return (
-    <nav className={`navbar-container ${theme}`}>
+    <motion.nav 
+      className={`navbar-container ${theme}`}
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ type: "spring", stiffness: 100, damping: 20 }}
+    >
       <div className="navbar-wrapper">
         {/* Logo */}
         <div className="navbar-left">
@@ -115,21 +121,25 @@ const Navbar = () => {
           
           {/* Desktop Navigation */}
           <div className="nav-links">
-            <button 
+            <motion.button 
               className={`navbar-link ${isActive("/") ? "active" : ""}`}
               onClick={() => navigate("/")}
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 1 }}
             >
               Home
-            </button>
+            </motion.button>
             
             {/* Resources Dropdown */}
             <div className="nav-dropdown" ref={resourcesDropdownRef}>
-              <button 
+              <motion.button 
                 className={`navbar-link ${isActive("/resources") || isActive("/upload") || isActive("/files") ? "active" : ""}`}
                 onClick={() => setIsResourcesDropdownOpen(!isResourcesDropdownOpen)}
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 1 }}
               >
                 Resources
-              </button>
+              </motion.button>
               
               {isResourcesDropdownOpen && (
                 <div className="dropdown-menu animate-fadeIn">
@@ -150,21 +160,25 @@ const Navbar = () => {
               )}
             </div>
             
-            <button 
+            <motion.button 
               className={`navbar-link ${isActive("/stories") ? "active" : ""}`}
               onClick={() => navigate("/stories")}
+              whileHover={{ y: -2 }}
+              whileTap={{ y: 1 }}
             >
               Stories
-            </button>
+            </motion.button>
             
             {/* Community Dropdown */}
             <div className="nav-dropdown" ref={communityDropdownRef}>
-              <button 
+              <motion.button 
                 className={`navbar-link ${isActive("/circles") || isActive("/events") || isActive("/leaderboard") ? "active" : ""}`}
                 onClick={() => setIsCommunityDropdownOpen(!isCommunityDropdownOpen)}
+                whileHover={{ y: -2 }}
+                whileTap={{ y: 1 }}
               >
                 Community
-              </button>
+              </motion.button>
               
               {isCommunityDropdownOpen && (
                 <div className="dropdown-menu animate-fadeIn">
@@ -203,13 +217,15 @@ const Navbar = () => {
               
               {/* AI Features Dropdown */}
               <div className="nav-dropdown" ref={aiDropdownRef}>
-                <button 
+                <motion.button 
                   className="btn btn-icon btn-ghost ai-button"
                   onClick={() => setIsAIDropdownOpen(!isAIDropdownOpen)}
                   aria-label="AI Features"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   <span className="icon">🤖</span>
-                </button>
+                </motion.button>
                 
                 {isAIDropdownOpen && (
                   <div className="dropdown-menu dropdown-menu-wide animate-fadeIn">
@@ -237,13 +253,15 @@ const Navbar = () => {
               
               {/* User Dropdown */}
               <div className="nav-dropdown" ref={userDropdownRef}>
-                <button 
+                <motion.button 
                   className="user-avatar"
                   onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)}
                   aria-label="User menu"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                 >
                   {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-                </button>
+                </motion.button>
                 
                 {isUserDropdownOpen && (
                   <div className="dropdown-menu animate-fadeIn">
@@ -288,34 +306,46 @@ const Navbar = () => {
             </>
           ) : (
             <div className="auth-buttons">
-              <button 
+              <motion.button 
                 className="btn btn-secondary"
                 onClick={() => navigate("/login")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Log In
-              </button>
-              <button 
+              </motion.button>
+              <motion.button 
                 className="btn btn-primary"
                 onClick={() => navigate("/signup")}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 Sign Up
-              </button>
+              </motion.button>
             </div>
           )}
           
-          <button 
+          <motion.button 
             className="mobile-toggle"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle mobile menu"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
           >
             {isMobileMenuOpen ? "✕" : "☰"}
-          </button>
+          </motion.button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="mobile-menu animate-slideInUp">
+        <motion.div 
+          className="mobile-menu"
+          initial={{ y: 100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 100, opacity: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        >
           <div className="mobile-search">
             <SmartSearchBar />
           </div>
@@ -409,9 +439,9 @@ const Navbar = () => {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
-    </nav>
+    </motion.nav>
   );
 };
 

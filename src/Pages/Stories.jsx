@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { motion } from 'framer-motion';
 import { storiesService, activityService } from '../services/api';
 import AuthContext from '../auth/AuthContext';
 import '../styles/Stories.css';
@@ -262,17 +263,36 @@ const Stories = () => {
   return (
     <div className="stories-page">
       {/* Hero */}
-      <div className="stories-hero">
+      <motion.div 
+        className="stories-hero"
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
         <h1>📖 Stories & Reflections</h1>
         <p>Share your learning journey, insights, and experiences with the community</p>
-      </div>
+      </motion.div>
 
       {/* Error Message */}
-      {error && <div className="error-message">{error}</div>}
+      {error && (
+        <motion.div 
+          className="error-message"
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {error}
+        </motion.div>
+      )}
 
       {/* Compose */}
       {user && (
-        <div className="story-composer">
+        <motion.div 
+          className="story-composer"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           <div className="composer-header">
             <span>✨ Share Your Story</span>
           </div>
@@ -284,39 +304,72 @@ const Stories = () => {
             rows={4}
             disabled={posting}
           />
-          <button
+          <motion.button
             className="btn-share"
             onClick={handleShare}
             disabled={!newStory.trim() || posting}
+            whileHover={{ scale: !(!newStory.trim() || posting) ? 1.05 : 1 }}
+            whileTap={{ scale: !(!newStory.trim() || posting) ? 0.95 : 1 }}
           >
             {posting ? 'Sharing...' : 'Share Story'}
-          </button>
-        </div>
+          </motion.button>
+        </motion.div>
       )}
 
       {!user && (
-        <div className="login-prompt">
+        <motion.div 
+          className="login-prompt"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           <p>📝 <a href="/login">Log in</a> to share your story with the community</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Loading State */}
       {loading && (
-        <div className="loading-state">
+        <motion.div 
+          className="loading-state"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
           <p>Loading stories...</p>
-        </div>
+        </motion.div>
       )}
 
       {/* Stories Feed */}
       {!loading && (
-        <div className="stories-feed">
+        <motion.div 
+          className="stories-feed"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
           {stories.length === 0 ? (
-            <div className="no-stories">
+            <motion.div 
+              className="no-stories"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.5 }}
+            >
               <p>No stories yet. Be the first to share!</p>
-            </div>
+            </motion.div>
           ) : (
-            stories.map(story => (
-              <div key={story._id || story.id} className="story-card">
+            stories.map((story, index) => (
+              <motion.div 
+                key={story._id || story.id} 
+                className="story-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                whileHover={{ 
+                  y: -5,
+                  boxShadow: 'var(--bh-shadow-lg)',
+                  transition: { duration: 0.2 }
+                }}
+              >
                 <div className="story-header">
                   <div className="story-author-info">
                     <span className="author-avatar">👤</span>
@@ -341,13 +394,15 @@ const Stories = () => {
                 </div>
 
                 <div className="story-actions">
-                  <button
+                  <motion.button
                     className={`action-btn ${likedStories.has(story._id || story.id) ? 'liked' : ''}`}
                     onClick={() => toggleLike(story._id || story.id)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     ❤️ {story.likes || 0}
-                  </button>
-                  <button 
+                  </motion.button>
+                  <motion.button 
                     className="action-btn"
                     onClick={() => {
                       const comment = prompt('Enter your comment:');
@@ -355,57 +410,69 @@ const Stories = () => {
                         handleComment(story._id || story.id, comment);
                       }
                     }}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     💬 {story.comments?.length || 0}
-                  </button>
-                  <button 
+                  </motion.button>
+                  <motion.button 
                     className="action-btn"
                     onClick={() => handleShareStory(story._id || story.id)}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                   >
                     ↗️ {story.shares || 0}
-                  </button>
+                  </motion.button>
                   
                   {/* Edit/Delete buttons for story owner */}
                   {user && user.id === story.authorId && (
                     <div className="story-owner-actions">
                       {editingStoryId === (story._id || story.id) ? (
                         <>
-                          <button 
+                          <motion.button 
                             className="btn-save"
                             onClick={() => handleSaveEdit(story._id || story.id)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             Save
-                          </button>
-                          <button 
+                          </motion.button>
+                          <motion.button 
                             className="btn-cancel"
                             onClick={handleCancelEdit}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             Cancel
-                          </button>
+                          </motion.button>
                         </>
                       ) : (
                         <>
-                          <button 
+                          <motion.button 
                             className="btn-edit"
                             onClick={() => handleEdit(story)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             Edit
-                          </button>
-                          <button 
+                          </motion.button>
+                          <motion.button 
                             className="btn-delete"
                             onClick={() => handleDelete(story._id || story.id)}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
                           >
                             Delete
-                          </button>
+                          </motion.button>
                         </>
                       )}
                     </div>
                   )}
                 </div>
-              </div>
+              </motion.div>
             ))
           )}
-        </div>
+        </motion.div>
       )}
     </div>
   );

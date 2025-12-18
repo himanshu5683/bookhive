@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import AuthContext from '../../auth/AuthContext';
 import { resourcesService } from '../../services/api'; // Fixed: Import resourcesService instead of apiClient
 import Rating from './Rating';
@@ -87,7 +88,17 @@ const ResourceCard = ({ resource, showRating = false }) => {
   };
 
   return (
-    <Card className="resource-card">
+    <motion.div 
+      className="resource-card"
+      whileHover={{ 
+        y: -5,
+        boxShadow: 'var(--bh-shadow-lg)',
+        transition: { duration: 0.2 }
+      }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
       <div className="resource-header">
         <span className="resource-type">{typeLabel}</span>
         {resource.isPremium ? (
@@ -107,12 +118,14 @@ const ResourceCard = ({ resource, showRating = false }) => {
       <p className="resource-description">
         {showFullDescription ? resource.description : truncateDescription(resource.description)}
         {resource.description.length > 100 && (
-          <button 
+          <motion.button 
             className="toggle-description"
             onClick={() => setShowFullDescription(!showFullDescription)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {showFullDescription ? 'Show Less' : 'Show More'}
-          </button>
+          </motion.button>
         )}
       </p>
       
@@ -145,17 +158,21 @@ const ResourceCard = ({ resource, showRating = false }) => {
 
       <div className="resource-footer">
         {isPreviewable && (
-          <button
+          <motion.button
             className="btn btn-open"
             onClick={handleOpen}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             Open
-          </button>
+          </motion.button>
         )}
-        <button
+        <motion.button
           className="btn btn-download"
           onClick={handleDownload}
           disabled={downloading || (user && user.credits < (resource.isPremium ? resource.premiumPrice : resource.credits))}
+          whileHover={{ scale: !downloading && !(user && user.credits < (resource.isPremium ? resource.premiumPrice : resource.credits)) ? 1.05 : 1 }}
+          whileTap={{ scale: !downloading && !(user && user.credits < (resource.isPremium ? resource.premiumPrice : resource.credits)) ? 0.95 : 1 }}
         >
           {downloading ? 'Downloading...' : 
            user && user.credits < (resource.isPremium ? resource.premiumPrice : resource.credits) ? 
@@ -163,7 +180,7 @@ const ResourceCard = ({ resource, showRating = false }) => {
            resource.isPremium ? 
            `Download (${resource.premiumPrice} credits)` : 
            `Download (${resource.credits} credits)`}
-        </button>
+        </motion.button>
       </div>
 
       {showRating && (
@@ -173,7 +190,7 @@ const ResourceCard = ({ resource, showRating = false }) => {
           onRatingSubmit={handleRatingSubmit}
         />
       )}
-    </Card>
+    </motion.div>
   );
 };
 

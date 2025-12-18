@@ -12,6 +12,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.13.2",
+    "framer-motion": "^12.23.26",
     "i18next": "^22.5.1",
     "mongoose": "8.1.1",
     "react": "^18.2.0",

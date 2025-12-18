@@ -1,5 +1,6 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import './styles/styles.css';
 
 // Import i18n
@@ -62,6 +63,26 @@ const Layout = ({ children }) => (
   </div>
 );
 
+// Animated Page Wrapper
+const AnimatedPage = ({ children }) => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <div
+        key={location.pathname}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        style={{ width: '100%' }}
+      >
+        {children}
+      </div>
+    </AnimatePresence>
+  );
+};
+
 function App() {
   return (
     <ThemeProvider>
@@ -73,91 +94,91 @@ function App() {
                 <AppWrapper>
                   <Routes>
                     {/* Public Routes */}
-                    <Route path="/" element={<Layout><Home /></Layout>} />
-                    <Route path="/library" element={<Layout><Library /></Layout>} />
-                    <Route path="/resources" element={<Layout><Resources /></Layout>} />
-                    <Route path="/stories" element={<Layout><Stories /></Layout>} />
-                    <Route path="/circles" element={<Layout><StudyCircles /></Layout>} />
-                    <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
-                    <Route path="/profile" element={<Layout><Profile /></Layout>} />
-                    <Route path="/events" element={<Layout><Events /></Layout>} />
+                    <Route path="/" element={<Layout><AnimatedPage><Home /></AnimatedPage></Layout>} />
+                    <Route path="/library" element={<Layout><AnimatedPage><Library /></AnimatedPage></Layout>} />
+                    <Route path="/resources" element={<Layout><AnimatedPage><Resources /></AnimatedPage></Layout>} />
+                    <Route path="/stories" element={<Layout><AnimatedPage><Stories /></AnimatedPage></Layout>} />
+                    <Route path="/circles" element={<Layout><AnimatedPage><StudyCircles /></AnimatedPage></Layout>} />
+                    <Route path="/leaderboard" element={<Layout><AnimatedPage><Leaderboard /></AnimatedPage></Layout>} />
+                    <Route path="/profile" element={<Layout><AnimatedPage><Profile /></AnimatedPage></Layout>} />
+                    <Route path="/events" element={<Layout><AnimatedPage><Events /></AnimatedPage></Layout>} />
                     
                     {/* Authentication Routes */}
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/oauth/callback" element={<OAuthCallback />} />
+                    <Route path="/login" element={<AnimatedPage><Login /></AnimatedPage>} />
+                    <Route path="/signup" element={<AnimatedPage><Signup /></AnimatedPage>} />
+                    <Route path="/oauth/callback" element={<AnimatedPage><OAuthCallback /></AnimatedPage>} />
                     
                     {/* Protected Routes */}
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
-                        <Layout><Dashboard /></Layout>
+                        <Layout><AnimatedPage><Dashboard /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/upload" element={
                       <ProtectedRoute>
-                        <Layout><Upload /></Layout>
+                        <Layout><AnimatedPage><Upload /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/files" element={
                       <ProtectedRoute>
-                        <Layout><FileList /></Layout>
+                        <Layout><AnimatedPage><FileList /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/notifications" element={
                       <ProtectedRoute>
-                        <Layout><NotificationsPage /></Layout>
+                        <Layout><AnimatedPage><NotificationsPage /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     
                     {/* AI Routes */}
                     <Route path="/ai" element={
                       <ProtectedRoute>
-                        <Layout><AIDashboard /></Layout>
+                        <Layout><AnimatedPage><AIDashboard /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/dashboard" element={
                       <ProtectedRoute>
-                        <Layout><AIDashboard /></Layout>
+                        <Layout><AnimatedPage><AIDashboard /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/recommendations" element={
                       <ProtectedRoute>
-                        <Layout><AIDashboard /></Layout>
+                        <Layout><AnimatedPage><AIDashboard /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/chat" element={
                       <ProtectedRoute>
-                        <Layout><Chat /></Layout>
+                        <Layout><AnimatedPage><Chat /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/summarize" element={
                       <ProtectedRoute>
-                        <Layout><Summarize /></Layout>
+                        <Layout><AnimatedPage><Summarize /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/search" element={
                       <ProtectedRoute>
-                        <Layout><Search /></Layout>
+                        <Layout><AnimatedPage><Search /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/auto-tag" element={
                       <ProtectedRoute>
-                        <Layout><AutoTag /></Layout>
+                        <Layout><AnimatedPage><AutoTag /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/trend-detection" element={
                       <ProtectedRoute>
-                        <Layout><TrendDetection /></Layout>
+                        <Layout><AnimatedPage><TrendDetection /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/sentiment" element={
                       <ProtectedRoute>
-                        <Layout><SentimentAnalysis /></Layout>
+                        <Layout><AnimatedPage><SentimentAnalysis /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                     <Route path="/ai/event-suggestions" element={
                       <ProtectedRoute>
-                        <Layout><EventSuggestions /></Layout>
+                        <Layout><AnimatedPage><EventSuggestions /></AnimatedPage></Layout>
                       </ProtectedRoute>
                     } />
                   </Routes>
