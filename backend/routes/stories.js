@@ -222,6 +222,11 @@ router.post('/:id/like', async (req, res) => {
   try {
     const userId = req.user.id; // Using id from authenticated user (as requested)
     
+    // Validate user
+    if (!userId) {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
@@ -241,13 +246,18 @@ router.post('/:id/like', async (req, res) => {
     
     await story.save();
     
+    // Check if currently liked
+    const isLiked = likeIndex === -1;
+    
     res.status(200).json({ 
-      message: likeIndex === -1 ? 'Story liked successfully' : 'Story unliked successfully',
-      likeCount: story.likes.length
+      success: true,
+      message: isLiked ? 'Story liked successfully' : 'Story unliked successfully',
+      likesCount: story.likes.length,
+      liked: isLiked
     });
   } catch (error) {
     console.error('Error liking story:', error);
-    res.status(500).json({ error: 'Failed to like story' });
+    res.status(500).json({ success: false, error: 'Failed to like story' });
   }
 });
 
@@ -260,15 +270,25 @@ router.post('/:id/comment', async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id; // Using id from authenticated user (as requested)
     
+    // Validate user
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    
     // Validate content
     if (!content || content.trim() === '') {
-      return res.status(400).json({ error: 'Comment content is required' });
+      return res.status(400).json({ success: false, error: 'Comment content is required' });
     }
     
     // Find story
     const story = await Story.findById(req.params.id);
     if (!story) {
-      return res.status(404).json({ error: 'Story not found' });
+      return res.status(404).json({ success: false, error: 'Story not found' });
+    }
+    
+    // Ensure comments array exists
+    if (!story.comments) {
+      story.comments = [];
     }
     
     // Add comment
@@ -285,13 +305,17 @@ router.post('/:id/comment', async (req, res) => {
     // Populate user reference for response
     await story.populate('comments.user', 'name');
     
+    // Get the newly added comment
+    const newComment = story.comments[story.comments.length - 1];
+    
     res.status(201).json({ 
+      success: true,
       message: 'Comment added successfully',
-      comment: story.comments[story.comments.length - 1]
+      comment: newComment
     });
   } catch (error) {
     console.error('Error adding comment:', error);
-    res.status(500).json({ error: 'Failed to add comment' });
+    res.status(500).json({ success: false, error: 'Failed to add comment' });
   }
 });
 

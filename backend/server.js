@@ -33,10 +33,6 @@ import { WebSocketServer } from 'ws';
 // Passport configuration
 import './config/passport.js';
 
-const app = express();
-app.set("trust proxy", 1);
-const server = http.createServer(app);
-
 dotenv.config();
 
 // Database connection - wrap in async IIFE to handle errors better
@@ -57,6 +53,10 @@ dotenv.config();
     startServer();
   }
 })();
+
+const app = express();
+app.set("trust proxy", 1);
+const server = http.createServer(app);
 
 // Function to start the server after database connection
 function startServer() {

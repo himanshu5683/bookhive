@@ -162,7 +162,13 @@ const Events = () => {
     }
 
     try {
-      await eventsService.delete(eventId);
+      const response = await eventsService.delete(eventId);
+      
+      // Check if the response has the success property
+      if (response && !response.success) {
+        throw new Error(response.error || 'Failed to delete event');
+      }
+      
       setSuccess('Event deleted successfully!');
       
       // Refresh events

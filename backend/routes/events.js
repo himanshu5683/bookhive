@@ -221,23 +221,33 @@ router.delete('/:id', async (req, res) => {
   try {
     const userId = req.user.id; // Using id from authenticated user (as requested)
     
+    // Validate user
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Authentication required' });
+    }
+    
     // Find event and check ownership
     const event = await Event.findById(req.params.id);
     if (!event) {
-      return res.status(404).json({ error: 'Event not found' });
+      return res.status(404).json({ success: false, error: 'Event not found' });
     }
     
+    // Check if user is authorized to delete the event
     if (event.hostId !== userId.toString()) {
-      return res.status(403).json({ error: 'Only the host can delete the event' });
+      return res.status(403).json({ success: false, error: 'Only the host can delete the event' });
     }
     
-    // Delete event
-    await event.remove();
+    // Delete event using findByIdAndDelete instead of remove() to avoid deprecation warning
+    await Event.findByIdAndDelete(req.params.id);
     
-    res.json({ message: 'Event deleted successfully' });
+    res.json({ success: true, message: 'Event deleted successfully' });
   } catch (error) {
     console.error('Error deleting event:', error);
-    res.status(500).json({ error: 'Failed to delete event' });
+    // Return appropriate error status
+    if (error.name === 'CastError') {
+      return res.status(404).json({ success: false, error: 'Event not found' });
+    }
+    res.status(500).json({ success: false, error: 'Failed to delete event' });
   }
 });
 

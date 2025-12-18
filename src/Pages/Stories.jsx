@@ -89,9 +89,14 @@ const Stories = () => {
     try {
       const response = await storiesService.like(storyId);
       
+      // Check if the response has the success property
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to update like');
+      }
+      
       // Update story likes count locally
       setStories(stories.map(s => 
-        s._id === storyId ? { ...s, likes: response.likeCount } : s
+        s._id === storyId ? { ...s, likes: response.likesCount } : s
       ));
       
       // Update liked stories state
@@ -121,6 +126,11 @@ const Stories = () => {
 
     try {
       const response = await storiesService.comment(storyId, commentContent);
+      
+      // Check if the response has the success property
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to add comment');
+      }
       
       // Update story comments count locally
       setStories(stories.map(s => 
