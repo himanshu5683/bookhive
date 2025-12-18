@@ -33,13 +33,22 @@ import { WebSocketServer } from 'ws';
 // Passport configuration
 import './config/passport.js';
 
+const app = express();
+app.set("trust proxy", 1);
+const server = http.createServer(app);
+
 dotenv.config();
 
 // Database connection - wrap in async IIFE to handle errors better
 (async () => {
   try {
-    await connectDB();
-    console.log('✅ Database connection established');
+    // Only attempt database connection if MONGODB_URI is provided
+    if (process.env.MONGODB_URI) {
+      await connectDB();
+      console.log('✅ Database connection established');
+    } else {
+      console.log('⚠️ No MongoDB URI provided, skipping database connection');
+    }
     startServer();
   } catch (error) {
     console.error('❌ Failed to connect to database:', error);
@@ -48,10 +57,6 @@ dotenv.config();
     startServer();
   }
 })();
-
-const app = express();
-app.set("trust proxy", 1);
-const server = http.createServer(app);
 
 // Function to start the server after database connection
 function startServer() {
@@ -71,18 +76,18 @@ function startServer() {
 
   // Session configuration
   app.use(session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || 'fallback_secret_key',
     resave: false,
     saveUninitialized: false,
-    store: MongoStore.create({
+    store: process.env.MONGODB_URI ? MongoStore.create({
       mongoUrl: process.env.MONGODB_URI,
       collectionName: 'sessions',
       ttl: 24 * 60 * 60 // 24 hours
-    }),
+    }) : undefined,
     cookie: {
-      secure: true,
+      secure: process.env.NODE_ENV === 'production',
       httpOnly: true,
-      sameSite: 'none',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   }));

@@ -2,6 +2,8 @@ import React, { useState, useContext } from "react";
 import AuthContext from "../auth/AuthContext";
 import { resourcesService, activityService } from "../services/api";
 import { useNavigate } from "react-router-dom";
+import Card from "../components/Card";
+import PageContainer from "../components/PageContainer";
 import "../styles/Upload.css";
 
 const Upload = () => {
@@ -129,6 +131,7 @@ const Upload = () => {
         author: user.name,
         authorId: user.id,
         fileName: file.name,
+        originalName: file.name, // Save original file name
         fileSize: file.size,
         mimeType: file.type, // Add MIME type
         tags: [category.toLowerCase(), ...tagArray],
@@ -178,10 +181,11 @@ const Upload = () => {
   };
 
   return (
-    <div className="upload-container">
-      <div className="upload-card">
-        <h1 className="upload-title">📤 Upload Files</h1>
-        <p className="upload-subtitle">Share your resources with the BookHive community</p>
+    <PageContainer 
+      title="📤 Upload Files" 
+      subtitle="Share your resources with the BookHive community"
+    >
+      <Card>
 
         {error && <div className="upload-error">{error}</div>}
         {success && <div className="upload-success">{success}</div>}
@@ -335,7 +339,7 @@ const Upload = () => {
           <div className="upload-actions">
             <button
               type="submit"
-              className="upload-btn primary"
+              className="btn btn-primary"
               disabled={!file || uploading}
             >
               {uploading ? `Uploading (${uploadProgress}%)...` : "Upload File"}
@@ -344,7 +348,7 @@ const Upload = () => {
             {file && !uploading && (
               <button
                 type="button"
-                className="upload-btn secondary"
+                className="btn btn-secondary"
                 onClick={() => {
                   setFile(null);
                   setTitle("");
@@ -370,8 +374,8 @@ const Upload = () => {
             <li>✓ Add relevant tags to help others find your resources</li>
           </ul>
         </div>
-      </div>
-    </div>
+      </Card>
+    </PageContainer>
   );
 };
 

@@ -46,6 +46,9 @@ const resourceSchema = new mongoose.Schema({
   mimeType: {
     type: String
   },
+  originalName: {
+    type: String
+  },
   // Average rating (calculated from individual ratings)
   rating: {
     type: Number,

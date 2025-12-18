@@ -1,9 +1,10 @@
 import express from 'express';
 import inbuiltAIService from '../services/inbuiltAI.js';
-const { generateInbuiltAIResponse, generateResourceTags } = inbuiltAIService;
 import openaiService from '../services/openaiService.js';
-const { generateAIResponse } = openaiService;
 import authenticate from '../middleware/auth.js';
+
+const { generateInbuiltAIResponse, generateResourceTags } = inbuiltAIService;
+const { generateAIResponse } = openaiService;
 
 // Store conversation history in memory (in production, you might want to use a database)
 const conversationHistories = new Map();

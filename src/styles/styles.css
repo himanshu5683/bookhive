@@ -159,13 +159,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 h1 {
-  font-size: var(--bh-font-4xl);
+  font-size: var(--bh-font-5xl);
   font-weight: var(--bh-font-extrabold);
+  letter-spacing: -0.025em;
 }
 
 h2 {
-  font-size: var(--bh-font-3xl);
+  font-size: var(--bh-font-4xl);
   font-weight: var(--bh-font-bold);
+  letter-spacing: -0.01em;
 }
 
 h3 {
@@ -181,6 +183,21 @@ h4 {
 p {
   color: var(--bh-text-secondary);
   margin-bottom: var(--bh-space-4);
+  line-height: 1.6;
+}
+
+/* Ensure proper text contrast in dark mode */
+body.dark-theme h1,
+body.dark-theme h2,
+body.dark-theme h3,
+body.dark-theme h4,
+body.dark-theme h5,
+body.dark-theme h6 {
+  color: var(--bh-text-primary);
+}
+
+body.dark-theme p {
+  color: var(--bh-text-secondary);
 }
 
 .small {
@@ -249,6 +266,16 @@ a:hover {
   box-shadow: var(--bh-shadow-sm);
 }
 
+/* Enhanced button states for better UX */
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:focus {
+  outline: 2px solid var(--bh-accent-1);
+  outline-offset: 2px;
+}
+
 /* Secondary Button */
 .btn-secondary {
   background: var(--bh-bg-card);
@@ -262,6 +289,18 @@ a:hover {
   border-color: var(--bh-border-strong);
   transform: translateY(-1px);
   box-shadow: var(--bh-shadow-sm);
+}
+
+/* Ensure buttons have proper contrast in dark mode */
+body.dark-theme .btn-secondary {
+  background: var(--bh-bg-card);
+  color: var(--bh-text-primary);
+  border: 1px solid var(--bh-border-strong);
+}
+
+body.dark-theme .btn-secondary:hover:not(:disabled) {
+  background: var(--bh-bg-elevated);
+  border-color: var(--bh-accent-1);
 }
 
 /* Ghost Button */
@@ -312,6 +351,7 @@ a:hover {
   box-shadow: var(--bh-shadow-sm);
   padding: var(--bh-space-5);
   transition: box-shadow var(--bh-transition-fast), transform var(--bh-transition-fast);
+  overflow: hidden; /* Prevent content overflow */
 }
 
 .card:hover {
@@ -326,6 +366,17 @@ a:hover {
 
 .card-compact {
   padding: var(--bh-space-4);
+}
+
+/* Improved card styles for dark mode */
+body.dark-theme .card {
+  border: 1px solid var(--bh-border-strong);
+  background: var(--bh-bg-card);
+}
+
+body.dark-theme .card-elevated {
+  background: var(--bh-bg-elevated);
+  border: 1px solid var(--bh-border-strong);
 }
 
 /* Inputs & Form Elements */
@@ -350,6 +401,20 @@ a:hover {
   color: var(--bh-text-tertiary);
 }
 
+/* Ensure form elements have proper contrast in dark mode */
+body.dark-theme .input,
+body.dark-theme .textarea,
+body.dark-theme .select {
+  border-color: var(--bh-border-strong);
+}
+
+body.dark-theme .input:focus,
+body.dark-theme .textarea:focus,
+body.dark-theme .select:focus {
+  border-color: var(--bh-accent-1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.4);
+}
+
 .textarea {
   min-height: 100px;
   resize: vertical;
@@ -362,6 +427,11 @@ a:hover {
   font-weight: var(--bh-font-medium);
   color: var(--bh-text-primary);
   font-size: var(--bh-font-sm);
+}
+
+/* Ensure labels have proper contrast in dark mode */
+body.dark-theme .label {
+  color: var(--bh-text-primary);
 }
 
 /* Badges */
@@ -756,6 +826,75 @@ a:hover {
 @keyframes bounce {
   0%, 100% { transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8, 0, 1, 1); }
   50% { transform: translateY(0); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+}
+
+/* Lists and Tables */
+.list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.list-item {
+  padding: var(--bh-space-3) var(--bh-space-4);
+  border-bottom: 1px solid var(--bh-border);
+  transition: background-color var(--bh-transition-fast);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item:hover {
+  background-color: var(--bh-bg-secondary);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius-md);
+  overflow: hidden;
+}
+
+.table th,
+.table td {
+  padding: var(--bh-space-3) var(--bh-space-4);
+  text-align: left;
+  border-bottom: 1px solid var(--bh-border);
+}
+
+.table th {
+  background: var(--bh-bg-secondary);
+  font-weight: var(--bh-font-semibold);
+  color: var(--bh-text-primary);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover {
+  background-color: var(--bh-bg-secondary);
+}
+
+/* Dark mode adjustments for lists and tables */
+body.dark-theme .list-item:hover {
+  background-color: var(--bh-bg-elevated);
+}
+
+body.dark-theme .table {
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border-strong);
+}
+
+body.dark-theme .table th {
+  background: var(--bh-bg-secondary);
+}
+
+body.dark-theme .table tr:hover {
+  background-color: var(--bh-bg-elevated);
 }
 
 .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }

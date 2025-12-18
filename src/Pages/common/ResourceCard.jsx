@@ -4,10 +4,11 @@ import AuthContext from '../../auth/AuthContext';
 import { resourcesService } from '../../services/api'; // Fixed: Import resourcesService instead of apiClient
 import Rating from './Rating';
 import { getToken } from '../../utils/auth';
+import Card from '../../components/Card';
 import '../../styles/ResourceCard.css';
 
 const ResourceCard = ({ resource, showRating = false }) => {
-  const { user, updateUserCredits } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
@@ -28,15 +29,26 @@ const ResourceCard = ({ resource, showRating = false }) => {
       const response = await resourcesService.download(resource._id, { userId: user.id });
       
       // Update user credits in context
-      if (response.newCredits !== undefined) {
-        updateUserCredits(response.newCredits);
-      }
+      // Note: With blob response, we can't access JSON data directly
+      // In a real implementation, you might need a separate endpoint to get updated credits
       
-      // In a real app, this would trigger the actual download
-      alert(`Resource downloaded! 50 credits deducted. New balance: ${response.newCredits || 'unknown'} credits.`);
+      // Create a download link
+      const url = window.URL.createObjectURL(response.data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = resource.originalName || resource.fileName || resource.title;
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      
+      // Show success message
+      alert(`Resource downloaded successfully!`);
     } catch (err) {
       console.error('Failed to download resource:', err);
-      alert('Failed to download resource: ' + (err.message || 'Insufficient credits'));
+      alert('Failed to download resource: ' + (err.message || 'Please try again'));
     } finally {
       setDownloading(false);
     }
@@ -75,7 +87,7 @@ const ResourceCard = ({ resource, showRating = false }) => {
   };
 
   return (
-    <div className="resource-card">
+    <Card className="resource-card">
       <div className="resource-header">
         <span className="resource-type">{typeLabel}</span>
         {resource.isPremium ? (
@@ -161,7 +173,7 @@ const ResourceCard = ({ resource, showRating = false }) => {
           onRatingSubmit={handleRatingSubmit}
         />
       )}
-    </div>
+    </Card>
   );
 };
 

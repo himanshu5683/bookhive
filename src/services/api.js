@@ -109,7 +109,7 @@ export const resourcesAPI = {
   create: (resourceData) => apiClient.post('/resources', resourceData),
   update: (id, updateData) => apiClient.put(`/resources/${id}`, updateData),
   delete: (id) => apiClient.delete(`/resources/${id}`),
-  download: (id, data) => apiClient.post(`/resources/${id}/download`, data),
+  download: (id, data) => apiClient.post(`/resources/${id}/download`, data, { responseType: 'blob' }),
   view: (id) => apiClient.get(`/resources/${id}/view`), // Add view endpoint
   rate: (id, ratingData) => apiClient.post(`/resources/${id}/rate`, ratingData),
 };

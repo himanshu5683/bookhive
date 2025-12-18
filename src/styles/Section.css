@@ -1,0 +1,60 @@
+/* Section.css - Reusable Section Component Styles */
+
+.section {
+  padding: var(--bh-space-8) 0;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--bh-space-6);
+  gap: var(--bh-space-4);
+}
+
+.section-text {
+  flex: 1;
+}
+
+.section-title {
+  font-size: var(--bh-font-3xl);
+  font-weight: var(--bh-font-bold);
+  margin-bottom: var(--bh-space-2);
+  color: var(--bh-text-primary);
+}
+
+.section-subtitle {
+  font-size: var(--bh-font-lg);
+  color: var(--bh-text-secondary);
+  margin-bottom: 0;
+}
+
+.section-actions {
+  flex-shrink: 0;
+}
+
+.section-content {
+  /* Content styling can be added here if needed */
+}
+
+/* Dark mode adjustments */
+body.dark-theme .section-title {
+  color: var(--bh-text-primary);
+}
+
+body.dark-theme .section-subtitle {
+  color: var(--bh-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .section-header {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--bh-space-3);
+  }
+  
+  .section-text {
+    text-align: center;
+  }
+}

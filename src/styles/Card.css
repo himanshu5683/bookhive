@@ -1,0 +1,36 @@
+/* Card.css - Reusable Card Component Styles */
+
+.card {
+  background: var(--bh-bg-card);
+  border: 1px solid var(--bh-border);
+  border-radius: var(--bh-radius-lg);
+  box-shadow: var(--bh-shadow-sm);
+  padding: var(--bh-space-5);
+  transition: box-shadow var(--bh-transition-fast), transform var(--bh-transition-fast);
+  overflow: hidden;
+}
+
+.card:hover {
+  box-shadow: var(--bh-shadow-md);
+  transform: translateY(-2px);
+}
+
+.card-elevated {
+  background: var(--bh-bg-elevated);
+  box-shadow: var(--bh-shadow-lg);
+}
+
+.card-compact {
+  padding: var(--bh-space-4);
+}
+
+/* Dark mode adjustments */
+body.dark-theme .card {
+  border: 1px solid var(--bh-border-strong);
+  background: var(--bh-bg-card);
+}
+
+body.dark-theme .card-elevated {
+  background: var(--bh-bg-elevated);
+  border: 1px solid var(--bh-border-strong);
+}

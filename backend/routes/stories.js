@@ -73,7 +73,7 @@ router.get('/', async (req, res) => {
     res.status(200).json({
       stories: [],
       totalPages: 0,
-      currentPage: parseInt(page),
+      currentPage: 1,
       total: 0
     });
   }

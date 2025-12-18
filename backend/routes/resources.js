@@ -6,12 +6,13 @@ import Resource from '../models/Resource.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
 import inbuiltAIService from '../services/inbuiltAI.js'; // Import our inbuilt AI service
-const { generateResourceTags } = inbuiltAIService;
 import dotenv from 'dotenv';
 import authenticate from '../middleware/auth.js';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+const { generateResourceTags } = inbuiltAIService;
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -270,9 +271,53 @@ router.get('/:id/view', async (req, res) => {
     }
     res.setHeader('Content-Disposition', 'inline');
     
-    // In a real implementation, you would serve the actual file here
-    // For now, we'll send a placeholder response
-    res.status(200).send(`Viewing resource: ${resource.title}\n\nIn a real implementation, this would display the file content.`);
+    // For a real implementation, you would serve the actual file here
+    // Since this is a demo app, we'll provide a proper response that simulates file viewing
+    // In a production app with actual file storage, you would use:
+    // res.sendFile(filePath) or stream the file
+    
+    // Create a simple HTML response for previewable files
+    let content = '';
+    if (resource.mimeType && (resource.mimeType.startsWith('image/') || resource.mimeType === 'application/pdf')) {
+      content = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${resource.title} - Preview</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .preview-container { text-align: center; }
+            .preview-title { color: #333; }
+            .preview-info { background: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0; }
+            .download-link { display: inline-block; padding: 10px 20px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; }
+          </style>
+        </head>
+        <body>
+          <div class="preview-container">
+            <h1 class="preview-title">${resource.title}</h1>
+            <div class="preview-info">
+              <p><strong>Description:</strong> ${resource.description}</p>
+              <p><strong>File Type:</strong> ${resource.mimeType}</p>
+              <p><strong>File Size:</strong> ${(resource.fileSize / 1024 / 1024).toFixed(2)} MB</p>
+            </div>
+            <p>This is a preview simulation. In a production environment, the actual file content would be displayed here.</p>
+            <a href="/api/resources/${id}/download" class="download-link">Download File</a>
+          </div>
+        </body>
+        </html>
+      `;
+    } else {
+      content = `Viewing resource: ${resource.title}
+
+File Type: ${resource.mimeType}
+File Size: ${(resource.fileSize / 1024 / 1024).toFixed(2)} MB
+
+Description: ${resource.description}
+
+In a real implementation with file storage, this would display the actual file content.`;
+    }
+    
+    res.status(200).send(content);
   } catch (error) {
     console.error('Error viewing resource:', error);
     res.status(500).json({ error: 'Server error viewing resource' });
@@ -381,14 +426,25 @@ router.post('/:id/download', async (req, res) => {
     });
     
     // In a real app, you would generate a signed URL or redirect to the file
-    // For now, we'll just return a success message with proper headers for download
+    // For now, we'll send a simulated file download
     res.setHeader('Content-Type', resource.mimeType || 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${resource.fileName || resource.title}"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${resource.originalName || resource.fileName || resource.title}"`);
     
-    res.status(200).json({ 
-      message: 'Download initiated successfully',
-      downloadUrl: `/download/${resource._id}` // Placeholder URL
-    });
+    // Create a simple text file content for simulation
+    const fileContent = `BookHive Resource Download
+=====================
+
+Title: ${resource.title}
+Description: ${resource.description}
+Category: ${resource.category}
+File Type: ${resource.mimeType}
+File Size: ${(resource.fileSize / 1024 / 1024).toFixed(2)} MB
+
+This is a simulated file download. In a production environment, the actual file would be served here.
+
+Downloaded on: ${new Date().toISOString()}`;
+    
+    res.status(200).send(fileContent);
   } catch (error) {
     console.error('Error downloading resource:', error);
     res.status(500).json({ error: 'Server error downloading resource' });

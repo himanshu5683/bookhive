@@ -4,6 +4,8 @@ import AuthContext from "../auth/AuthContext";
 import { dashboardService } from "../services/api";
 import useResources from "../hooks/useResources";
 import useUserActivity from "../hooks/useUserActivity";
+import Card from "../components/Card";
+import PageContainer from "../components/PageContainer";
 import "../styles/Dashboard.css";
 
 const Dashboard = () => {
@@ -14,7 +16,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [signingOut, setSigningOut] = useState(false);
-  const { resources: recentUploads, loading: resourcesLoading, fetchUserResources } = useResources();
+  const { resources: recentUploads, fetchUserResources } = useResources();
   const { stats, fetchUserStats } = useUserActivity(user?.id);
 
   useEffect(() => {
@@ -78,12 +80,14 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-card">
+    <PageContainer 
+      title={`👋 Welcome back, ${user?.name || 'User'}!`} 
+      subtitle="Your personalized learning hub"
+    >
+      <Card>
         <div className="dashboard-header">
           <div>
-            <h1 className="dashboard-title">👋 Welcome back, {user?.name || 'User'}!</h1>
-            <p className="dashboard-subtitle">Your personalized learning hub</p>
+            <h1 className="dashboard-title sr-only">Dashboard</h1>
           </div>
           <button
             className="logout-btn"
@@ -227,8 +231,8 @@ const Dashboard = () => {
         <div className="actions-section">
           <h2 className="section-title">🎯 Quick Actions</h2>
           <div className="actions-grid">
-            <button
-              className="action-btn primary"
+            <button 
+              className="btn btn-primary"
               onClick={() => navigate("/upload")}
             >
               <span className="action-icon">📤</span>
@@ -236,7 +240,7 @@ const Dashboard = () => {
               <span className="action-desc">Add new files to the community</span>
             </button>
             <button
-              className="action-btn secondary"
+              className="btn btn-secondary"
               onClick={() => navigate("/files")}
             >
               <span className="action-icon">📚</span>
@@ -244,7 +248,7 @@ const Dashboard = () => {
               <span className="action-desc">Browse community uploads</span>
             </button>
             <button
-              className="action-btn tertiary"
+              className="btn btn-secondary"
               onClick={() => navigate("/ai/recommendations")}
             >
               <span className="action-icon">🤖</span>
@@ -252,7 +256,7 @@ const Dashboard = () => {
               <span className="action-desc">Find personalized resources</span>
             </button>
             <button
-              className="action-btn quaternary"
+              className="btn btn-secondary"
               onClick={() => navigate("/leaderboard")}
             >
               <span className="action-icon">🏆</span>
@@ -272,8 +276,8 @@ const Dashboard = () => {
             <li>Check your personalized recommendations regularly for new content</li>
           </ul>
         </div>
-      </div>
-    </div>
+      </Card>
+    </PageContainer>
   );
 };
 

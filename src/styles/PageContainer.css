@@ -1,0 +1,76 @@
+/* PageContainer.css - Reusable Page Container Component Styles */
+
+.page-container {
+  min-height: 100vh;
+  background: var(--bh-bg);
+  padding: var(--bh-space-6) var(--bh-space-4);
+  transition: background-color var(--bh-transition-normal);
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: var(--bh-space-8);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-title {
+  font-size: var(--bh-font-4xl);
+  font-weight: var(--bh-font-extrabold);
+  color: var(--bh-text-primary);
+  margin-bottom: var(--bh-space-3);
+}
+
+.page-subtitle {
+  font-size: var(--bh-font-lg);
+  color: var(--bh-text-secondary);
+  margin-bottom: 0;
+}
+
+.page-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Dark mode adjustments */
+body.dark-theme .page-container {
+  background: var(--bh-bg);
+}
+
+body.dark-theme .page-title {
+  color: var(--bh-text-primary);
+}
+
+body.dark-theme .page-subtitle {
+  color: var(--bh-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .page-container {
+    padding: var(--bh-space-4) var(--bh-space-3);
+  }
+  
+  .page-title {
+    font-size: var(--bh-font-3xl);
+  }
+  
+  .page-subtitle {
+    font-size: var(--bh-font-base);
+  }
+}
+
+@media (max-width: 480px) {
+  .page-container {
+    padding: var(--bh-space-3) var(--bh-space-2);
+  }
+  
+  .page-title {
+    font-size: var(--bh-font-2xl);
+  }
+  
+  .page-header {
+    margin-bottom: var(--bh-space-6);
+  }
+}

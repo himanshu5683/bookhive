@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
 import AuthContext from '../auth/AuthContext';
 import { circlesService } from '../services/api'; // Fixed: Import circlesService instead of studyCirclesService
 import '../styles/StudyCircles.css';
 
 const StudyCircles = () => {
-  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   const [circles, setCircles] = useState([]);
   const [selectedCircle, setSelectedCircle] = useState(null);
