@@ -220,12 +220,12 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/like', async (req, res) => {
   try {
-    const userId = req.user.id; // Using id from authenticated user (as requested)
-    
-    // Validate user
-    if (!userId) {
+    // Validate user - req.user comes from authentication middleware
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    
+    const userId = req.user._id; // Get user ID from authenticated user
     
     // Find story
     const story = await Story.findById(req.params.id);
@@ -237,7 +237,7 @@ router.post('/:id/like', async (req, res) => {
     const likeIndex = story.likes.findIndex(like => like.toString() === userId.toString());
     
     if (likeIndex === -1) {
-      // Add like
+      // Add like - ensure we're pushing the ObjectId, not a string
       story.likes.push(userId);
     } else {
       // Remove like
@@ -268,12 +268,13 @@ router.post('/:id/like', async (req, res) => {
 router.post('/:id/comment', async (req, res) => {
   try {
     const { content } = req.body;
-    const userId = req.user.id; // Using id from authenticated user (as requested)
     
-    // Validate user
-    if (!userId) {
+    // Validate user - req.user comes from authentication middleware
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    
+    const userId = req.user._id; // Get user ID from authenticated user
     
     // Validate content
     if (!content || content.trim() === '') {
@@ -291,7 +292,7 @@ router.post('/:id/comment', async (req, res) => {
       story.comments = [];
     }
     
-    // Add comment
+    // Add comment - ensure we're using the ObjectId for the user
     const comment = {
       user: userId,
       text: content.trim(),
@@ -325,12 +326,12 @@ router.post('/:id/comment', async (req, res) => {
  */
 router.post('/:id/share', async (req, res) => {
   try {
-    const userId = req.user.id; // Using id from authenticated user (as requested)
-    
-    // Validate user
-    if (!userId) {
+    // Validate user - req.user comes from authentication middleware
+    if (!req.user || !req.user._id) {
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
+    
+    const userId = req.user._id; // Get user ID from authenticated user
     
     // Find story
     const story = await Story.findById(req.params.id);
