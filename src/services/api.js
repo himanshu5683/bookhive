@@ -110,6 +110,7 @@ export const resourcesAPI = {
   update: (id, updateData) => apiClient.put(`/resources/${id}`, updateData),
   delete: (id) => apiClient.delete(`/resources/${id}`),
   download: (id, data) => apiClient.post(`/resources/${id}/download`, data),
+  view: (id) => apiClient.get(`/resources/${id}/view`), // Add view endpoint
   rate: (id, ratingData) => apiClient.post(`/resources/${id}/rate`, ratingData),
 };
 

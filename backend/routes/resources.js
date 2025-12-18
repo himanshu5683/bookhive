@@ -9,6 +9,7 @@ import inbuiltAIService from '../services/inbuiltAI.js'; // Import our inbuilt A
 const { generateResourceTags } = inbuiltAIService;
 import dotenv from 'dotenv';
 import authenticate from '../middleware/auth.js';
+import jwt from 'jsonwebtoken';
 
 dotenv.config();
 
@@ -130,7 +131,7 @@ router.post('/',
       return res.status(400).json({ errors: errors.array() });
     }
     
-    const { title, description, type, category, fileName, fileSize, tags } = req.body;
+    const { title, description, type, category, fileName, fileSize, mimeType, tags } = req.body;
     const userId = req.user.id; // Using id from authenticated user (as requested)
     const userName = req.user.name;
 
@@ -161,6 +162,7 @@ router.post('/',
       authorId: userId.toString(), // Store user ID as string
       fileName,
       fileSize,
+      mimeType, // Save the MIME type
       tags: finalTags
     });
 
@@ -221,6 +223,57 @@ router.get('/:id', async (req, res) => {
 });
 
 /**
+ * GET /api/resources/:id/view
+ * View a resource in the browser
+ * Query: { token } - Optional token for authentication
+ * Response: File stream with appropriate headers
+ */
+router.get('/:id/view', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { token } = req.query;
+    
+    // Authenticate user either through session or token
+    let userId = null;
+    if (req.user) {
+      userId = req.user.id;
+    } else if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        userId = decoded.id;
+      } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired token' });
+      }
+    } else {
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    // Find resource
+    const resource = await Resource.findById(id);
+    if (!resource) {
+      return res.status(404).json({ error: 'Resource not found' });
+    }
+    
+    // Check access (public files or owner only)
+    // For simplicity, we'll allow access to all files for authenticated users
+    // In a real implementation, you might want more sophisticated access control
+    
+    // Set headers for inline viewing
+    if (resource.mimeType) {
+      res.setHeader('Content-Type', resource.mimeType);
+    }
+    res.setHeader('Content-Disposition', 'inline');
+    
+    // In a real implementation, you would serve the actual file here
+    // For now, we'll send a placeholder response
+    res.status(200).send(`Viewing resource: ${resource.title}\n\nIn a real implementation, this would display the file content.`);
+  } catch (error) {
+    console.error('Error viewing resource:', error);
+    res.status(500).json({ error: 'Server error viewing resource' });
+  }
+});
+
+/**
  * PUT /api/resources/:id
  * Update a resource
  * Body: { title, description, category, tags, isPremium, premiumPrice }
@@ -247,6 +300,7 @@ router.put('/:id', async (req, res) => {
     delete updateData.authorId;
     delete updateData.fileName;
     delete updateData.fileSize;
+    delete updateData.mimeType;
     delete updateData.type;
     delete updateData.downloads;
     delete updateData.rating;

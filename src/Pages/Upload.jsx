@@ -130,6 +130,7 @@ const Upload = () => {
         authorId: user.id,
         fileName: file.name,
         fileSize: file.size,
+        mimeType: file.type, // Add MIME type
         tags: [category.toLowerCase(), ...tagArray],
         isPremium,
         premiumPrice: isPremium ? premiumPrice : undefined
@@ -278,30 +279,30 @@ const Upload = () => {
               type="file"
               onChange={handleFileSelect}
               disabled={uploading}
-              accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.mp4,.webm,.mov"
-              className="file-input"
+              style={{ display: 'none' }}
             />
-            <label htmlFor="file-input" className="file-input-label">
-              <div className="file-input-icon">📁</div>
-              <div className="file-input-text">
-                {file ? (
-                  <div className="file-selected">
-                    <p className="file-name">{file.name}</p>
-                    <p className="file-size">({(file.size / 1024 / 1024).toFixed(2)} MB)</p>
-                  </div>
+            <label htmlFor="file-input" className={`file-drop-area ${file ? 'file-selected' : ''}`}>
+              <div className="file-drop-content">
+                {!file ? (
+                  <>
+                    <span className="file-icon">📁</span>
+                    <p className="file-drop-text">Drag & drop your file here or click to browse</p>
+                    <p className="file-drop-hint">Supported: JPG, PNG, GIF, WebP, PDF, MP4, WebM, MOV (Max 100MB)</p>
+                  </>
                 ) : (
                   <>
-                    <p className="file-drag-text">Drag & drop your file here or click to browse</p>
-                    <p className="file-help-text">Supported: Images, PDFs, Videos (Max 100MB)</p>
+                    <span className="file-icon">✅</span>
+                    <p className="file-drop-text">File Selected: {file.name}</p>
+                    <p className="file-drop-hint">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
                   </>
                 )}
               </div>
             </label>
           </div>
 
-          {/* Upload Progress Bar */}
-          {uploading && uploadProgress > 0 && (
-            <div className="progress-section">
+          {/* Progress Bar */}
+          {uploading && (
+            <div className="upload-progress">
               <div className="progress-label">
                 <span className="progress-text">Uploading...</span>
                 <span className="progress-percentage">{uploadProgress}%</span>

@@ -40,6 +40,9 @@ const resourceSchema = new mongoose.Schema({
   fileSize: {
     type: Number
   },
+  mimeType: {
+    type: String
+  },
   // Average rating (calculated from individual ratings)
   rating: {
     type: Number,

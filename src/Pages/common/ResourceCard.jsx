@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import AuthContext from '../../auth/AuthContext';
 import { resourcesService } from '../../services/api'; // Fixed: Import resourcesService instead of apiClient
 import Rating from './Rating';
+import { getToken } from '../../utils/auth';
 import '../../styles/ResourceCard.css';
 
 const ResourceCard = ({ resource, showRating = false }) => {
@@ -10,6 +11,10 @@ const ResourceCard = ({ resource, showRating = false }) => {
   const navigate = useNavigate();
   const [downloading, setDownloading] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
+
+  // Check if the resource can be previewed (PDF or image)
+  const isPreviewable = resource.mimeType && 
+    (resource.mimeType.startsWith('image/') || resource.mimeType === 'application/pdf');
 
   const handleDownload = async () => {
     if (!user) {
@@ -35,6 +40,20 @@ const ResourceCard = ({ resource, showRating = false }) => {
     } finally {
       setDownloading(false);
     }
+  };
+
+  const handleOpen = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    // Get the auth token
+    const token = getToken();
+    
+    // Open the view endpoint in a new tab
+    const viewUrl = `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/resources/${resource._id}/view?token=${token}`;
+    window.open(viewUrl, '_blank');
   };
 
   const handleRatingSubmit = (updatedResource) => {
@@ -113,6 +132,14 @@ const ResourceCard = ({ resource, showRating = false }) => {
       </div>
 
       <div className="resource-footer">
+        {isPreviewable && (
+          <button
+            className="btn btn-open"
+            onClick={handleOpen}
+          >
+            Open
+          </button>
+        )}
         <button
           className="btn btn-download"
           onClick={handleDownload}
