@@ -23,6 +23,9 @@ apiClient.interceptors.request.use(
     const token = getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Token attached to request:', config.url);
+    } else {
+      console.log('No token available for request:', config.url);
     }
     
     console.log('API Request:', config.method?.toUpperCase(), config.url);
@@ -120,11 +123,11 @@ export const storiesAPI = {
   getAll: (params = {}) => apiClient.get('/stories', { params }),
   create: (storyData) => apiClient.post('/stories', storyData),
   update: (storyId, storyData) => apiClient.put(`/stories/${storyId}`, storyData),
-  like: (storyId) => apiClient.post(`/stories/${storyId}/like`),
-  unlike: (storyId) => apiClient.delete(`/stories/${storyId}/like`),
-  comment: (storyId, comment) => apiClient.post(`/stories/${storyId}/comment`, { content: comment }),
-  share: (storyId) => apiClient.post(`/stories/${storyId}/share`),
-  delete: (storyId) => apiClient.delete(`/stories/${storyId}`),
+  like: (storyId) => apiClient.post(`/stories/${storyId}/like`, {}, { withCredentials: true }),
+  unlike: (storyId) => apiClient.delete(`/stories/${storyId}/like`, { withCredentials: true }),
+  comment: (storyId, comment) => apiClient.post(`/stories/${storyId}/comment`, { content: comment }, { withCredentials: true }),
+  share: (storyId) => apiClient.post(`/stories/${storyId}/share`, {}, { withCredentials: true }),
+  delete: (storyId) => apiClient.delete(`/stories/${storyId}`, { withCredentials: true }),
 };
 
 // ============ CIRCLES ENDPOINTS ============
