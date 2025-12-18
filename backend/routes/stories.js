@@ -220,12 +220,15 @@ router.delete('/:id', async (req, res) => {
  */
 router.post('/:id/like', async (req, res) => {
   try {
+    console.log('Like route called with user:', req.user);
     // Validate user - req.user comes from authentication middleware
     if (!req.user || !req.user._id) {
+      console.log('Authentication failed in like route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
     const userId = req.user._id; // Get user ID from authenticated user
+    console.log('User ID extracted:', userId);
     
     // Find story
     const story = await Story.findById(req.params.id);
@@ -268,13 +271,16 @@ router.post('/:id/like', async (req, res) => {
 router.post('/:id/comment', async (req, res) => {
   try {
     const { content } = req.body;
+    console.log('Comment route called with user:', req.user);
     
     // Validate user - req.user comes from authentication middleware
     if (!req.user || !req.user._id) {
+      console.log('Authentication failed in comment route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
     const userId = req.user._id; // Get user ID from authenticated user
+    console.log('User ID extracted:', userId);
     
     // Validate content
     if (!content || content.trim() === '') {
@@ -326,12 +332,15 @@ router.post('/:id/comment', async (req, res) => {
  */
 router.post('/:id/share', async (req, res) => {
   try {
+    console.log('Share route called with user:', req.user);
     // Validate user - req.user comes from authentication middleware
     if (!req.user || !req.user._id) {
+      console.log('Authentication failed in share route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
     const userId = req.user._id; // Get user ID from authenticated user
+    console.log('User ID extracted:', userId);
     
     // Find story
     const story = await Story.findById(req.params.id);
