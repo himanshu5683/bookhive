@@ -125,26 +125,6 @@ router.get('/profile', async (req, res) => {
 });
 
 /**
- * GET /api/users/:id
- * Fetch user profile details
- */
-router.get('/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    const user = await User.findById(id).select('-password');
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    
-    res.status(200).json(user);
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    res.status(500).json({ error: 'Server error fetching user' });
-  }
-});
-
-/**
  * PUT /api/users/profile
  * Update current user's profile
  * Body: { name, bio, avatar, tags }
@@ -373,6 +353,26 @@ router.get('/gamification', async (req, res) => {
   } catch (error) {
     console.error('Error fetching gamification status:', error.message, error.stack);
     res.status(500).json({ error: 'Server error fetching gamification data', details: error.message });
+  }
+});
+
+/**
+ * GET /api/users/:id
+ * Fetch user profile details
+ */
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const user = await User.findById(id).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res.status(500).json({ error: 'Server error fetching user' });
   }
 });
 
