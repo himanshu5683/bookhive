@@ -68,6 +68,23 @@ router.get('/', async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
     
+    // Sanitize likes arrays in all stories to prevent validation errors
+    stories.forEach(story => {
+      if (story.likes && !Array.isArray(story.likes)) {
+        story.likes = [];
+      }
+      // Filter out any invalid ObjectId values from likes
+      if (story.likes && Array.isArray(story.likes)) {
+        story.likes = story.likes.filter(like => {
+          try {
+            return mongoose.Types.ObjectId.isValid(like);
+          } catch (e) {
+            return false;
+          }
+        });
+      }
+    });
+    
     // Get total count
     const total = await Story.countDocuments(query);
     
@@ -172,6 +189,21 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
     
+    // Validate and sanitize likes array to prevent validation errors
+    if (story.likes && !Array.isArray(story.likes)) {
+      story.likes = [];
+    }
+    // Filter out any invalid ObjectId values from likes
+    if (story.likes && Array.isArray(story.likes)) {
+      story.likes = story.likes.filter(like => {
+        try {
+          return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
     if (story.authorId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the author can update the story' });
     }
@@ -203,6 +235,21 @@ router.delete('/:id', async (req, res) => {
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ error: 'Story not found' });
+    }
+    
+    // Validate and sanitize likes array to prevent validation errors
+    if (story.likes && !Array.isArray(story.likes)) {
+      story.likes = [];
+    }
+    // Filter out any invalid ObjectId values from likes
+    if (story.likes && Array.isArray(story.likes)) {
+      story.likes = story.likes.filter(like => {
+        try {
+          return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
     }
     
     // Check if user is authorized to delete the story
@@ -249,6 +296,21 @@ router.post('/:id/like', async (req, res) => {
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
+    }
+    
+    // Validate and sanitize likes array to prevent validation errors
+    if (story.likes && !Array.isArray(story.likes)) {
+      story.likes = [];
+    }
+    // Filter out any invalid ObjectId values from likes
+    if (story.likes && Array.isArray(story.likes)) {
+      story.likes = story.likes.filter(like => {
+        try {
+          return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
     }
     
     // Check if user has already liked the story using MongoDB's includes method
@@ -314,6 +376,21 @@ router.post('/:id/comment', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
+    // Validate and sanitize likes array to prevent validation errors
+    if (story.likes && !Array.isArray(story.likes)) {
+      story.likes = [];
+    }
+    // Filter out any invalid ObjectId values from likes
+    if (story.likes && Array.isArray(story.likes)) {
+      story.likes = story.likes.filter(like => {
+        try {
+          return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
     // Ensure comments array exists
     if (!story.comments) {
       story.comments = [];
@@ -373,6 +450,21 @@ router.post('/:id/share', async (req, res) => {
     const story = await Story.findById(req.params.id);
     if (!story) {
       return res.status(404).json({ success: false, error: 'Story not found' });
+    }
+    
+    // Validate and sanitize likes array to prevent validation errors
+    if (story.likes && !Array.isArray(story.likes)) {
+      story.likes = [];
+    }
+    // Filter out any invalid ObjectId values from likes
+    if (story.likes && Array.isArray(story.likes)) {
+      story.likes = story.likes.filter(like => {
+        try {
+          return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
     }
     
     // Ensure shareCount is initialized
