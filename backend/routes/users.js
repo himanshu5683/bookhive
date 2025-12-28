@@ -288,14 +288,14 @@ router.get('/gamification', async (req, res) => {
         title: 'Top Contributor',
         description: 'Upload 10 resources to the community',
         icon: '⭐',
-        unlocked: user.contributions >= 10
+        unlocked: (user.contributions || 0) >= 10
       },
       {
         key: 'rapidRiser',
         title: 'Rapid Riser',
         description: 'Accumulate 200 points/credits',
         icon: '🚀',
-        unlocked: user.credits >= 200
+        unlocked: (user.credits || 0) >= 200
       },
       {
         key: 'sevenDayStreak',
@@ -316,7 +316,7 @@ router.get('/gamification', async (req, res) => {
         title: 'Knowledge Master',
         description: 'Upload 25 resources to the community',
         icon: '📚',
-        unlocked: user.contributions >= 25
+        unlocked: (user.contributions || 0) >= 25
       },
       {
         key: 'communityLeader',
