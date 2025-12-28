@@ -68,13 +68,18 @@ router.get('/', async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
     
-    // Sanitize likes and comments arrays in all stories to prevent validation errors
+    // Initialize and sanitize likes and comments arrays in all stories to prevent validation errors
     stories.forEach(story => {
-      if (story.likes && !Array.isArray(story.likes)) {
+      // Initialize likes array if undefined
+      if (!story.likes) {
+        story.likes = [];
+      }
+      // Validate and sanitize likes array
+      if (!Array.isArray(story.likes)) {
         story.likes = [];
       }
       // Filter out any invalid ObjectId values from likes
-      if (story.likes && Array.isArray(story.likes)) {
+      if (Array.isArray(story.likes)) {
         story.likes = story.likes.filter(like => {
           try {
             return mongoose.Types.ObjectId.isValid(like);
@@ -84,11 +89,16 @@ router.get('/', async (req, res) => {
         });
       }
       
-      if (story.comments && !Array.isArray(story.comments)) {
+      // Initialize comments array if undefined
+      if (!story.comments) {
+        story.comments = [];
+      }
+      // Validate and sanitize comments array
+      if (!Array.isArray(story.comments)) {
         story.comments = [];
       }
       // Filter out any invalid comment objects from comments
-      if (story.comments && Array.isArray(story.comments)) {
+      if (Array.isArray(story.comments)) {
         story.comments = story.comments.filter(comment => {
           try {
             // Check if comment is a valid object with required properties
@@ -204,12 +214,16 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
     
+    // Initialize likes array if undefined
+    if (!story.likes) {
+      story.likes = [];
+    }
     // Validate and sanitize likes array to prevent validation errors
-    if (story.likes && !Array.isArray(story.likes)) {
+    if (!Array.isArray(story.likes)) {
       story.likes = [];
     }
     // Filter out any invalid ObjectId values from likes
-    if (story.likes && Array.isArray(story.likes)) {
+    if (Array.isArray(story.likes)) {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
@@ -219,12 +233,16 @@ router.put('/:id', async (req, res) => {
       });
     }
     
+    // Initialize comments array if undefined
+    if (!story.comments) {
+      story.comments = [];
+    }
     // Validate and sanitize comments array to prevent validation errors
-    if (story.comments && !Array.isArray(story.comments)) {
+    if (!Array.isArray(story.comments)) {
       story.comments = [];
     }
     // Filter out any invalid comment objects from comments
-    if (story.comments && Array.isArray(story.comments)) {
+    if (Array.isArray(story.comments)) {
       story.comments = story.comments.filter(comment => {
         try {
           // Check if comment is a valid object with required properties
@@ -268,12 +286,16 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ error: 'Story not found' });
     }
     
+    // Initialize likes array if undefined
+    if (!story.likes) {
+      story.likes = [];
+    }
     // Validate and sanitize likes array to prevent validation errors
-    if (story.likes && !Array.isArray(story.likes)) {
+    if (!Array.isArray(story.likes)) {
       story.likes = [];
     }
     // Filter out any invalid ObjectId values from likes
-    if (story.likes && Array.isArray(story.likes)) {
+    if (Array.isArray(story.likes)) {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
@@ -283,12 +305,16 @@ router.delete('/:id', async (req, res) => {
       });
     }
     
+    // Initialize comments array if undefined
+    if (!story.comments) {
+      story.comments = [];
+    }
     // Validate and sanitize comments array to prevent validation errors
-    if (story.comments && !Array.isArray(story.comments)) {
+    if (!Array.isArray(story.comments)) {
       story.comments = [];
     }
     // Filter out any invalid comment objects from comments
-    if (story.comments && Array.isArray(story.comments)) {
+    if (Array.isArray(story.comments)) {
       story.comments = story.comments.filter(comment => {
         try {
           // Check if comment is a valid object with required properties
@@ -345,12 +371,16 @@ router.post('/:id/like', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
+    // Initialize likes array if undefined
+    if (!story.likes) {
+      story.likes = [];
+    }
     // Validate and sanitize likes array to prevent validation errors
-    if (story.likes && !Array.isArray(story.likes)) {
+    if (!Array.isArray(story.likes)) {
       story.likes = [];
     }
     // Filter out any invalid ObjectId values from likes
-    if (story.likes && Array.isArray(story.likes)) {
+    if (Array.isArray(story.likes)) {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
@@ -360,12 +390,16 @@ router.post('/:id/like', async (req, res) => {
       });
     }
     
+    // Initialize comments array if undefined
+    if (!story.comments) {
+      story.comments = [];
+    }
     // Validate and sanitize comments array to prevent validation errors
-    if (story.comments && !Array.isArray(story.comments)) {
+    if (!Array.isArray(story.comments)) {
       story.comments = [];
     }
     // Filter out any invalid comment objects from comments
-    if (story.comments && Array.isArray(story.comments)) {
+    if (Array.isArray(story.comments)) {
       story.comments = story.comments.filter(comment => {
         try {
           // Check if comment is a valid object with required properties
@@ -439,12 +473,16 @@ router.post('/:id/comment', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
+    // Initialize likes array if undefined
+    if (!story.likes) {
+      story.likes = [];
+    }
     // Validate and sanitize likes array to prevent validation errors
-    if (story.likes && !Array.isArray(story.likes)) {
+    if (!Array.isArray(story.likes)) {
       story.likes = [];
     }
     // Filter out any invalid ObjectId values from likes
-    if (story.likes && Array.isArray(story.likes)) {
+    if (Array.isArray(story.likes)) {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
@@ -454,12 +492,16 @@ router.post('/:id/comment', async (req, res) => {
       });
     }
     
+    // Initialize comments array if undefined
+    if (!story.comments) {
+      story.comments = [];
+    }
     // Validate and sanitize comments array to prevent validation errors
-    if (story.comments && !Array.isArray(story.comments)) {
+    if (!Array.isArray(story.comments)) {
       story.comments = [];
     }
     // Filter out any invalid comment objects from comments
-    if (story.comments && Array.isArray(story.comments)) {
+    if (Array.isArray(story.comments)) {
       story.comments = story.comments.filter(comment => {
         try {
           // Check if comment is a valid object with required properties
@@ -531,12 +573,16 @@ router.post('/:id/share', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Story not found' });
     }
     
+    // Initialize likes array if undefined
+    if (!story.likes) {
+      story.likes = [];
+    }
     // Validate and sanitize likes array to prevent validation errors
-    if (story.likes && !Array.isArray(story.likes)) {
+    if (!Array.isArray(story.likes)) {
       story.likes = [];
     }
     // Filter out any invalid ObjectId values from likes
-    if (story.likes && Array.isArray(story.likes)) {
+    if (Array.isArray(story.likes)) {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
@@ -546,12 +592,16 @@ router.post('/:id/share', async (req, res) => {
       });
     }
     
+    // Initialize comments array if undefined
+    if (!story.comments) {
+      story.comments = [];
+    }
     // Validate and sanitize comments array to prevent validation errors
-    if (story.comments && !Array.isArray(story.comments)) {
+    if (!Array.isArray(story.comments)) {
       story.comments = [];
     }
     // Filter out any invalid comment objects from comments
-    if (story.comments && Array.isArray(story.comments)) {
+    if (Array.isArray(story.comments)) {
       story.comments = story.comments.filter(comment => {
         try {
           // Check if comment is a valid object with required properties
