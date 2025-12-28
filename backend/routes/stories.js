@@ -40,7 +40,7 @@ router.use((req, res, next) => {
  */
 router.get('/', async (req, res) => {
   try {
-    const { page = 1, limit = 10, category, search, sortBy = 'createdAt', sortOrder = -1 } = req.query;
+    const { page = 1, limit = 10, category, search, sortBy = 'createdAt', sortOrder = -1, sort } = req.query;
     
     // Build query
     let query = {};
@@ -58,13 +58,23 @@ router.get('/', async (req, res) => {
       query.category = category;
     }
     
-    // Build sort object
-    let sort = {};
-    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    // Build sort object - handle both old and new sort parameter formats
+    let sortObj = {};
+    if (sort) {
+      // New format: sort can be 'rating', '-rating', 'createdAt', '-createdAt', etc.
+      if (sort.startsWith('-')) {
+        sortObj[sort.substring(1)] = -1;
+      } else {
+        sortObj[sort] = 1;
+      }
+    } else {
+      // Old format: sortBy and sortOrder
+      sortObj[sortBy] = sortOrder === 'asc' ? 1 : -1;
+    }
     
     // Fetch stories with pagination
     const stories = await Story.find(query)
-      .sort(sort)
+      .sort(sortObj)
       .limit(limit * 1)
       .skip((page - 1) * limit);
     

@@ -66,12 +66,24 @@ router.get('/', async (req, res) => {
       ];
     }
     
-    // Build sort
+    // Build sort - handle both specific sort values and generic sort parameter
     const sortObj = {};
-    if (sort === 'rating') sortObj.rating = -1;
-    else if (sort === 'downloads') sortObj.downloads = -1;
-    else if (sort === 'recent') sortObj.createdAt = -1;
-    else sortObj.rating = -1;
+    if (sort) {
+      // Handle generic sort parameter (e.g., sort='-rating', sort='rating', sort='-downloads', etc.)
+      if (sort === 'rating') sortObj.rating = -1;
+      else if (sort === 'downloads') sortObj.downloads = -1;
+      else if (sort === 'recent' || sort === 'createdAt') sortObj.createdAt = -1;
+      else if (sort.startsWith('-')) {
+        // Handle negative sort (e.g., sort='-rating', sort='-downloads')
+        sortObj[sort.substring(1)] = -1;
+      } else {
+        // Handle positive sort (e.g., sort='rating', sort='downloads')
+        sortObj[sort] = 1;
+      }
+    } else {
+      // Default sort by rating
+      sortObj.rating = -1;
+    }
     
     // Calculate pagination
     const skip = (page - 1) * limit;

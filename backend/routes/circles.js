@@ -31,11 +31,19 @@ router.get('/', async (req, res) => {
     const query = {};
     if (topic) query.topic = topic;
     
-    // Build sort
+    // Build sort - handle both specific sort values and generic sort parameter
     const sortObj = {};
-    if (sort === '-memberCount') sortObj.memberCount = -1;
-    else if (sort === 'memberCount') sortObj.memberCount = 1;
-    else sortObj.memberCount = -1; // Default sort by memberCount descending
+    if (sort) {
+      // Handle generic sort parameter (e.g., sort='-memberCount', sort='memberCount')
+      if (sort.startsWith('-')) {
+        sortObj[sort.substring(1)] = -1;
+      } else {
+        sortObj[sort] = 1;
+      }
+    } else {
+      // Default sort by memberCount descending
+      sortObj.memberCount = -1;
+    }
     
     // Calculate pagination
     const skip = (page - 1) * limit;
