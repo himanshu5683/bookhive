@@ -128,7 +128,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userId = req.user.id; // Using id from authenticated user
     
     // Validate required fields
     if (!title || !content) {
@@ -196,7 +196,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { title, content, category, mood } = req.body;
-    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userId = req.user.id; // Using id from authenticated user
     
     // Find story and check ownership
     const story = await Story.findById(req.params.id);
@@ -260,7 +260,7 @@ router.put('/:id', async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const userId = req.user.id; // Using id from authenticated user (as requested)
+    const userId = req.user.id; // Using id from authenticated user
     
     // Check if story exists
     const story = await Story.findById(req.params.id);
@@ -326,12 +326,12 @@ router.post('/:id/like', async (req, res) => {
   try {
     console.log('Like route called with user:', req.user);
     // Validate user - req.user comes from authentication middleware
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user.id) {
       console.log('Authentication failed in like route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
-    const userId = req.user._id; // Get user ID from authenticated user
+    const userId = req.user.id; // Get user ID from authenticated user
     console.log('User ID extracted:', userId);
     
     // Validate story ID
@@ -376,14 +376,14 @@ router.post('/:id/like', async (req, res) => {
       });
     }
     
-    // Check if user has already liked the story using MongoDB's includes method
+    // Check if user has already liked the story
     const hasLiked = story.likes.some(like => like.toString() === userId.toString());
     
     if (hasLiked) {
-      // Remove like using pull operation for better performance
-      story.likes.pull(userId);
+      // Remove like: filter out the specific user ID
+      story.likes = story.likes.filter(like => like.toString() !== userId.toString());
     } else {
-      // Add like using push operation
+      // Add like: push the user ID if not already present
       story.likes.push(userId);
     }
     
@@ -415,12 +415,12 @@ router.post('/:id/comment', async (req, res) => {
     console.log('Comment route called with user:', req.user);
     
     // Validate user - req.user comes from authentication middleware
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user.id) {
       console.log('Authentication failed in comment route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
-    const userId = req.user._id; // Get user ID from authenticated user
+    const userId = req.user.id; // Get user ID from authenticated user
     console.log('User ID extracted:', userId);
     
     // Validate content
@@ -512,12 +512,12 @@ router.post('/:id/share', async (req, res) => {
   try {
     console.log('Share route called with user:', req.user);
     // Validate user - req.user comes from authentication middleware
-    if (!req.user || !req.user._id) {
+    if (!req.user || !req.user.id) {
       console.log('Authentication failed in share route - req.user:', req.user);
       return res.status(401).json({ success: false, error: 'Authentication required' });
     }
     
-    const userId = req.user._id; // Get user ID from authenticated user
+    const userId = req.user.id; // Get user ID from authenticated user
     console.log('User ID extracted:', userId);
     
     // Validate story ID
