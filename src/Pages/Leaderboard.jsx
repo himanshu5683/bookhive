@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { dashboardService } from '../services/api'; // Fixed: Import dashboardService instead of leaderboardService
+import { dashboardService, usersService } from '../services/api'; // Fixed: Import dashboardService instead of leaderboardService
 import '../styles/Leaderboard.css';
 
 const Leaderboard = () => {
@@ -7,16 +7,30 @@ const Leaderboard = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [gamification, setGamification] = useState(null);
+  const [selectedBadge, setSelectedBadge] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  // Fetch leaderboard from backend API
+  // Fetch leaderboard and gamification data from backend API
   useEffect(() => {
-    const fetchLeaderboard = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await dashboardService.getLeaderboard({ sortBy: filterBy, limit: 20 }); // Fixed: Use dashboardService instead of leaderboardService
+        // Fetch leaderboard
+        const leaderboardResponse = await dashboardService.getLeaderboard({ sortBy: filterBy, limit: 20 }); // Fixed: Use dashboardService instead of leaderboardService
         // Fixed: Use response.leaderboard instead of trying response.users
-        setUsers(response.leaderboard || []);
+        setUsers(leaderboardResponse.leaderboard || []);
+        
+        // Fetch gamification data
+        try {
+          const gamificationResponse = await usersService.getGamification();
+          setGamification(gamificationResponse);
+        } catch (gamificationErr) {
+          console.error('Failed to fetch gamification data:', gamificationErr);
+          // Don't set error for gamification as it's not critical for leaderboard display
+          setGamification(null);
+        }
       } catch (err) {
         console.error('Failed to fetch leaderboard:', err);
         setError('Failed to load leaderboard. Please try again.');
@@ -26,7 +40,7 @@ const Leaderboard = () => {
       }
     };
 
-    fetchLeaderboard();
+    fetchData();
   }, [filterBy]);
 
   const rankedUsers = [...users].sort((a, b) => {
@@ -127,35 +141,51 @@ const Leaderboard = () => {
         <h2>🎮 Gamification</h2>
 
         <div className="achievements">
-          <h3>Recent Achievements</h3>
-          <div className="achievement-grid">
-            <div className="achievement-item">
-              <span className="achievement-icon">⭐</span>
-              <p>Top Contributor</p>
+          <h3>Your Achievements</h3>
+          {gamification ? (
+            <div className="achievement-grid">
+              {gamification.badges && gamification.badges.map((badge, index) => (
+                <div 
+                  key={badge.key || index} 
+                  className={`achievement-item ${badge.unlocked ? 'unlocked' : 'locked'}`}
+                  onClick={() => {
+                    setSelectedBadge(badge);
+                    setShowModal(true);
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span className="achievement-icon">{badge.icon}</span>
+                  <p>{badge.title}</p>
+                  {badge.unlocked && <span className="unlocked-indicator">✓</span>}
+                </div>
+              ))}
             </div>
-            <div className="achievement-item">
-              <span className="achievement-icon">🚀</span>
-              <p>Rapid Riser</p>
+          ) : (
+            <p>Loading achievements...</p>
+          )}
+        </div>
+      </div>
+
+      {/* Badge Detail Modal */}
+      {showModal && selectedBadge && (
+        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <span className="modal-icon">{selectedBadge.icon}</span>
+              <h3>{selectedBadge.title}</h3>
+              <button className="modal-close" onClick={() => setShowModal(false)}>×</button>
             </div>
-            <div className="achievement-item">
-              <span className="achievement-icon">🔥</span>
-              <p>7-Day Streak</p>
-            </div>
-            <div className="achievement-item">
-              <span className="achievement-icon">💎</span>
-              <p>Premium Member</p>
-            </div>
-            <div className="achievement-item">
-              <span className="achievement-icon">📚</span>
-              <p>Knowledge Master</p>
-            </div>
-            <div className="achievement-item">
-              <span className="achievement-icon">👑</span>
-              <p>Community Leader</p>
+            <div className="modal-body">
+              <p className="modal-description">{selectedBadge.description}</p>
+              <div className="modal-status">
+                Status: <span className={selectedBadge.unlocked ? 'status-unlocked' : 'status-locked'}>
+                  {selectedBadge.unlocked ? 'Unlocked' : 'Locked'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

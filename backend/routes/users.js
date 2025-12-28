@@ -256,4 +256,108 @@ router.put('/:id/credits', async (req, res) => {
   }
 });
 
+/**
+ * GET /api/users/gamification
+ * Fetch current user's gamification status and badges
+ */
+router.get('/gamification', async (req, res) => {
+  try {
+    const userId = req.user.id; // Using id from authenticated user (as requested)
+    
+    // Find user and get their stats
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Calculate dynamic badges based on user stats
+    const unlockedBadges = [];
+    const lockedBadges = [];
+
+    // Define badge criteria
+    const badgeCriteria = [
+      {
+        key: 'topContributor',
+        title: 'Top Contributor',
+        description: 'Upload 10 resources to the community',
+        icon: '⭐',
+        unlocked: user.contributions >= 10
+      },
+      {
+        key: 'rapidRiser',
+        title: 'Rapid Riser',
+        description: 'Accumulate 200 points/credits',
+        icon: '🚀',
+        unlocked: user.credits >= 200
+      },
+      {
+        key: 'sevenDayStreak',
+        title: '7-Day Streak',
+        description: 'Maintain activity for 7 consecutive days',
+        icon: '🔥',
+        unlocked: false // Placeholder - would need actual streak tracking
+      },
+      {
+        key: 'premiumMember',
+        title: 'Premium Member',
+        description: 'Upgrade to premium membership',
+        icon: '💎',
+        unlocked: false // Placeholder - would need actual premium status
+      },
+      {
+        key: 'knowledgeMaster',
+        title: 'Knowledge Master',
+        description: 'Upload 25 resources to the community',
+        icon: '📚',
+        unlocked: user.contributions >= 25
+      },
+      {
+        key: 'communityLeader',
+        title: 'Community Leader',
+        description: 'Create or lead community circles',
+        icon: '👑',
+        unlocked: false // Placeholder - would need actual role data
+      }
+    ];
+
+    // Categorize badges as unlocked/locked and update user badges if needed
+    badgeCriteria.forEach(badge => {
+      const badgeText = `${badge.icon} ${badge.title}`;
+      if (badge.unlocked) {
+        // Add to unlocked badges list
+        unlockedBadges.push(badge);
+        // Add to user's badges if not already there
+        if (!user.badges.includes(badgeText)) {
+          user.badges.push(badgeText);
+        }
+      } else {
+        lockedBadges.push(badge);
+      }
+    });
+
+    // Update user badges if new badges were unlocked
+    if (unlockedBadges.some(badge => !user.badges.includes(`${badge.icon} ${badge.title}`))) {
+      await user.save();
+    }
+
+    res.status(200).json({
+      points: user.credits,
+      level: Math.floor(user.credits / 100) + 1, // Example level calculation
+      streak: 0, // Placeholder - would need actual streak tracking
+      badges: [...unlockedBadges, ...lockedBadges],
+      stats: {
+        uploads: user.contributions,
+        likes: 0, // Would need to track likes received
+        comments: 0, // Would need to track comments made
+        downloads: user.downloads
+      },
+      premium: false, // Placeholder - would need actual premium status
+      role: user.role || 'Member'
+    });
+  } catch (error) {
+    console.error('Error fetching gamification status:', error);
+    res.status(500).json({ error: 'Server error fetching gamification status' });
+  }
+});
+
 export default router;

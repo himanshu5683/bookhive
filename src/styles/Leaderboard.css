@@ -217,6 +217,7 @@
   border-radius: var(--bh-radius-sm);
   border: 1px solid var(--bh-border);
   transition: all 0.3s ease;
+  position: relative;
 }
 
 .achievement-item:hover {
@@ -235,6 +236,119 @@
   font-weight: 600;
   color: var(--bh-text-primary);
   margin: 0;
+}
+
+.achievement-item.unlocked {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(46, 125, 50, 0.1));
+  border: 1px solid #4caf50;
+}
+
+.achievement-item.locked {
+  background: linear-gradient(135deg, rgba(158, 158, 158, 0.1), rgba(117, 117, 117, 0.1));
+  border: 1px solid #9e9e9e;
+  opacity: 0.7;
+}
+
+.unlocked-indicator {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #4caf50;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal-content {
+  background: var(--bh-bg-card);
+  border-radius: var(--bh-radius-lg);
+  border: 1px solid var(--bh-border);
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--bh-shadow-xl);
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--bh-border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.modal-icon {
+  font-size: 2rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  flex: 1;
+  color: var(--bh-text-primary);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--bh-text-secondary);
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+  background: var(--bh-bg);
+  color: var(--bh-text-primary);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-description {
+  margin: 0 0 1rem 0;
+  color: var(--bh-text-primary);
+  line-height: 1.5;
+}
+
+.modal-status {
+  font-weight: 600;
+}
+
+.status-unlocked {
+  color: #4caf50;
+}
+
+.status-locked {
+  color: #f44336;
 }
 
 @media (max-width: 1024px) {

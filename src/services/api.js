@@ -162,6 +162,7 @@ export const usersAPI = {
   updateCredits: (id, creditsData) => apiClient.put(`/users/${id}/credits`, creditsData),
   updateTags: (id, tagsData) => apiClient.put(`/users/${id}/tags`, tagsData),
   getAchievements: (id) => apiClient.get(`/users/${id}/achievements`),
+  getGamification: () => apiClient.get('/users/gamification'),
   follow: (id) => apiClient.post(`/users/${id}/follow`),
 };
 
