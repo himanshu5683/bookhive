@@ -372,7 +372,7 @@ router.get('/gamification', async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching gamification status:', error.message, error.stack);
-    res.status(500).json({ error: 'Server error fetching gamification status' });
+    res.status(500).json({ error: 'Server error fetching gamification data', details: error.message });
   }
 });
 
