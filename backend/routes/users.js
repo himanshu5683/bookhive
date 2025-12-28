@@ -262,11 +262,18 @@ router.put('/:id/credits', async (req, res) => {
  */
 router.get('/gamification', async (req, res) => {
   try {
-    const userId = req.user.id; // Using id from authenticated user (as requested)
+    // Safely read req.user.id with validation
+    if (!req.user || !req.user.id) {
+      console.error('Authentication failed - no user in request:', req.user);
+      return res.status(401).json({ error: 'Authentication required' });
+    }
+    
+    const userId = req.user.id;
     
     // Find user and get their stats
     const user = await User.findById(userId).select('-password');
     if (!user) {
+      console.error('User not found for ID:', userId);
       return res.status(404).json({ error: 'User not found' });
     }
 
@@ -322,40 +329,49 @@ router.get('/gamification', async (req, res) => {
 
     // Categorize badges as unlocked/locked and update user badges if needed
     badgeCriteria.forEach(badge => {
-      const badgeText = `${badge.icon} ${badge.title}`;
-      if (badge.unlocked) {
-        // Add to unlocked badges list
-        unlockedBadges.push(badge);
-        // Add to user's badges if not already there
-        if (!user.badges.includes(badgeText)) {
-          user.badges.push(badgeText);
+      try {
+        const badgeText = `${badge.icon} ${badge.title}`;
+        if (badge.unlocked) {
+          // Add to unlocked badges list
+          unlockedBadges.push(badge);
+          // Add to user's badges if not already there
+          if (user.badges && Array.isArray(user.badges) && !user.badges.includes(badgeText)) {
+            user.badges.push(badgeText);
+          }
+        } else {
+          lockedBadges.push(badge);
         }
-      } else {
-        lockedBadges.push(badge);
+      } catch (badgeError) {
+        console.error('Error processing badge:', badge, badgeError);
       }
     });
 
     // Update user badges if new badges were unlocked
-    if (unlockedBadges.some(badge => !user.badges.includes(`${badge.icon} ${badge.title}`))) {
-      await user.save();
+    try {
+      if (user.badges && Array.isArray(user.badges) && unlockedBadges.some(badge => !user.badges.includes(`${badge.icon} ${badge.title}`))) {
+        await user.save();
+      }
+    } catch (saveError) {
+      console.error('Error saving user badges:', saveError);
+      // Don't fail the entire request if badge save fails
     }
 
     res.status(200).json({
-      points: user.credits,
-      level: Math.floor(user.credits / 100) + 1, // Example level calculation
+      points: user.credits || 0,
+      level: Math.floor((user.credits || 0) / 100) + 1, // Example level calculation
       streak: 0, // Placeholder - would need actual streak tracking
       badges: [...unlockedBadges, ...lockedBadges],
       stats: {
-        uploads: user.contributions,
+        uploads: user.contributions || 0,
         likes: 0, // Would need to track likes received
         comments: 0, // Would need to track comments made
-        downloads: user.downloads
+        downloads: user.downloads || 0
       },
       premium: false, // Placeholder - would need actual premium status
       role: user.role || 'Member'
     });
   } catch (error) {
-    console.error('Error fetching gamification status:', error);
+    console.error('Error fetching gamification status:', error.message, error.stack);
     res.status(500).json({ error: 'Server error fetching gamification status' });
   }
 });

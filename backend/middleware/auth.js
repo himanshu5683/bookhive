@@ -47,6 +47,9 @@ const authenticate = async (req, res, next) => {
     // Attach user to request object
     req.user = user;
     
+    // Ensure req.user.id is available for compatibility
+    req.user.id = user._id;
+    
     // Log authenticated user for debugging
     console.log(`User authenticated: ${user._id} (${user.name})`);
     console.log('req.user object:', req.user);
