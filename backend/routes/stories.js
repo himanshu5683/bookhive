@@ -68,7 +68,7 @@ router.get('/', async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
     
-    // Sanitize likes arrays in all stories to prevent validation errors
+    // Sanitize likes and comments arrays in all stories to prevent validation errors
     stories.forEach(story => {
       if (story.likes && !Array.isArray(story.likes)) {
         story.likes = [];
@@ -78,6 +78,21 @@ router.get('/', async (req, res) => {
         story.likes = story.likes.filter(like => {
           try {
             return mongoose.Types.ObjectId.isValid(like);
+          } catch (e) {
+            return false;
+          }
+        });
+      }
+      
+      if (story.comments && !Array.isArray(story.comments)) {
+        story.comments = [];
+      }
+      // Filter out any invalid comment objects from comments
+      if (story.comments && Array.isArray(story.comments)) {
+        story.comments = story.comments.filter(comment => {
+          try {
+            // Check if comment is a valid object with required properties
+            return comment && typeof comment === 'object' && (comment.user || comment.text);
           } catch (e) {
             return false;
           }
@@ -204,6 +219,22 @@ router.put('/:id', async (req, res) => {
       });
     }
     
+    // Validate and sanitize comments array to prevent validation errors
+    if (story.comments && !Array.isArray(story.comments)) {
+      story.comments = [];
+    }
+    // Filter out any invalid comment objects from comments
+    if (story.comments && Array.isArray(story.comments)) {
+      story.comments = story.comments.filter(comment => {
+        try {
+          // Check if comment is a valid object with required properties
+          return comment && typeof comment === 'object' && (comment.user || comment.text);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
     if (story.authorId !== userId.toString()) {
       return res.status(403).json({ error: 'Only the author can update the story' });
     }
@@ -246,6 +277,22 @@ router.delete('/:id', async (req, res) => {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
+    // Validate and sanitize comments array to prevent validation errors
+    if (story.comments && !Array.isArray(story.comments)) {
+      story.comments = [];
+    }
+    // Filter out any invalid comment objects from comments
+    if (story.comments && Array.isArray(story.comments)) {
+      story.comments = story.comments.filter(comment => {
+        try {
+          // Check if comment is a valid object with required properties
+          return comment && typeof comment === 'object' && (comment.user || comment.text);
         } catch (e) {
           return false;
         }
@@ -307,6 +354,22 @@ router.post('/:id/like', async (req, res) => {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
+    // Validate and sanitize comments array to prevent validation errors
+    if (story.comments && !Array.isArray(story.comments)) {
+      story.comments = [];
+    }
+    // Filter out any invalid comment objects from comments
+    if (story.comments && Array.isArray(story.comments)) {
+      story.comments = story.comments.filter(comment => {
+        try {
+          // Check if comment is a valid object with required properties
+          return comment && typeof comment === 'object' && (comment.user || comment.text);
         } catch (e) {
           return false;
         }
@@ -391,6 +454,22 @@ router.post('/:id/comment', async (req, res) => {
       });
     }
     
+    // Validate and sanitize comments array to prevent validation errors
+    if (story.comments && !Array.isArray(story.comments)) {
+      story.comments = [];
+    }
+    // Filter out any invalid comment objects from comments
+    if (story.comments && Array.isArray(story.comments)) {
+      story.comments = story.comments.filter(comment => {
+        try {
+          // Check if comment is a valid object with required properties
+          return comment && typeof comment === 'object' && (comment.user || comment.text);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
     // Ensure comments array exists
     if (!story.comments) {
       story.comments = [];
@@ -461,6 +540,22 @@ router.post('/:id/share', async (req, res) => {
       story.likes = story.likes.filter(like => {
         try {
           return mongoose.Types.ObjectId.isValid(like);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+    
+    // Validate and sanitize comments array to prevent validation errors
+    if (story.comments && !Array.isArray(story.comments)) {
+      story.comments = [];
+    }
+    // Filter out any invalid comment objects from comments
+    if (story.comments && Array.isArray(story.comments)) {
+      story.comments = story.comments.filter(comment => {
+        try {
+          // Check if comment is a valid object with required properties
+          return comment && typeof comment === 'object' && (comment.user || comment.text);
         } catch (e) {
           return false;
         }
