@@ -35,8 +35,15 @@ const authenticate = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('Decoded JWT payload:', decoded);
     
+    // Get user ID from token (handle both id and userId fields)
+    const userId = decoded.id || decoded.userId;
+    if (!userId) {
+      console.log('No user ID found in token:', decoded);
+      return res.status(401).json({ error: 'Invalid token. No user ID found.' });
+    }
+    
     // Find user by ID from token
-    const user = await User.findById(decoded.userId).select('-password');
+    const user = await User.findById(userId).select('-password');
     
     // Check if user exists
     if (!user) {
